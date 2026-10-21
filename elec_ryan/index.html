@@ -713,7 +713,7 @@ footer{padding-block:48px 40px;color:var(--muted);font-size:14px}
           <div class="ask" data-id="td1c-vce" data-ans="-52" data-unit="V" data-hint="Maille de sortie avec le I_C linéaire. Le résultat est bizarre, c'est normal."><span class="al">$V_{CE}$ calculé avec ce $I_C$ $=$</span></div>
           <div class="ask" data-id="td1c-sat" data-ans="50" data-unit="mA"><span class="al">$I_{C,sat} = V_{cc}/R_C =$</span></div>
           <div class="ask" data-id="td1c-mode" data-choices="Bloqué|Linéaire|Saturé" data-ans="2"><span class="al">Mode ?</span></div>
-          <div class="ask" data-id="td1c-rb" data-ans="10" data-unit="kΩ" data-hint="Il faut β·I_B < I_C,sat."><span class="al">$R_B$ minimum pour être linéaire $=$</span></div>
+          <div class="ask" data-id="td1c-rb" data-ans="9.3" data-alt="10" data-unit="kΩ" data-hint="Il faut β·I_B < I_C,sat, avec I_B = (V_cc − V_BE)/R_B."><span class="al">$R_B$ minimum pour être linéaire $=$</span></div>
         </div>
         <details class="corr"><summary>Correction</summary><div class="body">
           <p>Maille d'entrée :</p>
@@ -723,7 +723,9 @@ footer{padding-block:48px 40px;color:var(--muted);font-size:14px}
           <p>$$V_{CE} = V_{cc} - R_C I_C = 10 - 200 \times 0{,}31 = -52\ \text{V}$$</p>
           <p>Impossible ! Le tuyau ne peut donner que $I_{C,sat} = \dfrac{V_{cc}}{R_C} = 50\ \text{mA}$.</p>
           <p class="ans">Saturé : $I_C = 50\ \text{mA}$, $V_{CE} \approx 0$.</p>
-          <p>Pour être linéaire : $\beta \dfrac{V_{cc}}{R_B} &lt; \dfrac{V_{cc}}{R_C} \Rightarrow R_B &gt; \beta R_C = 10\ \text{k}\Omega$.</p>
+          <p>Pour être linéaire, il faut $\beta I_B &lt; I_{C,sat}$ :</p>
+          <p>$$\beta\,\frac{V_{cc} - V_{BE}}{R_B} &lt; \frac{V_{cc}}{R_C} \;\Rightarrow\; R_B &gt; \beta R_C\,\frac{V_{cc} - V_{BE}}{V_{cc}} = 10\,000 \times \frac{9{,}3}{10} = 9{,}3\ \text{k}\Omega$$</p>
+          <p class="tip">Si on néglige $V_{BE}$ devant $V_{cc}$, on retrouve l'ordre de grandeur $R_B &gt; \beta R_C = 10\ \text{k}\Omega$. Les deux réponses sont acceptées.</p>
           <button class="load" data-preset="td1c">Voir dans le labo</button>
         </div></details>
       </div>
@@ -1306,7 +1308,7 @@ $("sigAmp").addEventListener("input",e=>{S.amp=e.target.value/100;update(true);}
 const P={
   td1a:{mode:"simple",Vcc:10,RC:1000,RE:0,beta:50,VBE:.7,Rk:Infinity,top:"R_B",note:"TD 1a : base reliée à l'émetteur, la roue ne peut rien faire. (R_C non donné, pris à 1 kΩ.)"},
   td1b:{mode:"simple",Vcc:10,RC:1000,RE:0,beta:50,VBE:.7,Rk:0,top:"R_B",note:"TD 1b : base directement sur V_cc. (R_C non donné, pris à 1 kΩ.)"},
-  td1c:{mode:"simple",Vcc:10,RC:200,RE:0,beta:50,VBE:.7,Rk:1500,top:"R_B",note:"TD 1c : R_B = 1500 Ω est trop petite. Ferme la roue jusqu'à R_B > 10 kΩ."},
+  td1c:{mode:"simple",Vcc:10,RC:200,RE:0,beta:50,VBE:.7,Rk:1500,top:"R_B",note:"TD 1c : R_B = 1500 Ω est trop petite. Ferme la roue jusqu'à R_B > 9,3 kΩ."},
   td2:{mode:"simple",Vcc:10,RC:50,RE:0,beta:100,VBE:.7,Rk:10000,top:"R_B",note:"TD 2 : R_B = 10 kΩ, R_C = 50 Ω, β = 100. Point de repos bien centré."},
   td3:{mode:"pont",Vcc:10,RC:400,RE:198,beta:100,VBE:.7,Rbot:10000,Rk:19730,top:"R_2",bot:"R_1",note:"TD 3 : R_1 = 10 kΩ, R_2 ≈ 19,7 kΩ, R_C = 400 Ω, R_E ≈ 198 Ω. Les manomètres montrent V_C ≈ 6 V et V_E ≈ 2 V."},
   an1:{mode:"simple",Vcc:10,RC:1000,RE:1000,beta:150,VBE:.7,Rk:150000,top:"R_B",note:"Annale ex. 1 : R_B = 150 kΩ, R_C = R_E = 1 kΩ, β = 150. V_CE ≈ 0,7 V : tout près de la saturation."},
@@ -1563,7 +1565,8 @@ function initAsk(a){
     if(a.classList.contains("ok")) return;
     const v=parseNum(inp.value);
     if(isNaN(v)){ msg.textContent="Tape un nombre (la virgule marche)."; inp.focus(); return; }
-    const ok=Math.abs(v-ans)<=Math.max(abs,tol*Math.abs(ans));
+    const near=x=>Math.abs(v-x)<=Math.max(abs,tol*Math.abs(x));
+    const ok=near(ans)||(a.dataset.alt!==undefined&&near(+a.dataset.alt));
     if(ok){ a.classList.add("ok"); inp.disabled=true; go.textContent="Juste"; go.disabled=true;
       if(!G.solved[id]){ G.solved[id]=1; streak(tries===0); gain(tries===0?30:15,tries===0?"Du premier coup !":"Bien rattrapé !"); exoProgress(); }
       msg.textContent=""; return; }
@@ -1598,7 +1601,7 @@ const QB=[
   {id:"b2",q:"En petits signaux, un condensateur de liaison devient :",o:["un interrupteur ouvert","un fil","une résistance $r$"],a:1,e:"En variable son impédance est très faible : court-circuit."},
   {id:"b3",q:"En petits signaux, $V_{cc}$ devient :",o:["la masse","une source $\\beta i_b$","il reste tel quel"],a:0,e:"Une tension constante n'a pas de partie variable : c'est la masse."},
   {id:"b4",q:"TD 2 : $R_B = 10\\ \\text{k}\\Omega$, $\\beta = 100$, $V_{cc} = 10\\ \\text{V}$. $I_C$ vaut :",o:["0,93 mA","9,3 mA","93 mA"],a:2,e:"$I_B = 9{,}3 / 10\\,000 = 0{,}93\\ \\text{mA}$, puis $I_C = 100 \\times 0{,}93 = 93\\ \\text{mA}$."},
-  {id:"b5",q:"TD 1c : pour repasser en linéaire il faut :",o:["$R_B > \\beta R_C$","$R_B < \\beta R_C$","$R_B = R_C$"],a:0,e:"$\\beta \\dfrac{V_{cc}}{R_B} < \\dfrac{V_{cc}}{R_C} \\iff R_B > \\beta R_C$."},
+  {id:"b5",q:"TD 1c : pour repasser en linéaire il faut :",o:["$R_B > \\beta R_C \\dfrac{V_{cc} - V_{BE}}{V_{cc}}$","$R_B < \\beta R_C$","$R_B = R_C$"],a:0,e:"$\\beta \\dfrac{V_{cc} - V_{BE}}{R_B} < \\dfrac{V_{cc}}{R_C}$, soit $R_B > 9{,}3\\ \\text{k}\\Omega$ (environ $\\beta R_C$ si on néglige $V_{BE}$)."},
   {id:"b6",q:"Pourquoi $C_E$ augmente l'amplification ?",o:["Il augmente $\\beta$","Il court-circuite $R_E$ en variable","Il bloque le continu dans $R_C$"],a:1,e:"Sans $C_E$ : $-\\dfrac{\\beta R_C}{r + (\\beta+1)R_E}$. Avec : $-\\dfrac{\\beta R_C}{r}$."},
   {id:"b7",q:"Annale ex. 1 : $V_{CE} = 0{,}7\\ \\text{V}$. Avec un gros signal :",o:["Sortie parfaite","Un côté de la sortie est écrêté (saturation)","Le transistor grille"],a:1,e:"Le point est collé à la saturation : il n'a presque pas de marge pour descendre. Teste « Annale 1 » dans le labo."},
   {id:"b8",q:"Si $I_B$ est négligeable devant le courant du pont, $R_1$ et $R_2$ sont :",o:["en série","en parallèle","court-circuitées"],a:0,e:"Le même courant les traverse : pont diviseur $\\dfrac{R_{bas}}{R_1 + R_2} V_{cc}$."},
@@ -1642,5 +1645,6 @@ loadPreset("td2");
 typeset([document.body]);
 })();
 </script>
+
 
 </body></html>
