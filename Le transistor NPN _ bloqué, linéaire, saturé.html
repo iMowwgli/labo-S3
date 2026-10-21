@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Transistor NPN : bloqué, linéaire, saturé</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F2F5F7;--sf:#fff;--ink:#13222E;--mut:#5A6B78;--line:#D3DDE4;--water:#1F7AE0;--base:#E8792B;--b:#6C7A89;--l:#0E8F83;--s:#D63A5B;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E1820;--sf:#15242E;--ink:#E7EFF4;--mut:#93A5B2;--line:#2A3B47;--water:#4DA3FF;--base:#FF9A4D;--b:#8D9BAA;--l:#2FC4B2;--s:#FF6483}}
+:root[data-theme="dark"]{--bg:#0E1820;--sf:#15242E;--ink:#E7EFF4;--mut:#93A5B2;--line:#2A3B47;--water:#4DA3FF;--base:#FF9A4D;--b:#8D9BAA;--l:#2FC4B2;--s:#FF6483}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 "IBM Plex Sans",system-ui,sans-serif}
+main{max-width:1060px;margin:0 auto;padding:28px 18px 60px}
+h1,h2,h3{font-family:"Bricolage Grotesque","IBM Plex Sans",sans-serif;line-height:1.15;margin:0}
+h1{font-size:clamp(28px,5vw,46px);font-weight:700;letter-spacing:-.02em}
+h2{font-size:clamp(22px,3vw,30px);margin:56px 0 14px}
+.sub{color:var(--mut);max-width:60ch;margin:10px 0 24px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pn{background:var(--sf);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.pn h3{font-size:16px;color:var(--mut);font-weight:500;margin-bottom:4px}
+svg{display:block;width:100%;height:auto}
+.w{fill:none;stroke:var(--ink);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+svg text{fill:var(--ink);font:500 12px "IBM Plex Sans",sans-serif}
+svg .m{fill:var(--mut);font-weight:400}
+.hl{fill:none;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:0}
+.pc{stroke:var(--water)}.pb{stroke:var(--base)}
+.tc{fill:none;stroke:var(--b);stroke-width:2;opacity:.9;transition:fill .4s,stroke .4s}
+svg[data-m=b] .tc{stroke:var(--b);fill:color-mix(in srgb,var(--b) 14%,transparent)}
+svg[data-m=l] .tc{stroke:var(--l);fill:color-mix(in srgb,var(--l) 16%,transparent)}
+svg[data-m=s] .tc{stroke:var(--s);fill:color-mix(in srgb,var(--s) 16%,transparent)}
+.ctl{margin-top:14px}
+.top{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between}
+.badge{font:700 22px "Bricolage Grotesque",sans-serif;padding:6px 18px;border-radius:99px;color:#fff;transition:background .35s;min-width:140px;text-align:center}
+[data-m=b].badge{background:var(--b)}[data-m=l].badge{background:var(--l)}[data-m=s].badge{background:var(--s)}
+input[type=range]{width:100%;height:34px;background:none;-webkit-appearance:none;appearance:none;margin:10px 0}
+input[type=range]::-webkit-slider-runnable-track{height:12px;border-radius:6px;background:linear-gradient(90deg,color-mix(in srgb,var(--b) 45%,transparent) 0 60%,color-mix(in srgb,var(--l) 55%,transparent) 60% 79.6%,color-mix(in srgb,var(--s) 55%,transparent) 79.6% 100%)}
+input[type=range]::-moz-range-track{height:12px;border-radius:6px;background:linear-gradient(90deg,color-mix(in srgb,var(--b) 45%,transparent) 0 60%,color-mix(in srgb,var(--l) 55%,transparent) 60% 79.6%,color-mix(in srgb,var(--s) 55%,transparent) 79.6% 100%)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;margin-top:-8px;border-radius:50%;background:var(--base);border:3px solid var(--sf);box-shadow:0 0 0 2px var(--base)}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--base);border:3px solid var(--sf);box-shadow:0 0 0 2px var(--base)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:6px 0 12px}
+.stats div{border-left:3px solid var(--line);padding-left:10px}
+.stats small{display:block;color:var(--mut);font-size:13px}
+.stats b{font:700 22px "Bricolage Grotesque",sans-serif;font-variant-numeric:tabular-nums}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+button{font:500 15px "IBM Plex Sans",sans-serif;color:var(--ink);background:var(--sf);border:1.5px solid var(--line);border-radius:10px;padding:9px 16px;cursor:pointer;transition:border-color .2s,background .2s}
+button:hover{border-color:var(--mut)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--water);outline-offset:2px}
+button.b{border-color:var(--b)}button.l{border-color:var(--l)}button.s{border-color:var(--s)}
+.mode{display:grid;grid-template-columns:150px 1fr;gap:20px;align-items:start}
+.mode h3{font-size:26px;transition:color .3s}
+.mode ul{margin:8px 0;padding-left:18px;font-variant-numeric:tabular-nums}
+.mode p{margin:8px 0;max-width:68ch}
+.eq{text-align:center;color:var(--mut);font-size:13px}
+ol.st{padding-left:22px;max-width:70ch}ol.st li{margin:10px 0}
+code{font:500 .92em "IBM Plex Sans",monospace;background:color-mix(in srgb,var(--water) 12%,transparent);padding:1px 6px;border-radius:5px}
+.quiz{display:grid;grid-template-columns:1.25fr 1fr;gap:14px;align-items:start}
+.fb{min-height:90px;margin-top:12px;padding:10px 14px;border-left:4px solid var(--line)}
+.fb.ok{border-color:var(--l)}.fb.ko{border-color:var(--s)}
+@media (max-width:760px){.grid,.quiz,.mode{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body><main>
+<header>
+<h1>Le transistor NPN en trois positions</h1>
+<p class="sub">Bloqué, linéaire, saturé : un seul composant, trois comportements. Déplace le curseur de Vbe et regarde le courant circuler dans le schéma et dans le robinet équivalent.</p>
+</header>
+
+<section id="live">
+<div class="grid">
+<div class="pn"><h3>Le circuit</h3><div id="hc"></div></div>
+<div class="pn"><h3>Le robinet équivalent</h3><div id="ht"></div></div>
+</div>
+<div class="pn ctl">
+<div class="top"><label for="sl"><b>Vbe</b> : tension entre la base et l’émetteur</label><span class="badge" id="bd" data-m="b">Bloqué</span></div>
+<input id="sl" type="range" min="0" max="1" step="0.005" value="0">
+<div class="stats"><div><small>Vbe</small><b id="sv"></b></div><div><small>Ib (base)</small><b id="si"></b></div><div><small>Ic (collecteur)</small><b id="sc"></b></div><div><small>Vce</small><b id="sx"></b></div></div>
+<div class="btns"><button class="b" data-v=".3">Bloquer</button><button class="l" data-v=".7">Linéaire</button><button class="s" data-v=".95">Saturer</button></div>
+<svg id="cv" viewBox="0 0 380 150" style="margin-top:14px;touch-action:none;cursor:ew-resize" role="img" aria-label="Courbe Ic en fonction de Vbe avec les trois zones"></svg>
+</div>
+</section>
+
+<h2>Les trois modes, côté composant</h2>
+<div class="pn mode" id="md"></div>
+
+<h2>Méthode pour reconnaître le mode</h2>
+<ol class="st">
+<li>Regarde <code>Vbe</code> (ou <code>Ib</code>). Sous 0,6 V, ou si Ib = 0, rien ne circule dans la base : le transistor est <b style="color:var(--b)">bloqué</b>. Alors Ic = 0 et Vce = Vcc.</li>
+<li>Regarde <code>Vce</code>. Autour de 0,2 V, le transistor est un interrupteur fermé : il est <b style="color:var(--s)">saturé</b>. Sans mesure, calcule <code>Ic max = (Vcc − 0,2) / Rc</code> et compare avec <code>β × Ib</code> : si β × Ib ≥ Ic max, il sature.</li>
+<li>Sinon, Vce est entre 0,2 V et Vcc et <code>Ic = β × Ib</code> : il est <b style="color:var(--l)">linéaire</b>.</li>
+</ol>
+<p class="sub">Ici : transistor NPN au silicium, β = 100, Vbe de conduction 0,6 V, Vce de saturation 0,2 V.</p>
+
+<h2>Entraîne-toi à les reconnaître</h2>
+<div class="quiz">
+<div class="pn"><h3>Quel est le mode de ce montage ?</h3><div id="qc"></div></div>
+<div>
+<div class="pn"><div class="stats" style="grid-template-columns:repeat(2,1fr)" id="qm"></div>
+<div class="btns"><button class="b" data-a="b">Bloqué</button><button class="l" data-a="l">Linéaire</button><button class="s" data-a="s">Saturé</button></div></div>
+<div class="fb" id="fb" aria-live="polite">Observe les mesures et le sens du courant, puis choisis.</div>
+<div class="top" style="margin-top:10px"><span id="sc2" class="sub" style="margin:0">Score : 0 / 0</span><button id="nx" style="display:none">Question suivante</button></div>
+</div>
+</div>
+</main>
+<script>
+const NS="http://www.w3.org/2000/svg",BETA=100,$=s=>document.querySelector(s);
+const fmt=(x,d=1)=>x.toFixed(d).replace(".",",");
+const NAMES={b:"Bloqué",l:"Linéaire",s:"Saturé"};
+function model(vbe,vcc=10,rc=1000){const icsat=(vcc-.2)/rc;let ib=Math.max(0,vbe-.6)*5e-4,ic=BETA*ib,m="l";
+if(vbe<.6){ib=0;ic=0;m="b"}else if(ic>=icsat){ic=icsat;m="s"}
+return{ib,ic,icsat,m,vce:m=="s"?.2:vcc-rc*ic,open:Math.min(1,BETA*ib/icsat)}}
+const inst=[];
+function circuit(host,o={}){
+const vcc=o.vcc||10,rc=o.rc||1000,rl=(rc>=1000?fmt(rc/1000,rc%1000?1:0)+" k":rc+" ")+"Ω";
+const CP="M250 24V125L224 145V165L250 185V250",BP="M60 193V155H222V165L250 185V250";
+host.innerHTML=`<svg viewBox="0 0 380 280" data-m="b" role="img" aria-label="Schéma d’un transistor NPN : Rc au collecteur, Rb et la source Vin sur la base, émetteur à la masse"><g class="w"><path d="M236 24H264M250 24V50"/><rect x="243" y="50" width="14" height="40" rx="2"/><path d="M250 90V125L222 145M222 128V182M222 165L250 185V250"/><path d="M60 155H110M150 155H222"/><rect x="110" y="149" width="40" height="12" rx="2"/><path d="M60 155V193M60 217V250"/><circle cx="60" cy="205" r="12"/><path d="M60 250H250M155 250V258M143 258H167M148 264H162M153 270H157"/></g>
+<circle class="tc" cx="236" cy="155" r="42"/><polygon points="250,185 239.6,182.4 244.2,176" fill="var(--ink)"/>
+<path class="hl pc" d="${CP}"/><path class="hl pb" d="${BP}"/><g class="pp"></g>
+<text x="268" y="28">+Vcc = ${vcc} V</text><text x="266" y="74">Rc = ${rl}</text><text class="m" x="258" y="132">C</text><text class="m" x="200" y="148">B</text><text class="m" x="258" y="202">E</text><text x="122" y="178">Rb</text><text x="18" y="209">Vin</text>
+<text data-k="ic" x="272" y="106" fill="var(--water)"></text><text data-k="ib" x="66" y="140"></text><text data-k="vbe" x="118" y="216"></text><text data-k="vce" x="272" y="222"></text></svg>`;
+const svg=host.firstChild,pc=svg.querySelector(".pc"),pb=svg.querySelector(".pb"),g=svg.querySelector(".pp"),T=k=>svg.querySelector(`[data-k=${k}]`);
+const mk=(n,c)=>[...Array(n)].map(()=>{const e=document.createElementNS(NS,"circle");e.setAttribute("r",3.6);e.setAttribute("fill",c);g.appendChild(e);return e});
+const P1=mk(16,"var(--water)"),P2=mk(8,"var(--base)"),L1=pc.getTotalLength(),L2=pb.getTotalLength();
+const x={m:null,ph1:0,ph2:0,
+update(v){const m=this.m=model(v,vcc,rc);svg.dataset.m=m.m;
+T("ic").textContent="Ic = "+fmt(m.ic*1e3,2)+" mA";T("ib").textContent="Ib = "+fmt(m.ib*1e6,0)+" µA";T("vbe").textContent="Vbe = "+fmt(v,2)+" V";T("vce").textContent="Vce = "+fmt(m.vce,1)+" V";
+pc.style.strokeOpacity=m.ic>0?.12+.3*m.ic/m.icsat:0;pb.style.strokeOpacity=m.ib>0?.2+.3*Math.min(1,m.ib/2e-4):0},
+tick(dt){const m=this.m;if(!m)return;this.ph1+=(m.ic>0?30+m.ic*1e3*12:0)*dt;this.ph2+=(m.ib>0?25+m.ib*1e6*.8:0)*dt;
+P1.forEach((e,i)=>{const p=pc.getPointAtLength(((this.ph1/L1+i/P1.length)%1)*L1);e.setAttribute("cx",p.x);e.setAttribute("cy",p.y);e.style.opacity=m.ic>0?1:0});
+P2.forEach((e,i)=>{const p=pb.getPointAtLength(((this.ph2/L2+i/P2.length)%1)*L2);e.setAttribute("cx",p.x);e.setAttribute("cy",p.y);e.style.opacity=m.ib>0?1:0})}};
+inst.push(x);return x}
+function tap(host){
+host.innerHTML=`<svg viewBox="0 0 380 260" data-m="b" role="img" aria-label="Robinet : la poignée est la base, l’arrivée d’eau le collecteur, la sortie l’émetteur"><rect class="w" x="8" y="70" width="62" height="110" rx="6"/><rect x="10" y="92" width="58" height="86" fill="var(--water)" opacity=".35"/>
+<rect x="70" y="95" width="116" height="34" fill="var(--water)" opacity=".35"/><path class="w" d="M70 95H340M70 129H340"/>
+<line class="fl" x1="196" y1="112" x2="340" y2="112" stroke="var(--water)" stroke-dasharray="12 8" stroke-linecap="round" stroke-width="3"/>
+<line class="st" x1="24" y1="22" x2="176" y2="22" stroke="var(--base)" stroke-dasharray="5 6" stroke-linecap="round" stroke-width="3"/>
+<rect class="gt" x="187" y="95" width="8" height="34" fill="var(--ink)"/><rect class="w" x="176" y="58" width="30" height="104" rx="4" fill="none"/>
+<line class="sm" x1="191" x2="191" y1="30" y2="95" stroke="var(--ink)" stroke-width="3"/><g class="hd" transform="translate(191 30)"><rect x="-26" y="-4" width="52" height="8" rx="4" fill="var(--base)"/></g>
+<text x="8" y="196">Réservoir</text><text class="m" x="8" y="212">pression Vcc</text><text x="82" y="148">C : arrivée d’eau</text><text x="262" y="148">E : sortie</text>
+<text x="24" y="12" fill="var(--base)">B : petit filet qui tourne la poignée</text><text class="lb" x="190" y="244" text-anchor="middle"></text></svg>`;
+const s=host.firstChild,q=c=>s.querySelector(c),fl=q(".fl"),st=q(".st");let o1=0,o2=0,cur=null;
+const LB={b:"Fermé : rien ne passe, même avec un réservoir plein",l:"À moitié ouvert : le débit suit la poignée",s:"Grand ouvert : c’est le tuyau qui limite le débit"};
+const x={update(v){const m=cur=model(v);s.dataset.m=m.m;const gy=95-34*m.open;
+q(".gt").setAttribute("y",gy);q(".sm").setAttribute("y2",gy);q(".hd").setAttribute("transform",`translate(191 30) rotate(${-m.open*90})`);
+fl.setAttribute("stroke-width",3+27*m.open);fl.style.opacity=m.open>0?1:0;
+st.setAttribute("stroke-width",2+4*Math.min(1,m.ib/2e-4));st.style.opacity=m.ib>0?1:.15;q(".lb").textContent=LB[m.m]},
+tick(dt){if(!cur)return;o1-=(cur.open>0?30+cur.open*140:0)*dt;o2-=(cur.ib>0?20+cur.ib*1e6:0)*dt;fl.setAttribute("stroke-dashoffset",o1);st.setAttribute("stroke-dashoffset",o2)}};
+inst.push(x);return x}
+function curve(svg,onpick){
+const X=v=>34+v*332,Y=ic=>120-ic/.0098*100,vs=.6+.0098/BETA/5e-4,C=k=>`color-mix(in srgb,var(--${k}) 16%,transparent)`;
+svg.innerHTML=`<rect x="${X(0)}" y="10" width="${X(.6)-X(0)}" height="110" fill="${C("b")}"/><rect x="${X(.6)}" y="10" width="${X(vs)-X(.6)}" height="110" fill="${C("l")}"/><rect x="${X(vs)}" y="10" width="${X(1)-X(vs)}" height="110" fill="${C("s")}"/>
+<path class="w" d="M34 10V120H366"/><path d="M${X(0)} 120H${X(.6)}L${X(vs)} 20H${X(1)}" fill="none" stroke="var(--ink)" stroke-width="2.5"/>
+<text x="${X(.3)}" y="108" text-anchor="middle">Bloqué</text><text x="${X(.698)}" y="108" text-anchor="middle" style="font-size:11px">Linéaire</text><text x="${X(.9)}" y="108" text-anchor="middle">Saturé</text>
+<text class="m" x="34" y="136" text-anchor="middle">0</text><text class="m" x="${X(.6)}" y="136" text-anchor="middle">0,6 V</text><text class="m" x="${X(vs)}" y="136" text-anchor="middle">0,8 V</text><text class="m" x="366" y="136" text-anchor="end">1 V</text><text class="m" x="40" y="22">Ic</text><text class="m" x="366" y="148" text-anchor="end">Vbe</text>
+<line class="vl" y1="10" y2="120" stroke="var(--base)" stroke-dasharray="3 4"/><circle class="dt" r="7" stroke="var(--sf)" stroke-width="3"/>`;
+const dt=svg.querySelector(".dt"),vl=svg.querySelector(".vl");
+const pick=e=>{const r=svg.getBoundingClientRect();onpick(Math.min(1,Math.max(0,((e.clientX-r.left)/r.width*380-34)/332)))};
+let dn=false;svg.onpointerdown=e=>{dn=true;svg.setPointerCapture(e.pointerId);pick(e)};svg.onpointermove=e=>dn&&pick(e);svg.onpointerup=()=>dn=false;
+return v=>{const m=model(v);dt.setAttribute("cx",X(v));dt.setAttribute("cy",Y(m.ic));dt.setAttribute("fill",`var(--${m.m})`);vl.setAttribute("x1",X(v));vl.setAttribute("x2",X(v))}}
+
+/* ---- Partie principale ---- */
+const hero=circuit($("#hc")),tp=tap($("#ht")),sl=$("#sl"),bd=$("#bd");
+const MODES={
+b:{eq:"Interrupteur ouvert",l:["Vbe < 0,6 V","Ib = 0","Ic = 0","Vce = Vcc"],tap:"Poignée fermée : aucune goutte ne passe, même si le réservoir est plein.",tip:"Pas de courant de base, donc rien ne circule. Toute la tension d’alimentation se retrouve aux bornes du transistor."},
+l:{eq:"Source de courant pilotée",l:["Vbe ≈ 0,6 à 0,8 V","Ic = β × Ib","0,2 V < Vce < Vcc","β × Ib < Ic max"],tap:"Robinet à moitié ouvert : le débit suit la position de la poignée. Un petit geste commande un gros débit, c’est l’amplification.",tip:"Le courant de collecteur est proportionnel au courant de base : c’est le mode de l’amplificateur."},
+s:{eq:"Interrupteur fermé",l:["Vbe ≈ 0,7 à 0,8 V","β × Ib ≥ Ic max","Vce ≈ 0,2 V","Ic = (Vcc − 0,2) / Rc"],tap:"Robinet grand ouvert : tourner encore la poignée ne change plus rien. Le débit est limité par le tuyau (la résistance Rc), pas par le robinet.",tip:"Ib est plus grand que nécessaire. Le transistor se comporte comme un interrupteur fermé : c’est le mode « tout ou rien » de la commutation."}};
+const sw=m=>m=="l"?`<circle cx="60" cy="30" r="13" class="w"/><path class="w" d="M60 38V22M55 27L60 21L65 27"/><path class="w" d="M60 4V17M60 43V56"/>`:`<path class="w" d="M60 4V18M60 42V56"/>`+(m=="b"?`<path class="w" d="M60 18L74 34"/>`:`<path class="w" d="M60 18V42"/>`);
+let lastM=null;
+function setV(v){sl.value=v;const m=model(v);hero.update(v);tp.update(v);cvu(v);
+$("#sv").textContent=fmt(v,2)+" V";$("#si").textContent=fmt(m.ib*1e6,0)+" µA";$("#sc").textContent=fmt(m.ic*1e3,2)+" mA";$("#sx").textContent=fmt(m.vce,1)+" V";
+bd.dataset.m=m.m;bd.textContent=NAMES[m.m];
+if(m.m!==lastM){lastM=m.m;const d=MODES[m.m];$("#md").innerHTML=`<div><svg viewBox="0 0 120 60" aria-hidden="true">${sw(m.m)}<text class="m" x="80" y="10">C</text><text class="m" x="80" y="56">E</text></svg><div class="eq">${d.eq}</div></div><div><h3 style="color:var(--${m.m})">${NAMES[m.m]}</h3><ul>${d.l.map(t=>`<li>${t}</li>`).join("")}</ul><p><b>Le robinet.</b> ${d.tap}</p><p><b>À retenir.</b> ${d.tip}</p></div>`}}
+const cvu=curve($("#cv"),v=>{tw=null;setV(v)});
+let tw=null,vcur=0;
+function go(to,dur,cb){tw={f:vcur,t:to,d:dur,e:0,cb}}
+sl.addEventListener("input",()=>{tw=null;vcur=+sl.value;setV(vcur)});
+document.querySelectorAll("[data-v]").forEach(b=>b.onclick=()=>{
+const t=+b.dataset.v;matchMedia("(prefers-reduced-motion:reduce)").matches?(tw=null,vcur=t,setV(t)):go(t,1.4)});
+let last=performance.now();
+function loop(t){const dt=Math.min(.05,(t-last)/1000);last=t;
+if(tw){tw.e+=dt;const k=Math.min(1,tw.e/tw.d),s=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;vcur=tw.f+(tw.t-tw.f)*(tw.d>3?k:s);setV(vcur);if(k>=1){const c=tw.cb;tw=null;c&&c()}}
+inst.forEach(i=>i.tick(dt));requestAnimationFrame(loop)}
+setV(0);
+if(matchMedia("(prefers-reduced-motion:reduce)").matches){vcur=.7;setV(.7)}else setTimeout(()=>go(1,7,()=>go(.7,1.5)),700);
+requestAnimationFrame(loop);
+
+/* ---- Quiz ---- */
+let qa=null,ok=0,n=0,qi=null;
+function newQ(){
+const vccs=[5,9,12],rcs=[1000,1500],vcc=vccs[Math.random()*3|0],rc=rcs[Math.random()*2|0],icsat=(vcc-.2)/rc,vs=.6+icsat/BETA/5e-4;
+let m;do{m="bls"[Math.random()*3|0]}while(m===(qa&&qa.m));
+const r=(a,b)=>Math.round((a+Math.random()*(b-a))*100)/100;
+const vbe=m=="b"?r(.05,.55):m=="l"?r(.61,vs-.015):Math.min(.95,r(vs+.03,vs+.15));
+qa={m,vcc,rc,vbe,res:model(vbe,vcc,rc),done:false};
+const i=inst.indexOf(qi);if(i>=0)inst.splice(i,1);
+qi=circuit($("#qc"),{vcc,rc});qi.update(vbe);
+$("#qm").innerHTML=`<div><small>Vbe</small><b>${fmt(vbe,2)} V</b></div><div><small>Vce</small><b>${fmt(qa.res.vce,1)} V</b></div><div><small>Ic</small><b>${fmt(qa.res.ic*1e3,2)} mA</b></div><div><small>Ib</small><b>${fmt(qa.res.ib*1e6,0)} µA</b></div>`;
+$("#fb").className="fb";$("#fb").textContent="Observe les mesures et le sens du courant, puis choisis.";$("#nx").style.display="none"}
+document.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{
+if(qa.done)return;qa.done=true;n++;const good=b.dataset.a===qa.m;if(good)ok++;
+const r=qa.res,I=fmt(r.icsat*1e3,2),T={
+b:`Vbe = ${fmt(qa.vbe,2)} V est sous 0,6 V : aucun courant de base, donc Ic = 0 et Vce = Vcc. Le transistor est bloqué.`,
+l:`Vce = ${fmt(r.vce,1)} V est entre 0,2 V et Vcc, et Ic = β × Ib = ${fmt(r.ic*1e3,2)} mA reste sous Ic max = ${I} mA. Il est en régime linéaire.`,
+s:`Vce ≈ 0,2 V : interrupteur fermé. β × Ib = ${fmt(BETA*r.ib*1e3,1)} mA dépasserait Ic max = ${I} mA, donc Ic plafonne à ${I} mA. Il est saturé.`}[qa.m];
+$("#fb").className="fb "+(good?"ok":"ko");$("#fb").innerHTML=`<b>${good?"Correct.":"Pas tout à fait : c’était "+NAMES[qa.m].toLowerCase()+"."}</b> ${T}`;
+$("#sc2").textContent=`Score : ${ok} / ${n}`;$("#nx").style.display=""});
+$("#nx").onclick=newQ;newQ();
+</script></body></html>
