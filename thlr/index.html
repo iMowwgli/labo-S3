@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Labo THLR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF1F4;--grid:rgba(27,42,74,.07);--surface:#FFFFFF;--ink:#1B2A4A;--ink2:#56627E;--line:#CBD3DE;
+  --hl:#F4C542;--on-hl:#2B2300;--ok:#2F8F5B;--on-ok:#FFFFFF;--no:#C2463D;--on-no:#FFFFFF;--acc:#2F5BD3;--on-acc:#FFFFFF;--node:#FFFFFF;--soft:#F4F6F9;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--paper:#16213A;--grid:rgba(230,235,243,.05);--surface:#1E2B47;--ink:#E6EBF3;--ink2:#A2ADC4;--line:#34446A;--hl:#E8B923;--on-hl:#221A00;--ok:#4CC38A;--on-ok:#08251A;--no:#F07167;--on-no:#2A0906;--acc:#8AA8FF;--on-acc:#0F1830;--node:#243457;--soft:#243457}
+}
+:root[data-theme="dark"]{--paper:#16213A;--grid:rgba(230,235,243,.05);--surface:#1E2B47;--ink:#E6EBF3;--ink2:#A2ADC4;--line:#34446A;--hl:#E8B923;--on-hl:#221A00;--ok:#4CC38A;--on-ok:#08251A;--no:#F07167;--on-no:#2A0906;--acc:#8AA8FF;--on-acc:#0F1830;--node:#243457;--soft:#243457}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{margin:0}
+body{background-color:var(--paper);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;color:var(--ink);font-family:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:17px;line-height:1.55}
+.mono,code,kbd{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+code{font-size:.92em;background:var(--soft);padding:1px 5px;border-radius:4px}
+header{max-width:1140px;margin:0 auto;padding:28px 20px 10px;display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px}
+h1{font-size:30px;line-height:1.1;margin:0;letter-spacing:-.015em}
+.sub{margin:6px 0 0;color:var(--ink2);font-size:15.5px;max-width:52ch}
+h2{font-size:21px;margin:0 0 6px}
+h3{font-size:17px;margin:0 0 8px}
+nav{display:flex;gap:3px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:4px}
+nav button{font:inherit;font-size:15px;border:0;background:none;color:var(--ink);padding:7px 13px;border-radius:7px;cursor:pointer}
+nav button[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+nav button:hover:not([aria-selected="true"]){background:var(--soft)}
+main{max-width:1140px;margin:0 auto;padding:10px 20px 70px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px}
+.stack>*+*{margin-top:14px}
+button:focus-visible,input:focus-visible,textarea:focus-visible,summary:focus-visible,select:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.btn{font:inherit;font-size:15px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:8px;cursor:pointer}
+.btn:hover{border-color:var(--ink2)}
+.btn.primary{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chip{font:inherit;font-size:14.5px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.desc{margin:0 0 12px;color:var(--ink2);max-width:75ch}
+.simgrid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,1fr);gap:14px;align-items:start}
+@media (max-width:860px){.simgrid{grid-template-columns:1fr}}
+.graph{overflow-x:auto;display:flex;justify-content:center;padding:6px 0}
+svg.auto{height:auto;display:block}
+label.lab{display:block;font-weight:700;font-size:15px;margin-bottom:6px}
+input[type=text],textarea{font:inherit;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:9px 11px;width:100%}
+textarea{font-size:14px;line-height:1.5;resize:vertical}
+.letters{margin:8px 0 4px}
+.letters button{min-width:38px}
+.tape{display:flex;flex-wrap:wrap;gap:4px;margin:12px 0}
+.tape span{display:inline-grid;place-items:center;min-width:32px;height:36px;border:1px solid var(--line);border-radius:6px;font-size:16px;background:var(--paper)}
+.tape span.done{color:var(--ink2);opacity:.55}
+.tape span.next{border:2px solid var(--hl);background:var(--surface);font-weight:600}
+.tape span.eps{color:var(--ink2);border-style:dashed}
+.verdict{padding:10px 12px;border-radius:8px;background:var(--soft);font-size:15.5px;margin-top:10px}
+.verdict.ok{background:var(--ok);color:var(--on-ok)}
+.verdict.no{background:var(--no);color:var(--on-no)}
+.hist{margin:12px 0 0;padding-left:0;list-style:none;font-size:13.5px;color:var(--ink2);max-height:220px;overflow:auto}
+.hist li{padding:3px 0;border-top:1px dashed var(--line)}
+.hist li b{color:var(--ink)}
+.props dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:15px}
+.props dt{font-weight:700}
+.props dd{margin:0}
+.yes{color:var(--ok);font-weight:700}.nope{color:var(--no);font-weight:700}
+.small{font-size:14px;color:var(--ink2)}
+.err{color:var(--no);font-size:14.5px}
+details.editor{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
+details summary{cursor:pointer;font-weight:700}
+table.t{border-collapse:collapse;font-size:14.5px;margin:8px 0;min-width:280px}
+table.t th,table.t td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+table.t th{background:var(--soft);font-weight:700}
+table.t td.new{background:var(--hl);color:var(--on-hl);font-weight:600}
+table.t tr.fresh td{animation:pop .5s ease-out}
+@keyframes pop{from{background:var(--hl)}}
+.tw{overflow-x:auto}
+.algo article{margin-top:14px}
+.algo .out:empty{display:none}
+.algo .out{margin-top:12px;border-top:1px dashed var(--line);padding-top:12px}
+.note{font-size:14.5px;color:var(--ink2);margin:6px 0}
+.pipe{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 4px}
+.pipe span.s{border:1px solid var(--ink);border-radius:8px;padding:4px 10px;font-weight:700;font-size:15px;background:var(--surface)}
+.pipe span.a{font-size:13.5px;color:var(--ink2)}
+.fiches{max-width:780px}
+.fiches details{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-top:10px}
+.fiches details[open]{padding-bottom:16px}
+.fiches details p,.fiches details li{max-width:70ch}
+.fiches ul{padding-left:20px;margin:6px 0}
+.quiz{max-width:720px}
+.opts{display:grid;gap:8px;margin-top:12px}
+.opt{font:inherit;text-align:left;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:11px 14px;border-radius:9px;cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--ink2)}
+.opt.good{background:var(--ok);color:var(--on-ok);border-color:var(--ok)}
+.opt.bad{background:var(--no);color:var(--on-no);border-color:var(--no)}
+.opt:disabled{cursor:default}
+.why{margin-top:12px;padding:12px 14px;background:var(--soft);border-radius:9px}
+.progress{height:6px;background:var(--soft);border-radius:3px;overflow:hidden;margin:10px 0 14px}
+.progress i{display:block;height:100%;background:var(--acc);transition:width .3s}
+.nd circle{fill:var(--node);stroke:var(--ink);stroke-width:1.6;transition:fill .25s}
+.nd circle.in{fill:none}
+.nd text{fill:var(--ink);font-family:"JetBrains Mono",ui-monospace,monospace;font-size:14px;font-weight:600}
+.nd.on circle:not(.in){fill:var(--hl)}.nd.on text{fill:var(--on-hl)}
+.nd.win circle:not(.in){fill:var(--ok)}.nd.win text{fill:var(--on-ok)}
+.nd.lose circle:not(.in){fill:var(--no)}.nd.lose text{fill:var(--on-no)}
+.nd.dim,.ed.dim,.lb.dim{opacity:.25}
+.ed{fill:none;stroke:var(--ink2);stroke-width:1.4}
+.ed.on{stroke:var(--acc);stroke-width:2.8}
+.ia{stroke:var(--ink);stroke-width:1.6}
+.lb{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13.5px;fill:var(--ink);paint-order:stroke;stroke:var(--surface);stroke-width:5px;stroke-linejoin:round}
+.lb.on{fill:var(--acc);font-weight:600}
+#mk path{fill:var(--ink2)}#mkOn path{fill:var(--acc)}#mkI path{fill:var(--ink)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="mk" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto"><path d="M0 0L10 5L0 10z"/></marker>
+<marker id="mkOn" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M0 0L10 5L0 10z"/></marker>
+<marker id="mkI" viewBox="0 0 10 10" refX="9" refY="5" markerUnits="userSpaceOnUse" markerWidth="10" markerHeight="10" orient="auto"><path d="M0 0L10 5L0 10z"/></marker>
+</defs></svg>
+
+<header>
+  <div>
+    <h1>Labo THLR</h1>
+    <p class="sub">Fais lire des mots à des automates, applique les algorithmes du cours étape par étape, puis teste-toi.</p>
+  </div>
+  <nav role="tablist" aria-label="Sections">
+    <button role="tab" data-tab="sim" aria-selected="true">Simulateur</button>
+    <button role="tab" data-tab="thompson" aria-selected="false">Thompson</button>
+    <button role="tab" data-tab="algo" aria-selected="false">Algorithmes</button>
+    <button role="tab" data-tab="fiches" aria-selected="false">Fiches</button>
+    <button role="tab" data-tab="quiz" aria-selected="false">Quiz</button>
+  </nav>
+</header>
+
+<main>
+<!-- SIMULATEUR -->
+<section id="tab-sim" role="tabpanel">
+  <div class="chips" id="presets"></div>
+  <p class="desc" id="autoDesc"></p>
+  <div class="simgrid">
+    <div class="panel">
+      <div class="graph" id="simGraph"></div>
+      <details class="editor">
+        <summary>Modifier cet automate</summary>
+        <p class="note">Une ligne par transition : <code>q0 a q1</code>, ou plusieurs lettres <code>q0 a,b q1</code>, ou <code>q0 eps q1</code> pour une ε-transition. Puis <code>init q0</code> et <code>final q2 q3</code>. Les lignes commençant par <code>#</code> sont ignorées.</p>
+        <textarea id="autoText" class="mono" rows="9" spellcheck="false" aria-label="Définition de l'automate"></textarea>
+        <div class="row" style="margin-top:8px"><button class="btn primary" id="applyText">Appliquer</button><span class="err" id="textErr"></span></div>
+      </details>
+    </div>
+    <div class="stack">
+      <div class="panel">
+        <label class="lab" for="word">Mot à lire</label>
+        <input type="text" id="word" class="mono" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="laisse vide pour tester ε">
+        <div class="row letters" id="letters"></div>
+        <div class="tape mono" id="tape" aria-live="polite"></div>
+        <div class="row">
+          <button class="btn primary" id="btnStep">Lire une lettre</button>
+          <button class="btn" id="btnAll">Lire tout le mot</button>
+          <button class="btn" id="btnReset">Recommencer</button>
+        </div>
+        <div class="verdict" id="verdict" aria-live="polite"></div>
+        <ol class="hist mono" id="hist"></ol>
+      </div>
+      <div class="panel props">
+        <h3>Propriétés de cet automate</h3>
+        <div id="props"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- THOMPSON -->
+<section id="tab-thompson" role="tabpanel" hidden>
+  <div class="panel stack">
+    <div>
+      <h2>Expression régulière vers ε-NFA</h2>
+      <p class="desc">Écris une expression avec des lettres, <code>+</code> pour l'union, <code>*</code> pour l'étoile, des parenthèses, <code>ε</code> et <code>∅</code>. La concaténation s'écrit en collant les morceaux : <code>(a+b)*abb</code>.</p>
+    </div>
+    <div class="row">
+      <input type="text" id="rx" class="mono" value="a*+bc" autocomplete="off" spellcheck="false" style="flex:1;min-width:200px" aria-label="Expression régulière">
+      <button class="btn" data-ins="ε">ε</button><button class="btn" data-ins="∅">∅</button>
+      <button class="btn primary" id="rxGo">Construire</button>
+    </div>
+    <div id="rxOut"></div>
+  </div>
+</section>
+
+<!-- ALGORITHMES -->
+<section id="tab-algo" role="tabpanel" hidden class="algo">
+  <div class="panel">
+    <p class="note" style="margin-top:0">Les algorithmes s'appliquent à l'automate choisi dans le simulateur. Tu peux en changer là-bas, ou en construire un avec Thompson.</p>
+    <h2 id="algoName"></h2>
+    <div class="graph" id="algoGraph"></div>
+  </div>
+  <article class="panel">
+    <h3>Supprimer les ε-transitions (suppression arrière)</h3>
+    <p class="note">On calcule la clôture avant de chaque état, on ajoute une flèche q → r pour chaque motif q –ε*→ p –x→ r, on retire les ε, puis q devient final si sa clôture contient un état final.</p>
+    <button class="btn" id="goEps">Appliquer</button>
+    <div class="out" id="outEps"></div>
+  </article>
+  <article class="panel">
+    <h3>Émonder</h3>
+    <p class="note">On garde seulement les états utiles : accessibles depuis un état initial et co-accessibles (un état final est atteignable depuis eux).</p>
+    <button class="btn" id="goPrune">Appliquer</button>
+    <div class="out" id="outPrune"></div>
+  </article>
+  <article class="panel">
+    <h3>Déterminiser (construction des sous-ensembles)</h3>
+    <p class="note">Chaque état du DFA est un ensemble d'états du NFA. On part des états initiaux et on calcule, pour chaque lettre, l'ensemble des états atteignables. Remplis la table ligne par ligne.</p>
+    <div class="row"><button class="btn primary" id="detNext">Ligne suivante</button><button class="btn" id="detAll">Tout afficher</button><button class="btn" id="detReset">Recommencer</button></div>
+    <div class="out" id="outDet"></div>
+  </article>
+  <article class="panel">
+    <h3>Minimiser (algorithme de Moore)</h3>
+    <p class="note">Sur un DFA complet : on part des classes F et Q\F, on vérifie que les états d'une même classe vont dans les mêmes classes pour chaque lettre, on coupe sinon, et on recommence jusqu'à stabilité.</p>
+    <button class="btn" id="goMoore">Appliquer</button>
+    <div class="out" id="outMoore"></div>
+  </article>
+</section>
+
+<!-- FICHES -->
+<section id="tab-fiches" role="tabpanel" hidden class="fiches">
+  <div class="panel">
+    <h2>Le fil rouge du cours</h2>
+    <p style="margin:0">Un même langage rationnel peut s'écrire sous plusieurs formes. Chaque chapitre donne un algorithme pour passer de l'une à l'autre.</p>
+    <div class="pipe">
+      <span class="s">regex</span><span class="a">Thompson</span><span class="s">ε-NFA</span><span class="a">suppression des ε</span><span class="s">NFA</span><span class="a">émondage, déterminisation</span><span class="s">DFA</span><span class="a">Moore</span><span class="s">DFA minimal</span>
+    </div>
+    <p class="note">Et dans l'autre sens : n'importe quel automate redonne une regex avec Brzozowski–McCluskey.</p>
+  </div>
+
+  <details>
+    <summary>Mots et langages</summary>
+    <p>Un alphabet Σ est un ensemble fini de lettres. Un mot est une suite finie de lettres, éventuellement vide : le mot vide se note ε. Σ* est l'ensemble de tous les mots, Σ⁺ = Σ* \ {ε}. Un langage est un ensemble de mots, donc une partie de Σ*, fini ou infini.</p>
+    <p>|w| est la longueur de w (|ε| = 0) et |w|ₐ le nombre de a dans w. Avec w = 011101 : |w| = 6 et |w|₁ = 4.</p>
+  </details>
+
+  <details>
+    <summary>Expressions régulières</summary>
+    <p>Définies par induction : ∅, ε et chaque lettre a sont des expressions ; si e₁ et e₂ en sont, alors e₁ + e₂ (union), e₁e₂ (concaténation) et e₁* (étoile de Kleene) aussi. Un langage est rationnel s'il est décrit par une expression régulière.</p>
+    <p>Pièges classiques : ε ∈ L(e*) toujours, même si ε ∉ L(e). Et ∅* = {ε}, pas ∅.</p>
+  </details>
+
+  <details>
+    <summary>Automates : définition et acceptation</summary>
+    <p>A = (Q, Σ, δ, I, F) : des états Q, un alphabet Σ, des transitions δ ⊆ Q × Σ × Q, des états initiaux I (non vide) et des états finaux F.</p>
+    <p>A accepte w s'il existe un chemin étiqueté par w d'un état initial vers un état final. Deux façons de refuser : le chemin se termine sur un état non final (passer par un final en route ne suffit pas), ou il n'existe aucun chemin (on se bloque).</p>
+    <p><button class="btn" data-open="sim">Essayer dans le simulateur</button></p>
+  </details>
+
+  <details>
+    <summary>Déterminisme et complétude</summary>
+    <p>Déterministe (DFA) : un seul état initial et au plus une flèche par lettre depuis chaque état. Donc au plus un chemin par mot, et tester un mot se fait en temps linéaire.</p>
+    <p>Complet : au moins une flèche par lettre depuis chaque état. Donc au moins un chemin par mot. On complète en ajoutant un état puits non final.</p>
+    <p>Un DFA complet a exactement un chemin par mot. Un NFA peut en avoir plusieurs : il suffit qu'un seul soit acceptant.</p>
+  </details>
+
+  <details>
+    <summary>Algorithme de Thompson</summary>
+    <p>Théorème de Kleene : toute regex a un ε-NFA équivalent. Thompson le construit par induction, avec toujours un seul état initial i et un seul final f distinct.</p>
+    <ul>
+      <li>Lettre, ε, ∅ : deux états, reliés par a, par ε, ou pas reliés.</li>
+      <li>Concaténation : f₁ –ε→ i₂. On ne fusionne pas f₁ et i₂, sinon des boucles se mélangent (contre-exemple a(ba)*a(ba)* avec aabbaa).</li>
+      <li>Union : nouveau i avec ε vers i₁ et i₂, nouveau f avec ε depuis f₁ et f₂.</li>
+      <li>Étoile : nouveau i et f, avec i –ε→ i₁, i –ε→ f, f₁ –ε→ i₁ et f₁ –ε→ f.</li>
+    </ul>
+    <p>Vérification : si la regex contient n symboles parmi lettres, ε, ∅, + et * (sans parenthèses ni concaténation), l'automate a exactement 2n états.</p>
+    <p><button class="btn" data-open="thompson">Ouvrir l'outil Thompson</button></p>
+  </details>
+
+  <details>
+    <summary>Suppression des ε-transitions</summary>
+    <p>La clôture avant ε(q) est l'ensemble des états atteignables depuis q avec seulement des ε. Elle contient toujours q. On la calcule avec un tableau itératif jusqu'au point fixe (deux colonnes identiques).</p>
+    <p>Ensuite : pour chaque p dans ε(q) et chaque flèche p –x→ r, ajouter q –x→ r. Supprimer les ε. Rendre q final si ε(q) contient un état final. On oublie souvent cette dernière étape. Le résultat a le même nombre d'états.</p>
+    <p><button class="btn" data-open="algo">Voir dans Algorithmes</button></p>
+  </details>
+
+  <details>
+    <summary>Émondage</summary>
+    <p>Accessible : atteignable depuis un état initial. Co-accessible : un état final est atteignable depuis lui. Utile : les deux. On trouve les accessibles par un parcours depuis les initiaux, les co-accessibles par un parcours depuis les finaux en inversant les flèches. On retire le reste sans changer le langage.</p>
+  </details>
+
+  <details>
+    <summary>Déterminisation</summary>
+    <p>Les états du DFA sont des ensembles d'états du NFA. L'initial est I. Depuis un ensemble S, la lettre a mène à Sₐ, l'ensemble des états atteignables par a depuis au moins un état de S. Un ensemble est final s'il contient au moins un état final.</p>
+    <p>En pratique, on remplit une table dont les lignes sont les ensembles découverts, en ajoutant une ligne chaque fois qu'un nouvel ensemble apparaît. Le DFA obtenu est complet et a au plus 2ⁿ états.</p>
+    <p><button class="btn" data-open="algo">Voir dans Algorithmes</button></p>
+  </details>
+
+  <details>
+    <summary>Minimisation (Moore)</summary>
+    <p>Deux états sont indistinguables s'ils acceptent les mêmes mots. Myhill-Nerode : le DFA minimal existe et est unique (l'automate canonique).</p>
+    <p>Moore, sur un DFA complet : partir des classes F et Q\F, regarder pour chaque lettre la classe du successeur de chaque état, couper une classe si deux de ses états vont dans des classes différentes, recommencer jusqu'à stabilité. Chaque classe devient un état.</p>
+  </details>
+
+  <details>
+    <summary>Brzozowski–McCluskey (automate vers regex)</summary>
+    <p>Préparer un seul initial sans flèche entrante et un seul final distinct sans flèche sortante (en ajoutant i et f avec des ε). Autoriser des regex sur les flèches, fusionner les flèches parallèles avec +, puis supprimer les états un à un.</p>
+    <p>Supprimer q avec une boucle y : chaque couple (entrante x, sortante z) donne une flèche xy*z. Avec 2 entrantes et 3 sortantes, on crée 6 flèches. On s'arrête quand il reste une seule flèche i → f : c'est la regex.</p>
+  </details>
+
+  <details>
+    <summary>Lemme de l'étoile</summary>
+    <p>Si L est rationnel, il existe un seuil n₀ tel que tout mot w ∈ L avec |w| ≥ n₀ s'écrit xyz avec y ≠ ε et xy*z ⊆ L. L'idée : un DFA à n états qui lit un mot plus long que n repasse forcément par un même état, donc il y a une boucle qu'on peut répéter.</p>
+    <p>On s'en sert par l'absurde pour prouver qu'un langage n'est pas rationnel, comme {aⁿbⁿ} : il faudrait un compteur non borné, alors qu'un automate a une mémoire finie. Attention, un langage peut vérifier le lemme sans être rationnel : il ne prouve jamais la rationalité.</p>
+  </details>
+
+  <details>
+    <summary>Stabilité et décidabilité</summary>
+    <ul>
+      <li>Complémentaire : échanger finaux et non finaux d'un DFA complet. Il faut les deux conditions.</li>
+      <li>Intersection : produit synchronisé. États (p, q), initial (i₁, i₂), final si p et q sont finaux. Au plus n₁ × n₂ états.</li>
+      <li>Aussi rationnels : Pref(L), Suff(L), Fact(L) et le miroir.</li>
+      <li>Vacuité : un parcours depuis l'initial dit si un état final est accessible.</li>
+      <li>Égalité : L₁ = L₂ si L₁ ∩ complémentaire(L₂) et L₂ ∩ complémentaire(L₁) sont vides. Sinon on obtient un contre-exemple.</li>
+    </ul>
+  </details>
+</section>
+
+<!-- QUIZ -->
+<section id="tab-quiz" role="tabpanel" hidden class="quiz">
+  <div class="panel" id="quizBox"></div>
+</section>
+</main>
+
+<script>
+const EPS='ε';
+const $=s=>document.querySelector(s);
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nat=(a,b)=>String(a).localeCompare(String(b),undefined,{numeric:true});
+const clone=A=>JSON.parse(JSON.stringify(A));
+const fmtSet=S=>{const a=[...S].sort(nat);return a.length?'{'+a.join(', ')+'}':'∅'};
+
+/* ---------- Automates : outils de base ---------- */
+function alpha(A){if(A.alphabet&&A.alphabet.length)return A.alphabet;return [...new Set(A.edges.filter(e=>e.sym!==EPS).map(e=>e.sym))].sort(nat)}
+const outs=(A,s,a)=>A.edges.filter(e=>e.from===s&&e.sym===a);
+const hasEps=A=>A.edges.some(e=>e.sym===EPS);
+function closure(A,S){const R=new Set(S),st=[...S];while(st.length){const s=st.pop();for(const e of A.edges)if(e.from===s&&e.sym===EPS&&!R.has(e.to)){R.add(e.to);st.push(e.to)}}return R}
+function move(A,S,a){const R=new Set();for(const e of A.edges)if(S.has(e.from)&&e.sym===a)R.add(e.to);return R}
+function reach(A,starts,rev){const R=new Set(starts),st=[...starts];while(st.length){const s=st.pop();for(const e of A.edges){const [x,y]=rev?[e.to,e.from]:[e.from,e.to];if(x===s&&!R.has(y)){R.add(y);st.push(y)}}}return R}
+function detWhy(A){const al=alpha(A),w=[];if(A.init.length!==1)w.push(`${A.init.length} états initiaux au lieu d'un seul`);if(hasEps(A))w.push('présence de ε-transitions');for(const s of A.states)for(const a of al){const n=new Set(outs(A,s,a).map(e=>e.to)).size;if(n>1)w.push(`${n} flèches « ${a} » depuis ${s}`)}return w}
+function missing(A){const al=alpha(A),m=[];for(const s of A.states)for(const a of al)if(!outs(A,s,a).length)m.push(`pas de « ${a} » depuis ${s}`);return m}
+
+function layoutLayered(A){
+  A.edges.forEach(e=>{delete e.bend});
+  const sink=A.states.length>2?A.states.find(s=>s==='∅'||/^puits'*$/.test(s)):undefined;
+  const lvl={},order=[],q=A.init.filter(s=>s!==sink);q.forEach(s=>lvl[s]=0);
+  while(q.length){const s=q.shift();order.push(s);for(const e of A.edges)if(e.from===s&&e.to!==sink&&lvl[e.to]===undefined){lvl[e.to]=lvl[s]+1;q.push(e.to)}}
+  const maxL=Math.max(0,...Object.values(lvl));
+  A.states.forEach(s=>{if(s!==sink&&lvl[s]===undefined){lvl[s]=maxL+1;order.push(s)}});
+  const cols=[];order.forEach(s=>(cols[lvl[s]]=cols[lvl[s]]||[]).push(s));
+  const mr=c=>Math.max(...c.map(rad));
+  const gap=c=>Math.max(120,2*mr(c)+70);
+  const H=Math.max(...cols.filter(Boolean).map(c=>(c.length-1)*gap(c)));
+  A.pos={};let x=80,prev=null;
+  cols.forEach(c=>{if(!c)return;if(prev)x+=mr(prev)+mr(c)+120;const g=gap(c);c.forEach((s,i)=>{A.pos[s]={x,y:80+H/2+(i-(c.length-1)/2)*g}});prev=c});
+  if(sink){const xs=Object.values(A.pos).map(p=>p.x),ys=Object.values(A.pos).map(p=>p.y);A.pos[sink]={x:(Math.min(...xs)+Math.max(...xs))/2+40,y:Math.max(...ys)+150}}
+  return A;
+}
+
+/* ---------- Dessin ---------- */
+const rad=s=>Math.max(20,9+String(s).length*4.4);
+function segDist(p,a,b){const dx=b.x-a.x,dy=b.y-a.y,L2=dx*dx+dy*dy||1;let t=((p.x-a.x)*dx+(p.y-a.y)*dy)/L2;t=Math.max(0,Math.min(1,t));return Math.hypot(p.x-(a.x+t*dx),p.y-(a.y+t*dy))}
+const DIRS=[[0,-1],[0,1],[-1,0],[1,0]];
+function loopDir(A,s,P){
+  const vs=[];
+  A.edges.forEach(e=>{let o=null;if(e.from===s&&e.to!==s)o=e.to;else if(e.to===s&&e.from!==s)o=e.from;if(o){const dx=P[o].x-P[s].x,dy=P[o].y-P[s].y,L=Math.hypot(dx,dy)||1;vs.push([dx/L,dy/L])}});
+  if(A.init.includes(s))vs.push([-1,0]);
+  let best=DIRS[0],bs=-1;
+  for(const d of DIRS){let m=Math.PI;for(const v of vs)m=Math.min(m,Math.acos(Math.max(-1,Math.min(1,d[0]*v[0]+d[1]*v[1]))));if(m>bs+1e-6){bs=m;best=d}}
+  return best;
+}
+function renderAuto(A,o={}){
+  const on=o.on||new Set(),onE=o.onE||new Set(),dim=o.dim||new Set(),win=o.win||new Set(),lose=o.lose||new Set();
+  const P=A.pos,R={};A.states.forEach(s=>R[s]=rad(s));
+  const G=new Map();
+  for(const e of A.edges){const k=e.from+'→'+e.to;let g=G.get(k);if(!g){g={from:e.from,to:e.to,syms:[],bend:undefined};G.set(k,g)}if(!g.syms.includes(e.sym))g.syms.push(e.sym);if(e.bend!==undefined)g.bend=e.bend}
+  let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+  const grow=(x,y)=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y)};
+  A.states.forEach(s=>{const p=P[s];grow(p.x-R[s]-14,p.y-R[s]-14);grow(p.x+R[s]+14,p.y+R[s]+14)});
+  A.init.forEach(s=>grow(P[s].x-R[s]-46,P[s].y));
+  let E='',L='';
+  for(const [k,g] of G){
+    const isOn=onE.has(k),isDim=dim.has(g.from)||dim.has(g.to);
+    const cls='ed'+(isOn?' on':'')+(isDim?' dim':''),lcls='lb'+(isOn?' on':'')+(isDim?' dim':'');
+    const txt=esc(g.syms.slice().sort((a,b)=>(a===EPS)-(b===EPS)||nat(a,b)).join(', '));
+    const p=P[g.from],r=R[g.from],mkr=isOn?'mkOn':'mk';
+    if(g.from===g.to){
+      const [ux,uy]=loopDir(A,g.from,P),px=-uy,py=ux;
+      const sx=p.x+r*(.87*ux-.5*px),sy=p.y+r*(.87*uy-.5*py),ex=p.x+(r+1)*(.87*ux+.5*px),ey=p.y+(r+1)*(.87*uy+.5*py);
+      const c1x=p.x+(r+46)*ux-(r+4)*px,c1y=p.y+(r+46)*uy-(r+4)*py,c2x=p.x+(r+46)*ux+(r+4)*px,c2y=p.y+(r+46)*uy+(r+4)*py;
+      E+=`<path class="${cls}" d="M${sx} ${sy} C${c1x} ${c1y} ${c2x} ${c2y} ${ex} ${ey}" marker-end="url(#${mkr})"/>`;
+      const ad=.25*.87*r+.75*(r+46)+12,lx=p.x+ad*ux,ly=p.y+ad*uy;
+      L+=`<text class="${lcls}" x="${lx}" y="${ly}" dy=".35em" text-anchor="${ux<0?'end':ux>0?'start':'middle'}">${txt}</text>`;
+      grow(lx-(ux>0?0:40),ly-14);grow(lx+(ux<0?0:40),ly+14);grow(c1x,c1y);grow(c2x,c2y);
+    }else{
+      const q=P[g.to],rq=R[g.to];
+      let bend=g.bend;
+      if(bend===undefined){
+        if(G.has(g.to+'→'+g.from))bend=34;
+        else{const others=A.states.filter(s=>s!==g.from&&s!==g.to);const clear=b=>{const dx=q.x-p.x,dy=q.y-p.y,Ln=Math.hypot(dx,dy)||1,cx=(p.x+q.x)/2-dy/Ln*b,cy=(p.y+q.y)/2+dx/Ln*b;for(let t=.08;t<.93;t+=.06){const X=(1-t)*(1-t)*p.x+2*t*(1-t)*cx+t*t*q.x,Y=(1-t)*(1-t)*p.y+2*t*(1-t)*cy+t*t*q.y;for(const s of others)if(Math.hypot(P[s].x-X,P[s].y-Y)<R[s]+10)return false}return true};bend=[0,70,-70,120,-120,180,-180].find(clear);if(bend===undefined)bend=70}
+      }
+      const dx=q.x-p.x,dy=q.y-p.y,Ln=Math.hypot(dx,dy)||1,nx=-dy/Ln,ny=dx/Ln;
+      const cx=(p.x+q.x)/2+nx*bend,cy=(p.y+q.y)/2+ny*bend;
+      const a1=Math.atan2(cy-p.y,cx-p.x),a2=Math.atan2(cy-q.y,cx-q.x);
+      const sx=p.x+r*Math.cos(a1),sy=p.y+r*Math.sin(a1),ex=q.x+(rq+1)*Math.cos(a2),ey=q.y+(rq+1)*Math.sin(a2);
+      E+=`<path class="${cls}" d="M${sx} ${sy} Q${cx} ${cy} ${ex} ${ey}" marker-end="url(#${mkr})"/>`;
+      const mx=.25*sx+.5*cx+.25*ex,my=.25*sy+.5*cy+.25*ey;
+      let lx,ly;
+      if(bend===0){lx=mx-nx*13;ly=my-ny*13}else{const sg=Math.sign(bend);lx=mx+nx*13*sg;ly=my+ny*13*sg}
+      L+=`<text class="${lcls}" x="${lx}" y="${ly}" dy=".35em" text-anchor="middle">${txt}</text>`;
+      grow(lx-24,ly-14);grow(lx+24,ly+14);
+    }
+  }
+  let N='',I='';
+  A.states.forEach(s=>{
+    const p=P[s],r=R[s],c=['nd'];
+    if(win.has(s))c.push('win');else if(lose.has(s))c.push('lose');else if(on.has(s))c.push('on');
+    if(dim.has(s))c.push('dim');
+    N+=`<g class="${c.join(' ')}"><circle cx="${p.x}" cy="${p.y}" r="${r}"/>${A.final.includes(s)?`<circle class="in" cx="${p.x}" cy="${p.y}" r="${r-4.5}"/>`:''}<text x="${p.x}" y="${p.y}" dy=".35em" text-anchor="middle">${esc(s)}</text></g>`;
+  });
+  A.init.forEach(s=>{const p=P[s],r=R[s];I+=`<line class="ia${dim.has(s)?' dim':''}" x1="${p.x-r-42}" y1="${p.y}" x2="${p.x-r-1}" y2="${p.y}" marker-end="url(#mkI)"/>`});
+  const pad=6,w=x1-x0+2*pad,h=y1-y0+2*pad;
+  const aria=`Automate : états ${A.states.join(', ')} ; initial ${A.init.join(', ')} ; finaux ${A.final.join(', ')||'aucun'}`;
+  return `<svg class="auto" viewBox="${x0-pad} ${y0-pad} ${w} ${h}" style="width:100%;max-width:${Math.round(w*1.2)}px;min-width:${Math.round(Math.min(w,520))}px" role="img" aria-label="${esc(aria)}">${E}${N}${I}${L}</svg>`;
+}
+
+/* ---------- Texte <-> automate ---------- */
+function parseAuto(text){
+  const A={name:'Mon automate',desc:"Ton automate, défini à la main. Tu peux le modifier quand tu veux.",states:[],init:[],final:[],edges:[],pos:{}};
+  const add=s=>{if(!A.states.includes(s))A.states.push(s)};
+  text.split('\n').forEach((raw,i)=>{
+    const line=raw.replace(/#.*/,'').trim();if(!line)return;
+    const t=line.split(/\s+/),kw=t[0].toLowerCase();
+    if(kw==='init'||kw==='final'){
+      const ids=t.slice(1);
+      if(!ids.length)throw new Error(`Ligne ${i+1} : ajoute au moins un état après « ${t[0]} ».`);
+      ids.forEach(add);(kw==='init'?A.init:A.final).push(...ids);
+    }else if(t.length===3){
+      add(t[0]);add(t[2]);
+      t[1].split(',').filter(Boolean).forEach(s=>{
+        const sym=(s==='eps'||s==='ε')?EPS:s;
+        if([...sym].length!==1)throw new Error(`Ligne ${i+1} : « ${s} » n'est pas une seule lettre. Sépare les lettres par des virgules : a,b.`);
+        A.edges.push({from:t[0],sym,to:t[2]});
+      });
+    }else throw new Error(`Ligne ${i+1} : format attendu « q0 a q1 », « init q0 » ou « final q2 ».`);
+  });
+  if(!A.init.length)throw new Error("Ajoute un état initial, par exemple « init q0 ».");
+  A.init=[...new Set(A.init)];A.final=[...new Set(A.final)];
+  const seen=new Set();A.edges=A.edges.filter(e=>{const k=e.from+'|'+e.sym+'|'+e.to;if(seen.has(k))return false;seen.add(k);return true});
+  A.alphabet=[...new Set(A.edges.filter(e=>e.sym!==EPS).map(e=>e.sym))].sort(nat);
+  return A;
+}
+function toText(A){
+  const lines=['init '+A.init.join(' ')];if(A.final.length)lines.push('final '+A.final.join(' '));
+  const G=new Map();A.edges.forEach(e=>{const k=e.from+' '+e.to;if(!G.has(k))G.set(k,{f:e.from,t:e.to,s:[]});G.get(k).s.push(e.sym===EPS?'eps':e.sym)});
+  for(const g of G.values())lines.push(`${g.f} ${g.s.join(',')} ${g.t}`);
+  return lines.join('\n');
+}
+
+/* ---------- Thompson ---------- */
+function parseRegex(src){
+  const s=[...src.replace(/\s+/g,'')];let i=0,n=0;const used=[];
+  if(!s.length)throw new Error("Écris une expression, par exemple a*+bc.");
+  const pk=()=>s[i];
+  function E(){let l=T();while(pk()==='+'||pk()==='|'){i++;n++;used.push('+');l={t:'+',l,r:T()}}return l}
+  function T(){let l=F();while(i<s.length&&pk()!=='+'&&pk()!=='|'&&pk()!==')'){l={t:'.',l,r:F()}}return l}
+  function F(){let a=At();while(pk()==='*'){i++;n++;used.push('*');a={t:'*',a}}return a}
+  function At(){
+    const c=pk();
+    if(c===undefined)throw new Error("L'expression s'arrête trop tôt : il manque un morceau à la fin.");
+    if(c==='('){i++;const e=E();if(pk()!==')')throw new Error("Il manque une parenthèse fermante.");i++;return e}
+    if(c==='ε'){i++;n++;used.push('ε');return{t:'eps'}}
+    if(c==='∅'){i++;n++;used.push('∅');return{t:'empty'}}
+    if(/[a-z0-9]/i.test(c)){i++;n++;used.push(c);return{t:'sym',c}}
+    throw new Error(`Symbole inattendu « ${c} » en position ${i+1}.`);
+  }
+  const ast=E();
+  if(i<s.length)throw new Error(`Symbole inattendu « ${s[i]} » en position ${i+1}.`);
+  return{ast,n,used};
+}
+function thompson(ast,name){
+  let k=0;const edges=[],pos={},states=[],CW=90,RH=80;
+  const ns=()=>{const id='q'+k++;states.push(id);return id};
+  const shift=(fr,dc,dr)=>fr.nodes.forEach(id=>{pos[id].c+=dc;pos[id].r+=dr});
+  const ed=(f,s,t,b)=>{const e={from:f,sym:s,to:t};if(b!==undefined)e.bend=b;edges.push(e)};
+  function b(t){
+    if(t.t==='sym'||t.t==='eps'||t.t==='empty'){const i=ns(),f=ns();pos[i]={c:0,r:0};pos[f]={c:1,r:0};if(t.t!=='empty')ed(i,t.t==='sym'?t.c:EPS,f);return{i,f,w:2,h:1,pr:0,nodes:[i,f]}}
+    if(t.t==='.'){const A=b(t.l),B=b(t.r),pr=Math.max(A.pr,B.pr);shift(A,0,pr-A.pr);shift(B,A.w,pr-B.pr);ed(A.f,EPS,B.i);return{i:A.i,f:B.f,w:A.w+B.w,h:Math.max(A.h+pr-A.pr,B.h+pr-B.pr),pr,nodes:[...A.nodes,...B.nodes]}}
+    if(t.t==='+'){const i=ns(),A=b(t.l),B=b(t.r),f=ns();shift(A,1,0);shift(B,1,A.h);const w=Math.max(A.w,B.w)+2,h=A.h+B.h;pos[i]={c:0,r:(h-1)/2};pos[f]={c:w-1,r:(h-1)/2};ed(i,EPS,A.i);ed(i,EPS,B.i);ed(A.f,EPS,f);ed(B.f,EPS,f);return{i,f,w,h,pr:(h-1)/2,nodes:[i,...A.nodes,...B.nodes,f]}}
+    if(t.t==='*'){const i=ns(),A=b(t.a),f=ns();shift(A,1,1);const w=A.w+2,h=A.h+2,pr=A.pr+1;pos[i]={c:0,r:pr};pos[f]={c:w-1,r:pr};ed(i,EPS,A.i);ed(i,EPS,f,2*((A.h-1-A.pr)*RH+44));ed(A.f,EPS,A.i,2*(A.pr*RH+44));ed(A.f,EPS,f);return{i,f,w,h,pr,nodes:[i,...A.nodes,f]}}
+  }
+  const fr=b(ast);
+  const P={};states.forEach(s=>P[s]={x:60+pos[s].c*CW,y:60+pos[s].r*RH});
+  return{name,desc:'',states,init:[fr.i],final:[fr.f],edges,pos:P,alphabet:[...new Set(edges.filter(e=>e.sym!==EPS).map(e=>e.sym))].sort(nat)};
+}
+
+/* ---------- Algorithmes ---------- */
+function removeEps(A){
+  const cl={};A.states.forEach(q=>cl[q]=closure(A,new Set([q])));
+  const edges=[],seen=new Set();
+  A.states.forEach(q=>cl[q].forEach(p=>A.edges.forEach(e=>{if(e.from===p&&e.sym!==EPS){const k=q+'|'+e.sym+'|'+e.to;if(!seen.has(k)){seen.add(k);edges.push({from:q,sym:e.sym,to:e.to})}}})));
+  const final=A.states.filter(q=>[...cl[q]].some(p=>A.final.includes(p)));
+  return{name:A.name+' sans ε',desc:"Résultat de la suppression arrière des ε-transitions : même nombre d'états, même langage.",states:[...A.states],init:[...A.init],final,edges,pos:clone(A.pos),alphabet:alpha(A)};
+}
+function closureSteps(A){
+  let col={};A.states.forEach(q=>{col[q]=new Set([q,...A.edges.filter(e=>e.from===q&&e.sym===EPS).map(e=>e.to)])});
+  const cols=[col];
+  for(let guard=0;guard<60;guard++){const nx={};A.states.forEach(q=>{const s=new Set(col[q]);col[q].forEach(p=>col[p].forEach(r=>s.add(r)));nx[q]=s});cols.push(nx);if(A.states.every(q=>nx[q].size===col[q].size))break;col=nx}
+  return cols;
+}
+function determinize(A){
+  const al=alpha(A),key=S=>[...S].sort(nat).join(','),nm=S=>S.size?'{'+[...S].sort(nat).join(',')+'}':'∅';
+  const start=closure(A,new Set(A.init)),seen=new Map([[key(start),start]]),queue=[start],rows=[];
+  while(queue.length){
+    const S=queue.shift(),row={set:S,trans:{},fresh:new Set(),final:[...S].some(s=>A.final.includes(s))};
+    for(const a of al){const T=closure(A,move(A,S,a));row.trans[a]=T;if(!seen.has(key(T))){seen.set(key(T),T);queue.push(T);row.fresh.add(a)}}
+    rows.push(row);
+  }
+  const D={name:'DFA de '+A.name,desc:"Résultat de la déterminisation : chaque état est un ensemble d'états de l'automate de départ.",states:rows.map(r=>nm(r.set)),init:[nm(start)],final:rows.filter(r=>r.final).map(r=>nm(r.set)),edges:[],alphabet:al};
+  rows.forEach(r=>al.forEach(a=>D.edges.push({from:nm(r.set),sym:a,to:nm(r.trans[a])})));
+  layoutLayered(D);
+  return{rows,D,nm,al,usedClosure:hasEps(A)};
+}
+function prune(A){
+  const acc=reach(A,A.init,false),co=reach(A,A.final,true);
+  const useful=A.states.filter(s=>acc.has(s)&&co.has(s));
+  const B={name:A.name+' émondé',desc:"Automate émondé : seuls les états utiles restent.",states:useful,init:A.init.filter(s=>useful.includes(s)),final:A.final.filter(s=>useful.includes(s)),edges:A.edges.filter(e=>useful.includes(e.from)&&useful.includes(e.to)).map(e=>({...e})),pos:clone(A.pos),alphabet:alpha(A)};
+  return{acc,co,useful,B};
+}
+function completeDFA(A){
+  const al=alpha(A);let p='puits';while(A.states.includes(p))p+="'";
+  const B=clone(A);let need=false;
+  for(const s of A.states)for(const a of al)if(!outs(A,s,a).length){need=true;B.edges.push({from:s,sym:a,to:p})}
+  if(!need)return{A:B,added:false};
+  B.states.push(p);al.forEach(a=>B.edges.push({from:p,sym:a,to:p}));layoutLayered(B);
+  return{A:B,added:true,p};
+}
+function moore(A){
+  const al=alpha(A),d=(s,a)=>outs(A,s,a)[0].to;
+  const renum=keys=>{const m=new Map(),c={};A.states.forEach(s=>{if(!m.has(keys[s]))m.set(keys[s],m.size+1);c[s]=m.get(keys[s])});return{c,k:m.size}};
+  let {c,k}=renum(Object.fromEntries(A.states.map(s=>[s,A.final.includes(s)?'F':'N'])));
+  const its=[];
+  for(let guard=0;guard<50;guard++){
+    const succ={},sig={};
+    A.states.forEach(s=>{succ[s]=al.map(a=>d(s,a));sig[s]=[c[s],...succ[s].map(t=>c[t])].join('|')});
+    const nx=renum(sig);its.push({c,k,succ,next:nx.c,nk:nx.k});
+    if(nx.k===k)break;c=nx.c;k=nx.k;
+  }
+  const cc=its[its.length-1].c,groups={};
+  A.states.forEach(s=>(groups[cc[s]]=groups[cc[s]]||[]).push(s));
+  const nm=i=>'{'+groups[i].join(',')+'}';
+  const M={name:'DFA minimal',desc:"Résultat de Moore : chaque état est une classe d'états indistinguables.",states:Object.keys(groups).map(nm),init:[nm(cc[A.init[0]])],final:Object.keys(groups).filter(i=>groups[i].some(s=>A.final.includes(s))).map(nm),edges:[],alphabet:al};
+  Object.keys(groups).forEach(i=>al.forEach(a=>M.edges.push({from:nm(i),sym:a,to:nm(cc[d(groups[i][0],a)])})));
+  layoutLayered(M);
+  return{its,M,al,groups};
+}
+
+/* ---------- Préréglages ---------- */
+const E=l=>l.map(([f,s,t,b])=>b===undefined?{from:f,sym:s,to:t}:{from:f,sym:s,to:t,bend:b});
+function makePresets(){
+  const th=thompson(parseRegex('a*+bc').ast,'a* + bc (Thompson)');
+  th.desc="ε-NFA construit par Thompson pour a*+bc : 5 symboles (a, *, +, b, c), donc 2 × 5 = 10 états. Les ensembles d'états courants incluent les ε-clôtures : lis un a pour les voir s'allumer.";
+  th.id='thompson';
+  return[
+    {id:'ab-nfa',name:'Finit par ab (NFA)',desc:"Non déterministe : depuis q0, la lettre a peut rester en q0 ou partir vers q1. Essaie aab : plusieurs chemins existent, un seul acceptant suffit.",states:['q0','q1','q2'],init:['q0'],final:['q2'],alphabet:['a','b'],pos:{q0:{x:80,y:130},q1:{x:250,y:130},q2:{x:420,y:130}},edges:E([['q0','a','q0'],['q0','b','q0'],['q0','a','q1'],['q1','b','q2']])},
+    {id:'ab-dfa',name:'Finit par ab (DFA)',desc:"Le même langage, en déterministe. C'est le résultat de la déterminisation du NFA : s0 = {q0}, s1 = {q0,q1}, s2 = {q0,q2}. Un seul chemin par mot.",states:['s0','s1','s2'],init:['s0'],final:['s2'],alphabet:['a','b'],pos:{s0:{x:80,y:130},s1:{x:260,y:130},s2:{x:440,y:130}},edges:E([['s0','b','s0'],['s0','a','s1'],['s1','a','s1'],['s1','b','s2'],['s2','a','s1'],['s2','b','s0',-130]])},
+    {id:'even-a',name:'Nombre pair de a',desc:"DFA complet à deux états : p0 veut dire « j'ai lu un nombre pair de a », p1 « impair ». Les b ne changent rien.",states:['p0','p1'],init:['p0'],final:['p0'],alphabet:['a','b'],pos:{p0:{x:100,y:130},p1:{x:320,y:130}},edges:E([['p0','a','p1'],['p1','a','p0'],['p0','b','p0'],['p1','b','p1']])},
+    {id:'mod3',name:'Multiples de 3 en binaire',desc:"Chaque état retient le reste de la division par 3 du nombre lu. Lire le bit b fait passer du reste r au reste (2r + b) mod 3. Essaie 110 (6) puis 111 (7).",states:['r0','r1','r2'],init:['r0'],final:['r0'],alphabet:['0','1'],pos:{r0:{x:80,y:130},r1:{x:260,y:130},r2:{x:440,y:130}},edges:E([['r0','0','r0'],['r0','1','r1'],['r1','1','r0'],['r1','0','r2'],['r2','0','r1'],['r2','1','r2']])},
+    th,
+    {id:'moore',name:'À minimiser',desc:"DFA complet pour « contient aa », avec des états en trop : une fois aa trouvé, C, D et E acceptent tous la même chose. Passe-le dans Moore, onglet Algorithmes.",states:['A','B','C','D','E'],init:['A'],final:['C','D','E'],alphabet:['a','b'],pos:{A:{x:70,y:130},B:{x:230,y:130},C:{x:390,y:130},D:{x:550,y:130},E:{x:550,y:290}},edges:E([['A','b','A'],['A','a','B'],['B','b','A'],['B','a','C'],['C','a','D'],['C','b','D'],['D','a','C'],['D','b','E'],['E','a','D'],['E','b','D']])},
+    {id:'useless',name:'Avec états inutiles',desc:"q3 n'est pas accessible et q4 n'est pas co-accessible : ils ne servent à rien. Regarde les propriétés, puis émonde-le.",states:['q0','q1','q2','q3','q4'],init:['q0'],final:['q2'],alphabet:['a','b'],pos:{q0:{x:80,y:110},q1:{x:250,y:110},q2:{x:420,y:110},q3:{x:250,y:250},q4:{x:420,y:250}},edges:E([['q0','a','q1'],['q1','b','q2'],['q3','a','q1'],['q1','a','q4'],['q4','b','q4']])}
+  ];
+}
+let PRESETS=makePresets();
+(function(){const t=store.get('thlr.custom');if(t){try{const A=parseAuto(t);layoutLayered(A);A.id='custom';PRESETS.push(A)}catch(e){}}})();
+
+/* ---------- Simulateur ---------- */
+let cur=clone(PRESETS[0]);let sim=null;
+function renderPresets(){
+  const box=$('#presets');
+  const isPreset=PRESETS.some(p=>p.id===cur.id);
+  box.innerHTML=PRESETS.map((p,i)=>`<button class="chip" data-i="${i}" aria-pressed="${p.id===cur.id}">${esc(p.name)}</button>`).join('')+(isPreset?'':`<button class="chip" aria-pressed="true">${esc(cur.name)}</button>`);
+  box.querySelectorAll('[data-i]').forEach(b=>b.onclick=()=>{loadAuto(clone(PRESETS[+b.dataset.i]))});
+}
+function loadAuto(A){
+  cur=A;renderPresets();
+  $('#autoDesc').textContent=cur.desc||'';
+  $('#autoText').value=toText(cur);$('#textErr').textContent='';
+  $('#letters').innerHTML='<span class="small">Ajouter :</span>'+alpha(cur).map(a=>`<button class="btn mono" data-l="${esc(a)}">${esc(a)}</button>`).join('');
+  $('#letters').querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{$('#word').value+=b.dataset.l;resetSim()});
+  renderProps();resetSim();
+  algoState.det=null;renderAlgo();
+}
+function resetSim(){
+  const w=[...$('#word').value.replace(/\s+/g,'')],al=alpha(cur);
+  const bad=w.find(c=>!al.includes(c));
+  const S0=closure(cur,new Set(cur.init));
+  const t0=new Set();cur.edges.forEach(e=>{if(e.sym===EPS&&S0.has(e.from))t0.add(e.from+'→'+e.to)});
+  sim={word:w,pos:0,sets:[S0],taken:[t0],bad};
+  drawSim();
+}
+function stepSim(){
+  if(!sim||sim.bad)return;
+  const S=sim.sets[sim.pos];if(sim.pos>=sim.word.length||S.size===0)return;
+  const x=sim.word[sim.pos],direct=new Set(),taken=new Set();
+  cur.edges.forEach(e=>{if(S.has(e.from)&&e.sym===x){direct.add(e.to);taken.add(e.from+'→'+e.to)}});
+  const T=closure(cur,direct);
+  cur.edges.forEach(e=>{if(e.sym===EPS&&T.has(e.from))taken.add(e.from+'→'+e.to)});
+  sim.sets.push(T);sim.taken.push(taken);sim.pos++;drawSim();
+}
+function drawSim(){
+  const {word,pos,sets,taken,bad}=sim,S=sets[pos];
+  const blocked=S.size===0,done=pos===word.length||blocked;
+  const acc=done&&!blocked&&[...S].some(s=>cur.final.includes(s));
+  const win=new Set(acc?[...S].filter(s=>cur.final.includes(s)):[]);
+  const lose=new Set(done&&!acc?S:[]);
+  $('#simGraph').innerHTML=renderAuto(cur,{on:S,onE:taken[pos],win,lose});
+  $('#tape').innerHTML=word.length?word.map((c,i)=>`<span class="${i<pos?'done':(i===pos&&!done?'next':'')}">${esc(c)}</span>`).join(''):'<span class="eps">ε</span>';
+  const v=$('#verdict');v.className='verdict';
+  const multi=S.size>1;
+  if(bad){v.textContent=`« ${bad} » n'est pas dans l'alphabet ${fmtSet(alpha(cur))}. Retire-le du mot pour continuer.`;v.classList.add('no')}
+  else if(blocked){v.textContent=`Refusé : depuis ${fmtSet(sets[pos-1])}, aucune flèche « ${word[pos-1]} ». Aucun chemin ne lit « ${word.slice(0,pos).join('')} », le mot est bloqué.`;v.classList.add('no')}
+  else if(done&&acc){v.textContent=multi?`Accepté : parmi les états courants ${fmtSet(S)}, au moins un est final (${[...win].join(', ')}). Un seul chemin acceptant suffit.`:`Accepté : on a lu tout le mot et on termine sur ${[...S][0]}, qui est final.`;v.classList.add('ok')}
+  else if(done){v.textContent=multi?`Refusé : on a lu tout le mot, mais aucun des états courants ${fmtSet(S)} n'est final.`:`Refusé : on a lu tout le mot et on termine sur ${[...S][0]}, qui n'est pas final.`;v.classList.add('no')}
+  else v.textContent=`États courants : ${fmtSet(S)}. Prochaine lettre : « ${word[pos]} ».`;
+  const h=[`<li><b>départ</b> → ${fmtSet(sets[0])}${hasEps(cur)?' (ε-clôture des initiaux)':''}</li>`];
+  for(let i=1;i<=pos;i++)h.push(`<li><b>${esc(word[i-1])}</b> → ${fmtSet(sets[i])}</li>`);
+  $('#hist').innerHTML=h.join('');
+  $('#btnStep').disabled=$('#btnAll').disabled=done||!!bad;
+}
+function renderProps(){
+  const dw=detWhy(cur),mi=missing(cur),acc=reach(cur,cur.init,false),co=reach(cur,cur.final,true);
+  const useless=cur.states.filter(s=>!(acc.has(s)&&co.has(s)));
+  const ne=cur.edges.filter(e=>e.sym===EPS).length;
+  const cut=(l,n=3)=>l.slice(0,n).join(' ; ')+(l.length>n?` ; et ${l.length-n} autre(s)`:'');
+  $('#props').innerHTML=`<dl>
+    <dt>Déterministe</dt><dd>${dw.length?`<span class="nope">non</span> : ${esc(cut(dw))}`:'<span class="yes">oui</span> : au plus un chemin par mot'}</dd>
+    <dt>Complet</dt><dd>${mi.length?`<span class="nope">non</span> : ${esc(cut(mi))}`:'<span class="yes">oui</span> : au moins un chemin par mot'}</dd>
+    <dt>ε-transitions</dt><dd>${ne?ne+' (c\'est un ε-NFA)':'aucune'}</dd>
+    <dt>États inutiles</dt><dd>${useless.length?esc(useless.map(s=>s+(acc.has(s)?' (non co-accessible)':' (non accessible)')).join(', ')):'aucun'}</dd>
+    <dt>Taille</dt><dd>${cur.states.length} états, ${cur.edges.length} transitions, alphabet ${esc(fmtSet(alpha(cur)))}</dd>
+  </dl>`;
+}
+$('#word').addEventListener('input',resetSim);
+$('#btnStep').onclick=stepSim;
+$('#btnAll').onclick=()=>{let g=0;while(g++<500&&!$('#btnStep').disabled)stepSim()};
+$('#btnReset').onclick=resetSim;
+$('#applyText').onclick=()=>{
+  try{
+    const A=parseAuto($('#autoText').value);
+    const keep=A.states.every(s=>cur.pos[s]);
+    if(keep){A.pos={};A.states.forEach(s=>A.pos[s]={...cur.pos[s]})}else layoutLayered(A);
+    A.id='custom';store.set('thlr.custom',$('#autoText').value);
+    PRESETS=PRESETS.filter(p=>p.id!=='custom');PRESETS.push(clone(A));
+    loadAuto(A);
+  }catch(e){$('#textErr').textContent=e.message}
+};
+function openInSim(A){PRESETS=PRESETS.filter(p=>p.id!=='tmp');A.id='tmp';loadAuto(clone(A));showTab('sim');window.scrollTo({top:0})}
+
+/* ---------- Thompson (onglet) ---------- */
+let lastTh=null;
+function runThompson(){
+  const out=$('#rxOut');
+  try{
+    const {ast,n,used}=parseRegex($('#rx').value);
+    const A=thompson(ast,'Thompson : '+$('#rx').value.replace(/\s+/g,''));
+    A.desc=`ε-NFA construit par Thompson pour ${$('#rx').value.replace(/\s+/g,'')}. ${n} symboles, donc ${2*n} états.`;
+    lastTh=A;
+    out.innerHTML=`<p class="note">Symboles comptés : ${used.map(esc).join(' ')} → n = ${n}, donc 2n = ${2*n} états. L'automate en a bien ${A.states.length}.</p><div class="graph">${renderAuto(A)}</div><div class="row"><button class="btn primary" id="thOpen">Lire des mots avec cet automate</button><button class="btn" id="thAlgo">Lui appliquer les algorithmes</button></div>`;
+    $('#thOpen').onclick=()=>openInSim(lastTh);
+    $('#thAlgo').onclick=()=>{PRESETS=PRESETS.filter(p=>p.id!=='tmp');lastTh.id='tmp';loadAuto(clone(lastTh));showTab('algo')};
+  }catch(e){out.innerHTML=`<p class="err">${esc(e.message)}</p>`}
+}
+$('#rxGo').onclick=runThompson;
+$('#rx').addEventListener('keydown',e=>{if(e.key==='Enter')runThompson()});
+document.querySelectorAll('[data-ins]').forEach(b=>b.onclick=()=>{const r=$('#rx'),p=r.selectionStart??r.value.length;r.value=r.value.slice(0,p)+b.dataset.ins+r.value.slice(r.selectionEnd??p);r.focus();r.setSelectionRange(p+1,p+1)});
+
+/* ---------- Algorithmes (onglet) ---------- */
+const algoState={det:null,shown:0};
+function renderAlgo(){
+  $('#algoName').textContent='Automate de travail : '+cur.name;
+  $('#algoGraph').innerHTML=renderAuto(cur);
+  ['#outEps','#outPrune','#outDet','#outMoore'].forEach(s=>$(s).innerHTML='');
+  algoState.det=null;algoState.shown=0;
+  $('#detNext').disabled=$('#detAll').disabled=false;
+}
+function openBtn(id,label){return `<div class="row" style="margin-top:8px"><button class="btn primary" id="${id}">${label||'Lire des mots avec le résultat'}</button></div>`}
+$('#goEps').onclick=()=>{
+  const out=$('#outEps');
+  if(!hasEps(cur)){out.innerHTML='<p class="note">Cet automate n\'a pas de ε-transition : il n\'y a rien à supprimer. Essaie l\'automate de Thompson.</p>';return}
+  const cols=closureSteps(cur),B=removeEps(cur);
+  const head='<tr><th>État</th>'+cols.map((_,i)=>`<th>Étape ${i}</th>`).join('')+'</tr>';
+  const body=cur.states.map(q=>`<tr><td class="mono">${esc(q)}</td>`+cols.map((c,i)=>`<td class="mono${i>0&&c[q].size>cols[i-1][q].size?' new':''}">${esc([...c[q]].sort(nat).join(' '))}</td>`).join('')+'</tr>').join('');
+  const newF=B.final.filter(s=>!cur.final.includes(s));
+  out.innerHTML=`<p class="note">Étape 0 : l'état et ses successeurs directs par ε. Chaque étape suivante ajoute les clôtures des états déjà trouvés. Les cases surlignées ont grandi. On s'arrête quand deux colonnes sont identiques.</p><div class="tw"><table class="t">${head}${body}</table></div>
+  <p class="note">${newF.length?`Nouveaux états finaux (leur clôture contient un final) : ${esc(newF.join(', '))}.`:'Aucun nouvel état final.'} Le résultat garde ${B.states.length} états :</p><div class="graph">${renderAuto(B)}</div>${openBtn('epsOpen')}`;
+  $('#epsOpen').onclick=()=>openInSim(B);
+};
+$('#goPrune').onclick=()=>{
+  const out=$('#outPrune'),{acc,co,useful,B}=prune(cur);
+  const dim=new Set(cur.states.filter(s=>!useful.includes(s)));
+  if(!dim.size){out.innerHTML='<p class="note">Tous les états sont utiles : l\'automate est déjà émondé.</p>';return}
+  if(!useful.length||!B.init.length){out.innerHTML='<p class="note">Aucun état n\'est utile : le langage de cet automate est vide.</p>';return}
+  out.innerHTML=`<p class="note">Accessibles : ${esc(fmtSet(acc))}. Co-accessibles : ${esc(fmtSet(co))}. On retire ${esc([...dim].join(', '))} (en transparence ci-dessous).</p><div class="graph">${renderAuto(cur,{dim})}</div>${openBtn('prOpen')}`;
+  $('#prOpen').onclick=()=>openInSim(B);
+};
+function drawDet(){
+  const out=$('#outDet'),st=algoState.det;if(!st)return;
+  const {rows,nm,al,D,usedClosure}=st;const n=algoState.shown;
+  const head='<tr><th>Ensemble</th>'+al.map(a=>`<th>${esc(a)}</th>`).join('')+'<th>Final ?</th></tr>';
+  const body=rows.slice(0,n).map((r,i)=>`<tr class="${i===n-1?'fresh':''}"><td class="mono">${esc(nm(r.set))}${i===0?' (initial)':''}</td>`+al.map(a=>`<td class="mono${r.fresh.has(a)?' new':''}">${esc(nm(r.trans[a]))}</td>`).join('')+`<td>${r.final?'oui':'non'}</td></tr>`).join('');
+  const done=n>=rows.length;
+  let html=(usedClosure?'<p class="note">Cet automate a des ε-transitions : chaque ensemble est remplacé par sa ε-clôture. Le cours préfère supprimer les ε d\'abord, ça donne le même langage.</p>':'')+`<p class="note">Case surlignée : un ensemble jamais vu, qui devient une nouvelle ligne. ${done?`Terminé : ${rows.length} états (au plus 2<sup>${cur.states.length}</sup> = ${2**cur.states.length}).`:`Encore ${rows.length-n} ligne(s) à calculer.`}</p><div class="tw"><table class="t">${head}${body}</table></div>`;
+  if(done)html+=`<p class="note">Un ensemble est final s'il contient un état final. Voici le DFA obtenu, complet par construction :</p><div class="graph">${renderAuto(D)}</div>${openBtn('detOpen')}`;
+  out.innerHTML=html;
+  if(done)$('#detOpen').onclick=()=>openInSim(D);
+  $('#detNext').disabled=$('#detAll').disabled=done;
+}
+function ensureDet(){if(!algoState.det){algoState.det=determinize(cur);algoState.shown=0}}
+$('#detNext').onclick=()=>{ensureDet();algoState.shown++;drawDet()};
+$('#detAll').onclick=()=>{ensureDet();algoState.shown=algoState.det.rows.length;drawDet()};
+$('#detReset').onclick=()=>{algoState.det=null;algoState.shown=0;$('#outDet').innerHTML='';$('#detNext').disabled=$('#detAll').disabled=false};
+function runMoore(A,pre){
+  const out=$('#outMoore');let notes=pre||'';
+  const c=completeDFA(A);if(c.added)notes+=`<p class="note">L'automate n'était pas complet : on ajoute l'état ${esc(c.p)} (puits) avant de minimiser.</p>`;
+  const B=c.A,{its,M,al,groups}=moore(B);
+  let html=notes;
+  its.forEach((it,idx)=>{
+    const byC={};B.states.forEach(s=>(byC[it.c[s]]=byC[it.c[s]]||[]).push(s));
+    const head='<tr><th>Classe</th><th>État</th>'+al.map(a=>`<th>par ${esc(a)}</th>`).join('')+'</tr>';
+    const body=Object.keys(byC).sort(nat).map(k=>byC[k].map((s,j)=>`<tr>${j===0?`<td rowspan="${byC[k].length}">${k}</td>`:''}<td class="mono">${esc(s)}</td>`+it.succ[s].map(t=>`<td class="mono">${esc(t)} → classe ${it.c[t]}</td>`).join('')+'</tr>').join('')).join('');
+    const splits=Object.keys(byC).filter(k=>new Set(byC[k].map(s=>it.next[s])).size>1).map(k=>{const g={};byC[k].forEach(s=>(g[it.next[s]]=g[it.next[s]]||[]).push(s));return `la classe ${k} se coupe en ${Object.values(g).map(x=>'{'+x.join(', ')+'}').join(' et ')}`});
+    const intro=idx===0?'Départ : classe 1 et classe 2 séparent les états finaux des autres (ils sont distingués par ε).':`Itération ${idx+1} :`;
+    html+=`<p class="note"><b>${intro}</b></p><div class="tw"><table class="t">${head}${body}</table></div><p class="note">${splits.length?'Conflit : '+esc(splits.join(' ; '))+'. On recommence avec les nouvelles classes.':'Aucun conflit : les classes sont stables, c\'est terminé.'}</p>`;
+  });
+  html+=`<p class="note">${B.states.length} états → ${M.states.length} états. Chaque classe devient un état ; l'initial est la classe de l'état initial, et une classe est finale si elle contient un état final.</p><div class="graph">${renderAuto(M)}</div>${openBtn('mOpen')}`;
+  out.innerHTML=html;$('#mOpen').onclick=()=>openInSim(M);
+}
+$('#goMoore').onclick=()=>{
+  const out=$('#outMoore');
+  if(detWhy(cur).length){
+    out.innerHTML=`<p class="note">Moore ne s'applique qu'à un DFA, et cet automate n'est pas déterministe (${esc(detWhy(cur)[0])}).</p><button class="btn primary" id="detThenMoore">Déterminiser puis minimiser</button>`;
+    $('#detThenMoore').onclick=()=>{const {D}=determinize(cur);runMoore(D,`<p class="note">On minimise le DFA obtenu par déterminisation (${D.states.length} états).</p>`)};
+    return;
+  }
+  runMoore(cur);
+};
+
+/* ---------- Quiz ---------- */
+const QUIZ=[
+ {q:"Combien d'états initiaux un DFA peut-il avoir ?",o:["Au moins un","Exactement un","Autant qu'on veut s'il est complet","Zéro ou un"],a:1,w:"La définition du déterminisme impose exactement un état initial, et au plus une flèche par lettre depuis chaque état."},
+ {q:"Dans un DFA complet, combien y a-t-il de chemins étiquetés par un mot w donné ?",o:["Au plus un","Au moins un","Exactement un","Ça dépend de w"],a:2,w:"Déterministe donne au plus un chemin, complet donne au moins un. Ensemble : exactement un."},
+ {q:"Le chemin d'un mot passe par un état final, puis se termine sur un état non final. Le mot est…",o:["Accepté","Refusé","Accepté seulement si l'automate est un NFA","Indéterminé"],a:1,w:"Seul l'état d'arrivée compte. Passer par un état final en route ne suffit pas (c'est l'exemple aca du cours)."},
+ {q:"Un NFA à 4 états. Le DFA obtenu par déterminisation a au plus…",o:["4 états","8 états","16 états","24 états"],a:2,w:"Les états du DFA sont des parties de Q. Il y en a au plus 2⁴ = 16."},
+ {q:"Combien d'états produit Thompson pour (a+b)*c ?",o:["6","8","10","12"],a:2,w:"On compte a, +, b, * et c : n = 5 symboles (les parenthèses et la concaténation ne comptent pas). Donc 2n = 10 états."},
+ {q:"Dans la construction de Thompson pour e₁e₂, pourquoi ne fusionne-t-on pas f₁ et i₂ ?",o:["Parce que ça ajoute des états","Parce que les boucles des deux automates peuvent se mélanger et accepter des mots en trop","Parce que l'automate ne serait plus complet","On peut, c'est juste une convention"],a:1,w:"Contre-exemple du cours : pour a(ba)*a(ba)*, la fusion accepte aabbaa, qui n'est pas dans le langage."},
+ {q:"La ε-clôture avant d'un état q contient toujours…",o:["Les états finaux","q lui-même","Tous les successeurs de q","Au moins deux états"],a:1,w:"On atteint q depuis q en lisant 0 flèche, donc q ∈ ε(q) dans tous les cas."},
+ {q:"Pendant la suppression arrière des ε, quand un état q devient-il final ?",o:["Jamais, les finaux ne changent pas","Si q a une ε-transition","Si sa ε-clôture contient un état final","Si q est initial"],a:2,w:"Si un final r est dans ε(q), tout chemin qui arrive en q peut se prolonger jusqu'à r sans lire de lettre. Oublier cette étape fait perdre des mots."},
+ {q:"Un état est utile s'il est…",o:["Accessible","Co-accessible","Accessible et co-accessible","Final"],a:2,w:"Il doit pouvoir apparaître sur un chemin acceptant : atteignable depuis un initial et capable d'atteindre un final."},
+ {q:"Moore commence avec quelles classes ?",o:["Une classe par état","F et Q \\ F","L'état initial et les autres","Les états accessibles et les autres"],a:1,w:"Les finaux et les non-finaux sont forcément distingués, par le mot ε. On raffine ensuite."},
+ {q:"Pour obtenir le complémentaire en échangeant finaux et non finaux, l'automate doit être…",o:["Déterministe seulement","Complet seulement","Déterministe et complet","Émondé"],a:2,w:"Il faut exactement un chemin par mot pour qu'inverser le verdict de ce chemin inverse le verdict du mot."},
+ {q:"À quoi sert le lemme de l'étoile ?",o:["Prouver qu'un langage est rationnel","Prouver qu'un langage n'est pas rationnel","Minimiser un automate","Construire une regex"],a:1,w:"C'est une condition nécessaire. On l'utilise par l'absurde. Un langage peut la vérifier sans être rationnel."},
+ {q:"Le langage {aⁿbⁿ | n ∈ ℕ} est…",o:["Rationnel et décidable","Décidable mais pas rationnel","Rationnel mais pas décidable","Ni l'un ni l'autre"],a:1,w:"Un algorithme peut compter les a et les b, donc il est décidable. Mais un automate a une mémoire finie et ne peut pas compter sans limite : le lemme de l'étoile le montre."},
+ {q:"Avec Brzozowski–McCluskey, on supprime un état qui a 2 flèches entrantes et 3 sortantes. Combien de flèches crée-t-on ?",o:["5","6","3","2"],a:1,w:"Une flèche par couple (entrante, sortante) : 2 × 3 = 6."},
+ {q:"Dans le produit synchronisé A₁ × A₂ qui reconnaît L₁ ∩ L₂, un état (p, q) est final si…",o:["p ou q est final","p et q sont finaux","p est final","Aucun des deux n'est final"],a:1,w:"On simule les deux automates en même temps : le mot doit être accepté par les deux. Le produit a au plus n₁ × n₂ états."}
+];
+let qz={i:0,score:0,answered:false,order:[]};
+function startQuiz(){qz={i:0,score:0,answered:false,order:QUIZ.map((_,i)=>i).sort(()=>Math.random()-.5)};drawQuiz()}
+function drawQuiz(){
+  const box=$('#quizBox'),best=+(store.get('thlr.best')||0);
+  if(qz.i>=QUIZ.length){
+    if(qz.score>best)store.set('thlr.best',qz.score);
+    const nb=Math.max(best,qz.score);
+    box.innerHTML=`<h2>Résultat : ${qz.score} / ${QUIZ.length}</h2><p>${qz.score===QUIZ.length?'Sans faute. Tu peux passer aux exercices des slides.':qz.score>=QUIZ.length*.7?'Solide. Relis les fiches des questions ratées.':'Relis les fiches, puis refais le quiz : les questions changent d\'ordre.'}</p><p class="note">Meilleur score : ${nb} / ${QUIZ.length}</p><div class="row"><button class="btn primary" id="qRe">Recommencer le quiz</button><button class="btn" data-open="fiches">Relire les fiches</button></div>`;
+    $('#qRe').onclick=startQuiz;bindOpen(box);return;
+  }
+  const Q=QUIZ[qz.order[qz.i]];
+  box.innerHTML=`<p class="note" style="margin:0">Question ${qz.i+1} sur ${QUIZ.length} · score ${qz.score}</p><div class="progress"><i style="width:${qz.i/QUIZ.length*100}%"></i></div><h2>${esc(Q.q)}</h2><div class="opts">${Q.o.map((o,j)=>`<button class="opt" data-j="${j}">${esc(o)}</button>`).join('')}</div><div id="qWhy"></div>`;
+  box.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+    if(qz.answered)return;qz.answered=true;const j=+b.dataset.j;
+    box.querySelectorAll('.opt').forEach(x=>{x.disabled=true;if(+x.dataset.j===Q.a)x.classList.add('good')});
+    if(j===Q.a)qz.score++;else b.classList.add('bad');
+    $('#qWhy').innerHTML=`<div class="why"><b>${j===Q.a?'Bonne réponse.':'Pas tout à fait.'}</b> ${esc(Q.w)}</div><div class="row" style="margin-top:12px"><button class="btn primary" id="qNext">${qz.i+1<QUIZ.length?'Question suivante':'Voir le résultat'}</button></div>`;
+    $('#qNext').onclick=()=>{qz.i++;qz.answered=false;drawQuiz()};$('#qNext').focus();
+  });
+}
+
+/* ---------- Onglets ---------- */
+function showTab(t){
+  document.querySelectorAll('nav [role=tab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===t));
+  document.querySelectorAll('main>[role=tabpanel]').forEach(p=>p.hidden=p.id!=='tab-'+t);
+  if(t==='algo'&&!$('#algoGraph').innerHTML)renderAlgo();
+  if(t==='thompson'&&!$('#rxOut').innerHTML)runThompson();
+  store.set('thlr.tab',t);
+}
+document.querySelectorAll('nav [role=tab]').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+function bindOpen(root){root.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>{showTab(b.dataset.open);window.scrollTo({top:0})})}
+bindOpen(document);
+
+loadAuto(clone(PRESETS[0]));
+startQuiz();
+showTab(store.get('thlr.tab')||'sim');
+</script>
+</body>
+</html>

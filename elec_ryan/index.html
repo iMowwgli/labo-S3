@@ -1,0 +1,1646 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Labo du Transistor</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@500;700&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400;1,600&display=swap">
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['$','$']], displayMath: [['$$','$$']] },
+  svg: { fontCache: 'global' },
+  options: { enableMenu: false },
+  startup: { typeset: true }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js" async></script>
+<style>
+/* Layout : console de jeu de labo — HUD collant avec XP, la vanne réaliste en scène principale, puis cours / méthode / TD / annale / boss / trophées en colonnes aérées */
+:root{
+  --bg:#F6F1FB; --surface:#FFFFFF; --soft:#F0E8F7; --ink:#241933; --muted:#6B5D7B; --line:#E2D6EC;
+  --rose:#D43C80; --rose-soft:#FCE2EE; --mauve:#6A4ED6; --mauve-soft:#ECE6FD; --gold:#C98A00; --gold-soft:#FFF1CC;
+  --water:#2C83DA; --water-hi:#8CC6FF; --glass:#E8F1FA; --m1:#FBFCFD; --m2:#C3CAD5; --m3:#8A93A3; --m4:#5D6676;
+  --wheel:#C8243A; --wheel-hi:#F05A6E;
+  --lin:#1F8A57; --lin-soft:#DBF3E6; --sat:#B76A00; --sat-soft:#FCEED6; --off:#6E6880; --off-soft:#EBE8F0; --bad:#C62828; --bad-soft:#FCE3E3;
+  --shadow:0 1px 2px rgb(36 25 51 / .06), 0 8px 24px -12px rgb(36 25 51 / .18);
+  --f-display:"Unbounded", "Avenir Next", system-ui, sans-serif;
+  --f-body:"Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
+  --f-math:"STIX Two Text", "Cambria Math", "Times New Roman", serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#120D1A; --surface:#1C1527; --soft:#261D34; --ink:#F1EAF8; --muted:#A898BB; --line:#352A47;
+  --rose:#FF6FA9; --rose-soft:#3D1F31; --mauve:#A592FF; --mauve-soft:#2A2350; --gold:#FFC23D; --gold-soft:#3A2D0E;
+  --water:#4DA6FF; --water-hi:#A9D6FF; --glass:#1F2B3B; --m1:#E9EDF3; --m2:#A8B0BE; --m3:#737D8E; --m4:#4A5262;
+  --wheel:#E0344B; --wheel-hi:#FF7B8C;
+  --lin:#55CE8E; --lin-soft:#173726; --sat:#F2A93F; --sat-soft:#3C2B12; --off:#A49DB3; --off-soft:#2B2636; --bad:#FF6B6B; --bad-soft:#431E22;
+  --shadow:0 1px 2px rgb(0 0 0 / .3), 0 10px 30px -12px rgb(0 0 0 / .6);
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#120D1A; --surface:#1C1527; --soft:#261D34; --ink:#F1EAF8; --muted:#A898BB; --line:#352A47;
+  --rose:#FF6FA9; --rose-soft:#3D1F31; --mauve:#A592FF; --mauve-soft:#2A2350; --gold:#FFC23D; --gold-soft:#3A2D0E;
+  --water:#4DA6FF; --water-hi:#A9D6FF; --glass:#1F2B3B; --m1:#E9EDF3; --m2:#A8B0BE; --m3:#737D8E; --m4:#4A5262;
+  --wheel:#E0344B; --wheel-hi:#FF7B8C;
+  --lin:#55CE8E; --lin-soft:#173726; --sat:#F2A93F; --sat-soft:#3C2B12; --off:#A49DB3; --off-soft:#2B2636; --bad:#FF6B6B; --bad-soft:#431E22;
+  --shadow:0 1px 2px rgb(0 0 0 / .3), 0 10px 30px -12px rgb(0 0 0 / .6);
+  color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:84px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--bg);color:var(--ink);font:400 16.5px/1.65 var(--f-body)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+p{margin:0}
+h1,h2,h3,h4{margin:0;text-wrap:balance}
+h1{font:800 clamp(30px,5.4vw,60px)/1.02 var(--f-display);letter-spacing:-.03em}
+h2{font:700 clamp(24px,3.4vw,36px)/1.1 var(--f-display);letter-spacing:-.02em}
+h3{font:700 19px/1.25 var(--f-body)}
+h4{font:700 16px/1.3 var(--f-body)}
+.eyebrow{font:700 11.5px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--rose)}
+.muted{color:var(--muted)}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+sub{font-size:.72em}
+mjx-container{color:inherit}
+mjx-container[display="true"]{margin:.4em 0 !important;overflow-x:auto;overflow-y:hidden;max-width:100%;padding:2px 0}
+button{font-family:inherit}
+:focus-visible{outline:2.5px solid var(--rose);outline-offset:2px}
+
+/* ---------- HUD ---------- */
+.hud{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.hud .wrap{display:flex;align-items:center;gap:14px;padding-block:9px}
+.brand{display:flex;align-items:center;gap:9px;font:800 15px var(--f-display);letter-spacing:-.02em;white-space:nowrap;color:var(--ink);text-decoration:none}
+.brand svg{flex:none}
+.nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1;min-width:0}
+.nav a{color:var(--muted);text-decoration:none;font:700 13.5px var(--f-body);padding:7px 11px;border-radius:999px;white-space:nowrap}
+.nav a:hover{background:var(--mauve-soft);color:var(--mauve)}
+.xp{display:flex;align-items:center;gap:10px;flex:none}
+.xp .lvl{display:flex;flex-direction:column;line-height:1.15;text-align:right}
+.xp .lvl b{font:700 12.5px var(--f-body);white-space:nowrap}
+.xp .lvl span{font:500 11px var(--f-mono);color:var(--muted)}
+.xpbar{width:120px;height:10px;border-radius:999px;background:var(--soft);overflow:hidden;border:1px solid var(--line)}
+.xpbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--rose),var(--mauve));border-radius:999px;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.combo{font:800 13px var(--f-display);color:var(--gold);background:var(--gold-soft);padding:4px 9px;border-radius:999px;white-space:nowrap}
+.combo[hidden]{display:none}
+@media (max-width:760px){.xp .lvl{display:none}.xpbar{width:70px}.brand span{display:none}}
+
+/* ---------- HERO / LABO ---------- */
+.hero{padding-block:34px 10px}
+.hero-top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 30px}
+.hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--rose),var(--mauve));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero .lead{max-width:52ch;color:var(--muted);font-size:17.5px;margin-top:10px}
+.presets{display:flex;flex-wrap:wrap;gap:7px;max-width:520px}
+.presets .lab{width:100%;font:700 11.5px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.chip{font:700 13px var(--f-body);border:1.5px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer;transition:transform .12s,border-color .12s}
+.chip:hover{border-color:var(--mauve);color:var(--mauve);transform:translateY(-1px)}
+.chip[aria-pressed="true"]{background:var(--mauve);border-color:var(--mauve);color:#fff}
+.chip.an{border-style:dashed}
+.lab-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:16px;margin-top:22px}
+@media (max-width:940px){.lab-grid{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow)}
+.scene{padding:10px 10px 14px;position:relative;overflow:hidden}
+#scene{width:100%;height:auto;display:block;touch-action:none;user-select:none}
+#wheel{cursor:grab}
+#wheel:focus-visible .rimring{stroke:var(--rose)}
+.wheelhint{position:absolute;top:14px;left:16px;font:700 12px var(--f-body);color:var(--mauve);background:var(--mauve-soft);padding:5px 10px;border-radius:999px;transition:opacity .4s}
+.ctrlrow{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;padding:4px 8px 0}
+.ctrlrow input[type=range]{flex:1;min-width:150px;accent-color:var(--wheel)}
+.ctrlrow label{font:700 13px var(--f-body);color:var(--muted)}
+.exact{display:flex;align-items:center;gap:6px;font-size:14px;color:var(--muted)}
+.exact input{width:100px;font:500 14px var(--f-mono);padding:6px 9px;border:1.5px solid var(--line);border-radius:10px;background:var(--soft);color:var(--ink)}
+.note{margin:10px 8px 0;font-size:14.5px;color:var(--muted);min-height:1.5em}
+.side{display:flex;flex-direction:column;gap:12px}
+.modecard{border-radius:20px;padding:16px 18px;border:2px solid var(--c);background:var(--cs);transition:background .3s,border-color .3s;display:grid;grid-template-columns:auto 1fr;gap:4px 14px;align-items:center}
+.modecard .ico{grid-row:span 2;width:52px;height:52px;border-radius:16px;background:var(--surface);display:grid;place-items:center;color:var(--c)}
+.modecard .k{font:700 11px var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--c)}
+.modecard .v{font:800 30px/1.05 var(--f-display);color:var(--c);letter-spacing:-.02em}
+.modecard .why{grid-column:1/-1;font-size:15px;margin-top:6px}
+.vals{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.vals div{background:var(--surface);padding:9px 12px;display:flex;flex-direction:column;min-width:0}
+.vals .n{font-size:12.5px;color:var(--muted)}
+.vals .x{font:700 17px var(--f-mono);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.vals .hl .x{color:var(--rose)}
+.reason{padding:14px 16px}
+.reason ol{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:9px;counter-reset:s}
+.reason li{counter-increment:s;display:grid;grid-template-columns:24px minmax(0,1fr);gap:9px;font-size:15px}
+.reason li::before{content:counter(s);width:24px;height:24px;border-radius:8px;background:var(--mauve-soft);color:var(--mauve);font:700 12.5px var(--f-mono);display:grid;place-items:center;margin-top:2px}
+.reason li>div{min-width:0;overflow-x:auto}
+#reasonBuf{position:absolute;left:-9999px;top:0;width:360px;visibility:hidden}
+.lab-below{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:16px;margin-top:16px}
+.lab-below>*{min-width:0}
+.panel h3{margin-bottom:2px}
+.panel .sub{font-size:14px;color:var(--muted);margin-bottom:8px}
+.svgx{overflow-x:auto}
+.toggle{display:flex;align-items:center;gap:9px;font:700 14px var(--f-body);cursor:pointer}
+.toggle input{width:18px;height:18px;accent-color:var(--rose)}
+.sl label{display:flex;justify-content:space-between;gap:8px;font-size:13.5px;color:var(--muted)}
+.sl label b{font:700 13.5px var(--f-mono);color:var(--ink)}
+.sl input{width:100%;accent-color:var(--rose)}
+.settings{margin-top:16px}
+.settings-top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.seg{display:inline-flex;border:1.5px solid var(--line);border-radius:999px;padding:3px;background:var(--soft);flex-wrap:wrap}
+.seg button{font:700 13.5px var(--f-body);border:0;background:transparent;color:var(--muted);padding:7px 13px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--mauve);box-shadow:var(--shadow)}
+.sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:12px 22px;margin-top:14px}
+.missions{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:10px;margin-top:10px}
+.mission{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:10px 12px;border-radius:14px;border:1.5px dashed var(--line);background:var(--soft)}
+.mission .m-ico{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:var(--surface);color:var(--muted)}
+.mission b{display:block;font-size:14.5px}
+.mission span{font-size:13px;color:var(--muted)}
+.mission .xpv{font:700 12px var(--f-mono);color:var(--gold)}
+.mission.done{border-style:solid;border-color:var(--lin);background:var(--lin-soft)}
+.mission.done .m-ico{background:var(--lin);color:#fff}
+
+/* ---------- sections ---------- */
+section{padding-block:56px 10px}
+.sec-head{display:flex;flex-direction:column;gap:8px;margin-bottom:22px}
+.sec-head p{color:var(--muted);max-width:62ch}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,350px),1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:16px}
+.grid2>*,.grid3>*{min-width:0}
+.lines{display:flex;flex-direction:column;gap:6px}
+.law{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:14px;background:var(--rose-soft)}
+.law.m{background:var(--mauve-soft)}
+.law small{font:700 11px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--rose)}
+.law.m small{color:var(--mauve)}
+.law .f{font-size:19px;text-align:center}
+.tip{font-size:14.5px;color:var(--muted);border-left:3px solid var(--mauve);padding-left:11px;border-radius:0}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+table.modes{width:100%;border-collapse:collapse;font-size:15px;min-width:600px}
+table.modes th,table.modes td{padding:11px 13px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+table.modes tr:last-child td{border-bottom:0}
+table.modes th{font:700 11.5px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.pill{display:inline-block;font:700 13px var(--f-body);padding:3px 11px;border-radius:999px;color:var(--c);background:var(--cs)}
+.recipe ol{margin:8px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:7px}
+.recipe h3{color:var(--rose)}
+
+/* schémas */
+.schem{overflow-x:auto;display:flex;justify-content:center}
+.schem svg{display:block;max-width:100%;height:auto}
+.sc .w{stroke:var(--ink);stroke-width:1.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.sc .r{fill:var(--surface);stroke:var(--ink);stroke-width:1.6}
+.sc .dot{fill:var(--ink)}
+.sc .term{fill:var(--surface);stroke:var(--ink);stroke-width:1.4}
+.sc .t{font-family:var(--f-math);font-style:italic;font-size:17px;fill:var(--ink)}
+.sc .t .s{font-size:12px;font-style:italic}
+.sc .t .up{font-style:normal}
+.sc .ta{stroke:var(--rose);stroke-width:1.5;fill:none}
+.sc .tt{font-family:var(--f-math);font-style:italic;font-size:15px;fill:var(--rose)}
+.sc .tc{font-family:var(--f-math);font-style:italic;font-size:15px;fill:var(--mauve)}
+.sc .ca{stroke:var(--mauve);stroke-width:1.5;fill:none}
+.sc .cap{font:700 11px var(--f-mono);fill:var(--muted);letter-spacing:.06em}
+.schems{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px}
+.figcap{text-align:center;font:700 13px var(--f-mono);color:var(--muted);margin-top:4px}
+
+/* exos */
+.exo{display:flex;flex-direction:column;gap:14px;margin-top:26px}
+.exo-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.exo-head h3{font:700 clamp(19px,2.4vw,24px)/1.2 var(--f-display);letter-spacing:-.01em}
+.prog{font:700 12px var(--f-mono);color:var(--mauve);background:var(--mauve-soft);padding:4px 10px;border-radius:999px}
+.prog.full{color:var(--lin);background:var(--lin-soft)}
+.given{display:flex;flex-wrap:wrap;gap:6px}
+.given span{font-size:14.5px;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:3px 10px}
+.ctx{color:var(--muted);max-width:70ch}
+.qcard{display:flex;flex-direction:column;gap:12px}
+.qcard .qt{display:flex;gap:10px;align-items:baseline}
+.qcard .qn{flex:none;font:800 13px var(--f-display);color:#fff;background:var(--rose);border-radius:9px;padding:3px 8px}
+.asks{display:flex;flex-direction:column;gap:9px}
+.ask{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:10px 12px;border-radius:14px;background:var(--soft);border:1.5px solid transparent;transition:border-color .2s,background .2s}
+.ask .al{min-width:0;flex:1 1 180px;font-size:15.5px}
+.ask input{width:110px;font:700 15px var(--f-mono);padding:7px 10px;border:1.5px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
+.ask .unit{font:700 14px var(--f-mono);color:var(--muted);min-width:24px}
+.ask button.go{font:700 13.5px var(--f-body);border:0;background:var(--mauve);color:#fff;padding:8px 14px;border-radius:10px;cursor:pointer}
+.ask button.go:hover{filter:brightness(1.08)}
+.ask .msg{width:100%;font-size:14px;min-height:0}
+.ask .msg:empty{display:none}
+.ask.ok{border-color:var(--lin);background:var(--lin-soft)}
+.ask.ok input{border-color:var(--lin)}
+.ask.ok button.go{background:var(--lin)}
+.ask.ko{animation:shake .35s}
+.ask .choices{display:flex;flex-wrap:wrap;gap:7px;width:100%}
+.ask .choices button{font:700 14.5px var(--f-body);border:1.5px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 13px;border-radius:12px;cursor:pointer}
+.ask .choices button:hover:not(:disabled){border-color:var(--mauve)}
+.ask .choices button.good{border-color:var(--lin);background:var(--lin-soft)}
+.ask .choices button.bad{border-color:var(--bad);background:var(--bad-soft)}
+@keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+@media (prefers-reduced-motion:reduce){.ask.ko{animation:none}}
+details.corr{border-radius:14px;border:1.5px solid var(--line);background:var(--surface)}
+details.corr>summary{cursor:pointer;list-style:none;padding:11px 14px;font:700 14.5px var(--f-body);color:var(--rose);display:flex;align-items:center;gap:9px}
+details.corr>summary::-webkit-details-marker{display:none}
+details.corr>summary::before{content:"";width:9px;height:9px;border-right:2.5px solid currentColor;border-bottom:2.5px solid currentColor;transform:rotate(-45deg);transition:transform .2s}
+details.corr[open]>summary::before{transform:rotate(45deg)}
+details.corr .body{padding:2px 16px 16px;display:flex;flex-direction:column;gap:7px}
+.ans{font-weight:700;color:var(--rose)}
+.load{align-self:flex-start;font:700 13.5px var(--f-body);border:1.5px solid var(--wheel);color:var(--wheel);background:transparent;padding:7px 13px;border-radius:999px;cursor:pointer;display:inline-flex;gap:7px;align-items:center}
+.load:hover{background:var(--wheel);color:#fff}
+.warn{font-size:14.5px;background:var(--gold-soft);border-radius:12px;padding:9px 12px}
+
+/* quiz / trophées */
+.quiz{display:flex;flex-direction:column;gap:12px}
+.q{display:flex;flex-direction:column;gap:10px}
+.q .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:8px}
+.q button.o{font:400 15.5px var(--f-body);text-align:left;padding:11px 14px;border-radius:13px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:flex;gap:10px;align-items:baseline}
+.q button.o .lt{font:700 13px var(--f-mono);color:var(--muted)}
+.q button.o:hover:not(:disabled){border-color:var(--mauve)}
+.q button.o.good{border-color:var(--lin);background:var(--lin-soft)}
+.q button.o.bad{border-color:var(--bad);background:var(--bad-soft)}
+.q .fb{font-size:15px}
+.q .fb:empty{display:none}
+.score{font:800 18px var(--f-display);color:var(--mauve)}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,170px),1fr));gap:12px}
+.badge{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:16px 12px;border-radius:18px;background:var(--surface);border:1.5px solid var(--line)}
+.badge .bi{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--muted);filter:grayscale(1);opacity:.55}
+.badge b{font-size:14.5px}
+.badge span{font-size:12.5px;color:var(--muted)}
+.badge.on{border-color:var(--gold);background:linear-gradient(var(--surface),var(--gold-soft))}
+.badge.on .bi{filter:none;opacity:1;background:var(--gold);color:#fff}
+.statrow{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.stat{padding:10px 16px;border-radius:14px;background:var(--surface);border:1px solid var(--line)}
+.stat b{display:block;font:800 22px var(--f-display);color:var(--mauve)}
+.stat span{font-size:12.5px;color:var(--muted)}
+.reset{font:700 13px var(--f-body);border:1.5px solid var(--line);background:transparent;color:var(--muted);padding:7px 13px;border-radius:999px;cursor:pointer}
+.reset.arm{border-color:var(--bad);color:var(--bad)}
+footer{padding-block:48px 40px;color:var(--muted);font-size:14px}
+
+/* toasts + confettis */
+#toasts{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:40;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:none}
+.toast{pointer-events:auto;display:flex;align-items:center;gap:10px;background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:14px;font:700 14px var(--f-body);box-shadow:var(--shadow);animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
+.toast .x{font:800 13px var(--f-display);color:var(--gold)}
+.toast.big{background:linear-gradient(90deg,var(--rose),var(--mauve));color:#fff}
+.toast.big .x{color:#fff}
+@keyframes pop{from{transform:translateY(12px) scale(.9);opacity:0}}
+@media (prefers-reduced-motion:reduce){.toast{animation:none}}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:35;width:100%;height:100%}
+
+/* animations de la scène */
+.flowdash{stroke-dasharray:3 9;animation:flow var(--spd,1s) linear infinite}
+.fall{stroke-dasharray:6 8;animation:fall .5s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-48}}
+@keyframes fall{to{stroke-dashoffset:-28}}
+.spray line{animation:spray .6s ease-out infinite}
+@keyframes spray{from{opacity:1}to{opacity:0;transform:translate(var(--dx),var(--dy))}}
+@media (prefers-reduced-motion:reduce){.flowdash,.fall,.spray line{animation:none}}
+</style>
+
+<canvas id="confetti" aria-hidden="true"></canvas>
+<div id="toasts" role="status" aria-live="polite"></div>
+
+<header class="hud">
+  <div class="wrap">
+    <a class="brand" href="#labo">
+      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="11" fill="none" stroke="var(--wheel)" stroke-width="3"/><path d="M13 3V23M3 13H23" stroke="var(--wheel)" stroke-width="2.5"/><circle cx="13" cy="13" r="3.5" fill="var(--rose)"/></svg>
+      <span>Labo du Transistor</span>
+    </a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#labo">Labo</a><a href="#cours">Cours</a><a href="#methode">Méthode</a><a href="#td">TD</a><a href="#annale">Annale</a><a href="#boss">Boss</a><a href="#trophees">Trophées</a>
+    </nav>
+    <div class="xp">
+      <span class="combo" id="combo" hidden></span>
+      <div class="lvl"><b id="lvlName">Électron libre</b><span id="xpTxt">0 XP</span></div>
+      <div class="xpbar" title="Progression vers le niveau suivant"><i id="xpFill"></i></div>
+    </div>
+  </div>
+</header>
+
+<main>
+<section id="labo" class="hero">
+  <div class="wrap">
+    <div class="hero-top">
+      <div>
+        <div class="eyebrow">Transistors bipolaires · EPITA S3</div>
+        <h1>Tourne la <em>vanne</em>.<br>Comprends le transistor.</h1>
+        <p class="lead">Le château d'eau, c'est $V_{cc}$. La vanne rouge, c'est la base. L'eau qui coule, c'est $I_C$. Le manomètre te donne la tension au collecteur.</p>
+      </div>
+      <div class="presets" role="group" aria-label="Charger un exercice">
+        <span class="lab">Charger un exo</span>
+        <button class="chip" data-preset="td1a">TD 1a</button>
+        <button class="chip" data-preset="td1b">TD 1b</button>
+        <button class="chip" data-preset="td1c">TD 1c</button>
+        <button class="chip" data-preset="td2">TD 2</button>
+        <button class="chip" data-preset="td3">TD 3</button>
+        <button class="chip an" data-preset="an1">Annale 1</button>
+        <button class="chip an" data-preset="an2">Annale 2</button>
+      </div>
+    </div>
+
+    <div class="lab-grid">
+      <div class="card scene">
+        <span class="wheelhint" id="wheelHint">Attrape la roue rouge et tourne</span>
+        <svg id="scene" viewBox="0 0 680 410" role="img" aria-label="Château d'eau, tuyau, manomètre et vanne représentant le transistor">
+          <defs>
+            <linearGradient id="gMetalV" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--m1)"/><stop offset=".45" style="stop-color:var(--m2)"/><stop offset=".6" style="stop-color:var(--m3)"/><stop offset="1" style="stop-color:var(--m2)"/></linearGradient>
+            <linearGradient id="gMetalH" x1="0" y1="0" x2="1" y2="0"><stop offset="0" style="stop-color:var(--m3)"/><stop offset=".35" style="stop-color:var(--m1)"/><stop offset=".7" style="stop-color:var(--m2)"/><stop offset="1" style="stop-color:var(--m4)"/></linearGradient>
+            <radialGradient id="gWheel" cx=".35" cy=".3" r=".8"><stop offset="0" style="stop-color:var(--wheel-hi)"/><stop offset="1" style="stop-color:var(--wheel)"/></radialGradient>
+            <linearGradient id="gWater" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--water-hi)"/><stop offset="1" style="stop-color:var(--water)"/></linearGradient>
+            <clipPath id="tankClip"><rect x="32" y="44" width="104" height="138" rx="14"/></clipPath>
+            <marker id="mIB" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1L9 5L1 9z" style="fill:var(--rose)"/></marker>
+          </defs>
+
+          <!-- sol -->
+          <line x1="10" y1="384" x2="670" y2="384" style="stroke:var(--line)" stroke-width="2"/>
+          <!-- château d'eau -->
+          <g>
+            <path d="M46 186 L34 382 M122 186 L134 382 M40 280 L128 280 M44 230 L124 330 M124 230 L44 330" style="stroke:var(--m3)" stroke-width="4" stroke-linecap="round" fill="none"/>
+            <rect x="28" y="40" width="112" height="146" rx="18" fill="url(#gMetalH)" style="stroke:var(--m4)" stroke-width="1.5"/>
+            <rect x="32" y="44" width="104" height="138" rx="14" style="fill:var(--glass)"/>
+            <g clip-path="url(#tankClip)">
+              <rect id="tankWater" x="32" y="100" width="104" height="90" fill="url(#gWater)"/>
+              <path id="tankWave" d="M32 100 q13 -5 26 0 t26 0 t26 0 t26 0" fill="none" style="stroke:var(--water-hi)" stroke-width="2"/>
+            </g>
+            <rect x="40" y="20" width="88" height="26" rx="8" style="fill:var(--surface);stroke:var(--line)"/>
+            <text x="84" y="38" text-anchor="middle" class="mono" style="font-size:13px;font-weight:700;fill:var(--ink)" id="vccTxt">Vcc = 10 V</text>
+          </g>
+
+          <!-- tuyau : coque métal + verre -->
+          <path id="pipeOuter" d="M136 168 H160 Q178 168 178 186 V212 Q178 230 196 230 H596 Q614 230 614 248 V290" fill="none" style="stroke:var(--m3)" stroke-width="30" stroke-linecap="butt"/>
+          <path d="M136 168 H160 Q178 168 178 186 V212 Q178 230 196 230 H596 Q614 230 614 248 V290" fill="none" style="stroke:var(--m1)" stroke-width="26"/>
+          <path d="M136 168 H160 Q178 168 178 186 V212 Q178 230 196 230 H596 Q614 230 614 248 V290" fill="none" style="stroke:var(--glass)" stroke-width="22"/>
+          <!-- eau amont (toujours sous pression) -->
+          <path id="wUp" d="M136 168 H160 Q178 168 178 186 V212 Q178 230 196 230 H432" fill="none" style="stroke:var(--water)" stroke-width="18"/>
+          <path id="wUpFlow" class="flowdash" d="M136 168 H160 Q178 168 178 186 V212 Q178 230 196 230 H432" fill="none" style="stroke:var(--water-hi)" stroke-width="4" stroke-linecap="round" opacity="0"/>
+          <!-- eau aval -->
+          <path id="wDown" d="M432 230 H596 Q614 230 614 248 V290" fill="none" style="stroke:var(--water)" stroke-width="0"/>
+          <path id="wDownFlow" class="flowdash" d="M432 230 H596 Q614 230 614 248 V290" fill="none" style="stroke:var(--water-hi)" stroke-width="4" stroke-linecap="round" opacity="0"/>
+
+          <!-- étranglement R_C -->
+          <g id="rcBlock">
+            <rect id="rcTop" x="236" y="219" width="64" height="0" style="fill:var(--m3)"/>
+            <rect id="rcBot" x="236" y="241" width="64" height="0" style="fill:var(--m3)"/>
+            <rect x="230" y="212" width="8" height="36" rx="2" fill="url(#gMetalV)" style="stroke:var(--m4)"/>
+            <rect x="298" y="212" width="8" height="36" rx="2" fill="url(#gMetalV)" style="stroke:var(--m4)"/>
+            <rect x="238" y="262" width="60" height="22" rx="6" style="fill:var(--surface);stroke:var(--line)"/>
+            <text x="268" y="278" text-anchor="middle" class="mono" style="font-size:12px;font-weight:700;fill:var(--ink)" id="rcTxt">R_C</text>
+          </g>
+          <!-- étranglement R_E -->
+          <g id="reBlock">
+            <rect id="reTop" x="494" y="219" width="54" height="0" style="fill:var(--m3)"/>
+            <rect id="reBot" x="494" y="241" width="54" height="0" style="fill:var(--m3)"/>
+            <rect x="488" y="212" width="8" height="36" rx="2" fill="url(#gMetalV)" style="stroke:var(--m4)"/>
+            <rect x="546" y="212" width="8" height="36" rx="2" fill="url(#gMetalV)" style="stroke:var(--m4)"/>
+            <rect x="491" y="262" width="60" height="22" rx="6" style="fill:var(--surface);stroke:var(--line)"/>
+            <text x="521" y="278" text-anchor="middle" class="mono" style="font-size:12px;font-weight:700;fill:var(--ink)" id="reTxt">R_E</text>
+          </g>
+
+          <!-- manomètre V_C -->
+          <g id="gaugeC">
+            <rect x="335" y="186" width="10" height="30" fill="url(#gMetalH)"/>
+            <circle cx="340" cy="158" r="31" fill="url(#gMetalH)" style="stroke:var(--m4)"/>
+            <circle cx="340" cy="158" r="26" style="fill:var(--surface)"/>
+            <path d="M321.6 176.4 A26 26 0 1 1 358.4 176.4" fill="none" style="stroke:var(--line)" stroke-width="5"/>
+            <path id="gaugeCArc" d="" fill="none" style="stroke:var(--rose)" stroke-width="5" stroke-linecap="round"/>
+            <line id="needleC" x1="340" y1="158" x2="340" y2="138" style="stroke:var(--ink)" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="340" cy="158" r="3.5" style="fill:var(--ink)"/>
+            <text x="340" y="176" text-anchor="middle" class="mono" style="font-size:9.5px;font-weight:700;fill:var(--muted)">V_C</text>
+            <text id="gaugeCTxt" x="340" y="118" text-anchor="middle" class="mono" style="font-size:12.5px;font-weight:700;fill:var(--rose)">0 V</text>
+          </g>
+          <!-- manomètre V_E -->
+          <g id="gaugeE">
+            <rect x="575" y="190" width="8" height="26" fill="url(#gMetalH)"/>
+            <circle cx="579" cy="168" r="24" fill="url(#gMetalH)" style="stroke:var(--m4)"/>
+            <circle cx="579" cy="168" r="20" style="fill:var(--surface)"/>
+            <line id="needleE" x1="579" y1="168" x2="579" y2="153" style="stroke:var(--ink)" stroke-width="2.2" stroke-linecap="round"/>
+            <circle cx="579" cy="168" r="3" style="fill:var(--ink)"/>
+            <text x="579" y="183" text-anchor="middle" class="mono" style="font-size:8.5px;font-weight:700;fill:var(--muted)">V_E</text>
+            <text id="gaugeETxt" x="579" y="136" text-anchor="middle" class="mono" style="font-size:12px;font-weight:700;fill:var(--mauve)">0 V</text>
+          </g>
+
+          <!-- vanne -->
+          <g id="valve">
+            <rect x="396" y="208" width="10" height="44" rx="2" fill="url(#gMetalH)" style="stroke:var(--m4)"/>
+            <rect x="458" y="208" width="10" height="44" rx="2" fill="url(#gMetalH)" style="stroke:var(--m4)"/>
+            <ellipse cx="432" cy="230" rx="30" ry="27" fill="url(#gMetalV)" style="stroke:var(--m4)" stroke-width="1.5"/>
+            <rect x="419" y="178" width="26" height="28" rx="4" fill="url(#gMetalH)" style="stroke:var(--m4)"/>
+            <rect x="429" y="128" width="6" height="52" fill="url(#gMetalH)"/>
+            <text x="388" y="276" text-anchor="end" style="font:italic 600 18px var(--f-math);fill:var(--ink)">C</text>
+            <text x="476" y="276" style="font:italic 600 18px var(--f-math);fill:var(--ink)">E</text>
+          </g>
+          <g id="cross" opacity="0">
+            <rect x="404" y="292" width="56" height="20" rx="6" style="fill:var(--off-soft);stroke:var(--off)"/>
+            <text x="432" y="306" text-anchor="middle" class="mono" style="font-size:11px;font-weight:700;fill:var(--off)">FERMÉ</text>
+          </g>
+          <!-- courant de base -->
+          <path id="ibArrow" d="M300 92 H372" style="stroke:var(--rose)" stroke-width="3" fill="none" marker-end="url(#mIB)" stroke-linecap="round"/>
+          <text x="300" y="80" style="font:italic 600 18px var(--f-math);fill:var(--rose)">I<tspan style="font-size:12px" dy="4">B</tspan></text>
+          <text id="ibTxt" x="300" y="112" class="mono" style="font-size:12px;font-weight:700;fill:var(--rose)">0</text>
+          <!-- roue (base) -->
+          <g id="wheel" tabindex="0" role="slider" aria-label="Roue de la vanne : la base du transistor" aria-valuemin="0" aria-valuemax="100">
+            <circle cx="432" cy="104" r="50" fill="transparent"/>
+            <g id="wheelRot">
+              <circle class="rimring" cx="432" cy="104" r="40" fill="none" style="stroke:url(#gWheel)" stroke-width="9"/>
+              <g style="stroke:var(--wheel)" stroke-width="5" stroke-linecap="round">
+                <line x1="432" y1="104" x2="432" y2="66"/><line x1="432" y1="104" x2="468.1" y2="92.3"/><line x1="432" y1="104" x2="454.3" y2="134.7"/><line x1="432" y1="104" x2="409.7" y2="134.7"/><line x1="432" y1="104" x2="395.9" y2="92.3"/>
+              </g>
+              <circle cx="432" cy="64" r="6" style="fill:var(--wheel-hi);stroke:var(--wheel)" stroke-width="2"/>
+            </g>
+            <circle cx="432" cy="104" r="12" fill="url(#gMetalH)" style="stroke:var(--m4)"/>
+            <text x="432" y="109" text-anchor="middle" style="font:italic 700 14px var(--f-math);fill:var(--ink)">B</text>
+          </g>
+          <text x="488" y="70" class="mono" style="font-size:11px;fill:var(--muted)">↻ ouvrir</text>
+
+          <!-- explosion -->
+          <g id="burst" opacity="0">
+            <path d="M432 196 l7 14 l14 -7 l-4 15 l15 3 l-13 9 l11 11 l-16 -1 l-2 16 l-10 -12 l-11 11 l-1 -16 l-15 2 l10 -12 l-13 -9 l15 -3 l-4 -15 l14 7z" style="fill:var(--bad);stroke:var(--bad)" opacity=".3"/>
+            <g class="spray" style="stroke:var(--water-hi)" stroke-width="3" stroke-linecap="round">
+              <line x1="432" y1="210" x2="416" y2="196" style="--dx:-12px;--dy:-14px"/><line x1="440" y1="208" x2="458" y2="192" style="--dx:14px;--dy:-14px"/><line x1="426" y1="214" x2="404" y2="210" style="--dx:-16px;--dy:-2px"/><line x1="444" y1="214" x2="468" y2="208" style="--dx:16px;--dy:-4px"/>
+            </g>
+            <rect x="350" y="292" width="164" height="22" rx="7" style="fill:var(--bad-soft);stroke:var(--bad)"/>
+            <text x="432" y="307" text-anchor="middle" class="mono" style="font-size:11px;font-weight:700;fill:var(--bad)">JONCTION B–E GRILLÉE</text>
+          </g>
+
+          <!-- sortie et masse -->
+          <rect x="603" y="288" width="22" height="12" rx="3" fill="url(#gMetalH)" style="stroke:var(--m4)"/>
+          <path id="stream" d="M614 300 V358" style="stroke:var(--water)" stroke-width="0" stroke-linecap="round"/>
+          <path id="streamFall" class="fall" d="M614 300 V358" style="stroke:var(--water-hi)" stroke-width="0" stroke-linecap="round"/>
+          <rect x="572" y="356" width="84" height="22" rx="5" fill="url(#gMetalV)" style="stroke:var(--m4)"/>
+          <path d="M584 360 V374 M596 360 V374 M608 360 V374 M620 360 V374 M632 360 V374 M644 360 V374" style="stroke:var(--m4)" stroke-width="2"/>
+          <text x="614" y="402" text-anchor="middle" class="mono" style="font-size:11px;font-weight:700;fill:var(--muted)">MASSE · 0 V</text>
+          <!-- I_C -->
+          <text id="icTxt" x="520" y="332" text-anchor="middle" style="font:italic 600 18px var(--f-math);fill:var(--water)">I<tspan style="font-size:12px" dy="4">C</tspan><tspan dy="-4" id="icVal" style="font:700 13px var(--f-mono)"> = 0</tspan></text>
+          <!-- particules -->
+          <g id="parts"></g>
+          <path id="route" d="M136 168 H160 Q178 168 178 186 V212 Q178 230 196 230 H596 Q614 230 614 248 V290" fill="none" stroke="none"/>
+        </svg>
+        <div class="ctrlrow">
+          <label for="knob">Ouverture</label>
+          <input id="knob" type="range" min="0" max="1000" value="500">
+          <span class="exact"><span id="rkName">R<sub>B</sub></span> = <input id="rkExact" type="text" inputmode="decimal" aria-label="Valeur exacte de la résistance de base"> Ω</span>
+        </div>
+        <p class="note" id="presetNote"></p>
+      </div>
+
+      <div class="side">
+        <div class="modecard" id="modecard">
+          <div class="ico" id="modeIco"></div>
+          <div class="k">Mode de fonctionnement</div>
+          <div class="v" id="modeName">—</div>
+          <div class="why" id="modeWhy"></div>
+        </div>
+        <div class="vals">
+          <div><span class="n">I<sub>B</sub> · ce que tu tournes</span><span class="x" id="vIB"></span></div>
+          <div><span class="n">β·I<sub>B</sub> · ce que tu demandes</span><span class="x" id="vDem"></span></div>
+          <div><span class="n">I<sub>C,sat</sub> · le max du tuyau</span><span class="x" id="vSat"></span></div>
+          <div class="hl"><span class="n">I<sub>C</sub> · ce qui coule</span><span class="x" id="vIC"></span></div>
+          <div><span class="n">V<sub>E</sub> · V<sub>C</sub></span><span class="x" id="vVEC"></span></div>
+          <div class="hl"><span class="n">V<sub>CE</sub></span><span class="x" id="vVCE"></span></div>
+        </div>
+        <div class="card reason">
+          <div class="eyebrow">Ta copie, en direct</div>
+          <ol id="reason"></ol>
+          <div id="reasonBuf" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lab-below">
+      <div class="card panel">
+        <h3>Où est le point de repos ?</h3>
+        <p class="sub">Le point Q glisse sur la droite de charge. En bas : bloqué. À gauche : saturé. Entre les deux : linéaire.</p>
+        <div class="svgx"><svg id="graph" viewBox="0 0 440 290" role="img" aria-label="I_C en fonction de V_CE avec la droite de charge"></svg></div>
+      </div>
+      <div class="card panel">
+        <h3>Ajoute un petit signal</h3>
+        <p class="sub">On secoue la roue autour du repos, comme le micro de l'exo 2. Point bien centré : belle sinusoïde amplifiée. Sinon : coupée.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:10px 20px;align-items:center">
+          <label class="toggle"><input type="checkbox" id="sigOn" checked> Secouer la roue</label>
+          <div class="sl" style="flex:1;min-width:180px"><label for="sigAmp">Taille du signal <b id="sigAmpV"></b></label><input type="range" id="sigAmp" min="5" max="100" value="35"></div>
+        </div>
+        <div class="svgx"><svg id="wave" viewBox="0 0 440 200" role="img" aria-label="Signal d'entrée et tension de sortie"></svg></div>
+      </div>
+    </div>
+
+    <div class="card settings">
+      <div class="settings-top">
+        <h3>Réglages du montage</h3>
+        <div class="seg" role="group" aria-label="Polarisation">
+          <button id="mSimple" aria-pressed="true">R<sub>B</sub> depuis V<sub>cc</sub></button>
+          <button id="mPont" aria-pressed="false">Pont diviseur</button>
+        </div>
+      </div>
+      <div class="sliders">
+        <div class="sl"><label for="sVcc">V<sub>cc</sub> <b id="oVcc"></b></label><input id="sVcc" type="range" min="1" max="20" step="0.5"></div>
+        <div class="sl"><label for="sRC">R<sub>C</sub> <b id="oRC"></b></label><input id="sRC" type="range" min="0" max="1000"></div>
+        <div class="sl"><label for="sRE">R<sub>E</sub> <b id="oRE"></b></label><input id="sRE" type="range" min="0" max="1000"></div>
+        <div class="sl"><label for="sBeta">β <b id="oBeta"></b></label><input id="sBeta" type="range" min="10" max="300" step="5"></div>
+        <div class="sl"><label for="sVBE">V<sub>BE</sub> <b id="oVBE"></b></label><input id="sVBE" type="range" min="0.5" max="0.8" step="0.05"></div>
+        <div class="sl" id="wrapRbot"><label for="sRbot"><span id="rbotName">R<sub>1</sub></span> (bas du pont) <b id="oRbot"></b></label><input id="sRbot" type="range" min="0" max="1000"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="settings-top"><h3>Défis du labo</h3><span class="prog" id="missProg">0 / 7</span></div>
+      <div class="missions" id="missions"></div>
+    </div>
+  </div>
+</section>
+
+<section id="cours">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Niveau 1 · comprendre</div>
+      <h2>Le cours en 8 cartes</h2>
+      <p>Une idée par ligne. Lis une carte, puis va tourner la vanne pour la voir en vrai.</p>
+    </div>
+
+    <div class="grid2">
+      <div class="card lines">
+        <h3>1 · Le NPN et ses 3 pattes</h3>
+        <div class="schem" data-schem="npn"></div>
+        <p>Le courant entre par la base $B$ et par le collecteur $C$.</p>
+        <p>Tout ressort par l'émetteur $E$ (la flèche).</p>
+        <p>Petit courant $I_B$ → gros courant $I_C$. C'est la roue et le tuyau.</p>
+      </div>
+      <div class="card lines">
+        <h3>2 · Les 3 lois à savoir par cœur</h3>
+        <div class="law"><small>Toujours vrai (loi des nœuds)</small><div class="f">$I_E = I_C + I_B = (\beta+1)\,I_B$</div></div>
+        <div class="law m"><small>Base passante</small><div class="f">$V_{BE} \approx 0{,}7\ \text{V}$ <span class="muted" style="font-size:14px">(parfois 0,6 V, lis l'énoncé)</span></div></div>
+        <div class="law"><small>Seulement en linéaire</small><div class="f">$I_C = \beta\, I_B$</div></div>
+        <p class="tip">$\beta$ est grand (100, 150, 200…), donc souvent $\beta+1 \approx \beta$ et $I_E \approx I_C$.</p>
+      </div>
+    </div>
+
+    <div class="tbl" style="margin-top:16px">
+      <table class="modes">
+        <thead><tr><th>3 · Mode</th><th>La vanne</th><th>Condition</th><th>Résultat</th><th>Entre C et E</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill" style="--c:var(--off);--cs:var(--off-soft)">Bloqué</span></td><td>fermée</td><td>$V_{BE} &lt; 0{,}7\ \text{V}$</td><td>$I_B = I_C = 0$<br>$V_{CE} = V_{cc}$</td><td>interrupteur ouvert</td></tr>
+          <tr><td><span class="pill" style="--c:var(--lin);--cs:var(--lin-soft)">Linéaire</span></td><td>à moitié</td><td>$0 &lt; V_{CE} &lt; V_{cc}$</td><td>$I_C = \beta I_B$</td><td>source de courant commandée</td></tr>
+          <tr><td><span class="pill" style="--c:var(--sat);--cs:var(--sat-soft)">Saturé</span></td><td>à fond</td><td>$\beta I_B &gt; I_{C,sat}$</td><td>$V_{CE} \approx 0$<br>$I_C = I_{C,sat} &lt; \beta I_B$</td><td>un fil (interrupteur fermé)</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="tip" style="margin-top:10px">Linéaire → amplificateurs. Bloqué et saturé → portes logiques et interrupteurs.</p>
+
+    <div class="grid2" style="margin-top:16px">
+      <div class="card lines">
+        <h3>4 · Un ampli = deux histoires</h3>
+        <p>Chaque tension = une partie <b>continue</b> + une petite partie <b>variable</b>.</p>
+        <p>On les étudie l'une après l'autre (superposition).</p>
+        <div class="law m"><small>Histoire 1 · polarisation (continu)</small>
+          <p>Condensateur = <b>interrupteur ouvert</b>.</p>
+          <p>On cherche le point de repos : $I_B$, $I_C$, $V_{CE}$.</p></div>
+        <div class="law"><small>Histoire 2 · petits signaux (variable)</small>
+          <p>Condensateur = <b>fil</b>. $V_{cc}$ = <b>masse</b>.</p>
+          <p>On cherche $Z_e$, $Z_s$ et $A_v = \dfrac{u}{v}$.</p></div>
+      </div>
+      <div class="card lines">
+        <h3>5 · Le transistor en petits signaux</h3>
+        <div class="schem" data-schem="model"></div>
+        <p>Entre $B$ et $E$ : une résistance $r$.</p>
+        <p>Entre $C$ et $E$ : une source de courant $\beta\, i_b$ (et $\rho$ en parallèle, qu'on néglige).</p>
+        <p>Toujours la vanne : $i_b$ commande $\beta\, i_b$.</p>
+      </div>
+    </div>
+
+    <div class="grid3" style="margin-top:16px">
+      <div class="card lines">
+        <h3>6 · Viser le milieu</h3>
+        <p>Le signal fait bouger le point autour du repos.</p>
+        <p>Trop près de $V_{CE} = 0$ : le bas est coupé (saturation).</p>
+        <p>Trop près de $V_{cc}$ : l'autre côté est coupé (blocage).</p>
+        <p class="tip">Idéal : $V_{CE} \approx V_{cc}/2$. Il y a un défi pour ça.</p>
+      </div>
+      <div class="card lines">
+        <h3>7 · Le pont et $R_E$</h3>
+        <p>Le pont fixe la tension de base.</p>
+        <p>Si $I_B$ est négligeable, $R_1$ et $R_2$ sont en série : pont diviseur.</p>
+        <p>$R_E$ stabilise : $I_C$ monte → $V_E$ monte → $V_{BE}$ baisse → $I_C$ redescend.</p>
+      </div>
+      <div class="card lines">
+        <h3>8 · Le condensateur $C_E$</h3>
+        <p>Continu : ouvert, $R_E$ stabilise.</p>
+        <p>Variable : un fil, $R_E$ disparaît.</p>
+        <p>Sans $C_E$ : $A_v = -\dfrac{\beta R_C}{r + (\beta+1)R_E}$, petit.</p>
+        <p>Avec $C_E$ : $A_v = -\dfrac{\beta R_C}{r}$, gros.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="methode">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Niveau 2 · la méthode</div>
+      <h2>Les 3 recettes qui tombent à chaque fois</h2>
+    </div>
+    <div class="grid3">
+      <div class="card recipe">
+        <h3>A · Trouver le mode</h3>
+        <ol>
+          <li>$V_{BE}$ peut-il atteindre $0{,}7$ V ? Non → <b>bloqué</b>.</li>
+          <li>Maille d'entrée → $I_B$.</li>
+          <li>On suppose linéaire : $I_C = \beta I_B$.</li>
+          <li>Maille de sortie → $V_{CE}$.</li>
+          <li>$V_{CE} &gt; 0$ → <b>linéaire</b>. $V_{CE} &lt; 0$ (impossible) → <b>saturé</b>.</li>
+        </ol>
+        <p class="tip" style="margin-top:10px">Autre test (annale) : on compare $I_C$ à $I_{C,sat} = \dfrac{V_{cc}}{R_C + R_E}$.</p>
+      </div>
+      <div class="card recipe">
+        <h3>B · Polarisation</h3>
+        <ol>
+          <li>Condensateurs → ouverts.</li>
+          <li>Efface ce qui est coupé : $e_G$, $R_G$, $R_L$…</li>
+          <li>Maille d'entrée : $V_{cc} = R_B I_B + V_{BE} + R_E I_E$.</li>
+          <li>Isole $I_B$, puis $I_C = \beta I_B$.</li>
+          <li>Maille de sortie : $V_{cc} = R_C I_C + V_{CE} + R_E I_E$.</li>
+        </ol>
+        <p class="tip" style="margin-top:10px">Exo « à l'envers » (TD 3) : pars des tensions données, remonte aux résistances avec $R = U/I$.</p>
+      </div>
+      <div class="card recipe">
+        <h3>C · Petits signaux</h3>
+        <ol>
+          <li>Condensateurs → fils. $V_{cc}$ → masse.</li>
+          <li>Transistor → $r$ (B–E) + source $\beta i_b$ (C–E).</li>
+          <li>Écris $v$ en fonction de $i_b$ (côté entrée).</li>
+          <li>Écris $u$ en fonction de $i_b$ (côté sortie).</li>
+          <li>$A_v = u / v$ : les $i_b$ se simplifient.</li>
+        </ol>
+        <p class="tip" style="margin-top:10px">$Z_e$ : tout ce que voit $v$ vers la masse. $Z_s$ : ce que voit la sortie, source éteinte → $R_C$.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="td">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Niveau 3 · TD transistors bipolaires</div>
+      <h2>Exercices 1, 2 et 3</h2>
+      <p>Tape tes résultats avant d'ouvrir la correction. Bonne réponse du premier coup : +30 XP. Les virgules marchent.</p>
+    </div>
+
+    <!-- EXO 1 -->
+    <div class="exo" data-exo="td1">
+      <div class="exo-head"><h3>Exercice 1 · Trois montages mal polarisés</h3><span class="prog"></span></div>
+      <p class="ctx">Le transistor n'est pas polarisé pour la zone linéaire. Pourquoi ? Quel est alors son mode ?</p>
+      <div class="given"><span>$V_{cc} = 10\ \text{V}$</span><span>$\beta = 50$</span></div>
+      <div class="card"><div class="schems">
+        <div><div class="schem" data-schem="td1a"></div><p class="figcap">a.</p></div>
+        <div><div class="schem" data-schem="td1b"></div><p class="figcap">b.</p></div>
+        <div><div class="schem" data-schem="td1c"></div><p class="figcap">c.</p></div>
+      </div></div>
+
+      <div class="card qcard">
+        <div class="qt"><span class="qn">a</span><p>La base est reliée directement à l'émetteur.</p></div>
+        <div class="asks">
+          <div class="ask" data-id="td1a-vbe" data-ans="0" data-unit="V" data-abs="0.01"><span class="al">$V_{BE} =$</span></div>
+          <div class="ask" data-id="td1a-mode" data-choices="Bloqué|Linéaire|Saturé" data-ans="0"><span class="al">Mode ?</span></div>
+        </div>
+        <details class="corr"><summary>Correction</summary><div class="body">
+          <p>Un fil relie $B$ et $E$ : $V_{BE} = 0\ \text{V}$.</p>
+          <p>$0 &lt; 0{,}7\ \text{V}$ : la jonction ne conduit pas.</p>
+          <p>$I_B = 0 \Rightarrow I_C = 0 \Rightarrow V_{CE} = V_{cc} - R_C \cdot 0 = 10\ \text{V}$.</p>
+          <p class="ans">Bloqué (interrupteur ouvert).</p>
+          <button class="load" data-preset="td1a">Voir dans le labo</button>
+        </div></details>
+      </div>
+
+      <div class="card qcard">
+        <div class="qt"><span class="qn">b</span><p>La base est branchée directement sur $V_{cc}$.</p></div>
+        <div class="asks">
+          <div class="ask" data-id="td1b-mode" data-choices="Bloqué|Linéaire|Saturé, puis il grille" data-ans="2"><span class="al">Mode ?</span></div>
+        </div>
+        <details class="corr"><summary>Correction</summary><div class="body">
+          <p>Aucune résistance ne limite le courant de base.</p>
+          <p>On impose $V_{BE} = V_{cc} = 10\ \text{V}$ alors que la jonction veut $0{,}7\ \text{V}$.</p>
+          <p>$I_B = \dfrac{10 - 0{,}7}{0} \to \infty$.</p>
+          <p class="ans">En théorie saturé. En pratique la jonction B–E est détruite.</p>
+          <button class="load" data-preset="td1b">Voir dans le labo</button>
+        </div></details>
+      </div>
+
+      <div class="card qcard">
+        <div class="qt"><span class="qn">c</span><p>$R_B = 1500\ \Omega$ et $R_C = 200\ \Omega$.</p></div>
+        <div class="asks">
+          <div class="ask" data-id="td1c-ib" data-ans="6.2" data-unit="mA"><span class="al">$I_B =$</span></div>
+          <div class="ask" data-id="td1c-ic" data-ans="310" data-unit="mA" data-hint="Si c'était linéaire : I_C = β·I_B."><span class="al">$I_C$ si c'était linéaire $=$</span></div>
+          <div class="ask" data-id="td1c-vce" data-ans="-52" data-unit="V" data-hint="Maille de sortie avec le I_C linéaire. Le résultat est bizarre, c'est normal."><span class="al">$V_{CE}$ calculé avec ce $I_C$ $=$</span></div>
+          <div class="ask" data-id="td1c-sat" data-ans="50" data-unit="mA"><span class="al">$I_{C,sat} = V_{cc}/R_C =$</span></div>
+          <div class="ask" data-id="td1c-mode" data-choices="Bloqué|Linéaire|Saturé" data-ans="2"><span class="al">Mode ?</span></div>
+          <div class="ask" data-id="td1c-rb" data-ans="10" data-unit="kΩ" data-hint="Il faut β·I_B < I_C,sat."><span class="al">$R_B$ minimum pour être linéaire $=$</span></div>
+        </div>
+        <details class="corr"><summary>Correction</summary><div class="body">
+          <p>Maille d'entrée :</p>
+          <p>$$I_B = \frac{V_{cc} - V_{BE}}{R_B} = \frac{10 - 0{,}7}{1500} \approx 6{,}2\ \text{mA}$$</p>
+          <p>Si linéaire : $I_C = \beta I_B = 50 \times 6{,}2 = 310\ \text{mA}$.</p>
+          <p>Maille de sortie :</p>
+          <p>$$V_{CE} = V_{cc} - R_C I_C = 10 - 200 \times 0{,}31 = -52\ \text{V}$$</p>
+          <p>Impossible ! Le tuyau ne peut donner que $I_{C,sat} = \dfrac{V_{cc}}{R_C} = 50\ \text{mA}$.</p>
+          <p class="ans">Saturé : $I_C = 50\ \text{mA}$, $V_{CE} \approx 0$.</p>
+          <p>Pour être linéaire : $\beta \dfrac{V_{cc}}{R_B} &lt; \dfrac{V_{cc}}{R_C} \Rightarrow R_B &gt; \beta R_C = 10\ \text{k}\Omega$.</p>
+          <button class="load" data-preset="td1c">Voir dans le labo</button>
+        </div></details>
+      </div>
+    </div>
+
+    <!-- EXO 2 -->
+    <div class="exo" data-exo="td2">
+      <div class="exo-head"><h3>Exercice 2 · Ampli émetteur commun, polarisation par $R_B$</h3><span class="prog"></span></div>
+      <p class="ctx">Le micro donne un signal trop faible pour le CAN : on l'amplifie. $C_1$, $C_2$ sont des condensateurs de liaison.</p>
+      <div class="card"><div class="schem" data-schem="td2"></div></div>
+      <div class="given"><span>$R_B = 10\ \text{k}\Omega$</span><span>$R_C = 50\ \Omega$</span><span>$V_{cc} = 10\ \text{V}$</span><span>$V_{BE} = 0{,}7\ \text{V}$</span><span>$\beta = 100$</span></div>
+
+      <div class="card qcard">
+        <div class="qt"><span class="qn">A1</span><p>Dessiner le schéma de polarisation.</p></div>
+        <div class="asks"><div class="ask" data-id="td2-a1" data-choices="Les condensateurs deviennent des fils|Les condensateurs deviennent des interrupteurs ouverts|On remplace V_cc par la masse" data-ans="1"><span class="al">En continu…</span></div></div>
+        <details class="corr"><summary>Correction</summary><div class="body">
+          <p>$C_1$, $C_2$ ouverts : $e_G$, $R_G$ et $R_L$ sont coupés du montage.</p>
+          <div class="schem" data-schem="td2pol"></div>
+        </div></details>
+      </div>
+
+      <div class="card qcard">
+        <div class="qt"><span class="qn">A2</span><p>Point de polarisation : $I_B$, $I_C$, $I_E$, $V_{CE}$, $V_{BE}$.</p></div>
+        <div class="asks">
+          <div class="ask" data-id="td2-ib" data-ans="0.93" data-unit="mA"><span class="al">$I_B =$</span></div>
+          <div class="ask" data-id="td2-ic" data-ans="93" data-unit="mA"><span class="al">$I_C =$</span></div>
+          <div class="ask" data-id="td2-ie" data-ans="93.93" data-unit="mA" data-tol="0.006" data-hint="I_E = I_C + I_B, garde 2 décimales."><span class="al">$I_E =$</span></div>
+          <div class="ask" data-id="td2-vce" data-ans="5.35" data-unit="V"><span class="al">$V_{CE} =$</span></div>
+        </div>
+        <details class="corr"><summary>Correction</summary><div class="body">
+          <p>Maille d'entrée : $V_{cc} = R_B I_B + V_{BE}$.</p>
+          <p>$$I_B = \frac{V_{cc} - V_{BE}}{R_B} = \frac{10 - 0{,}7}{10\,000} = 0{,}93\ \text{mA}$$</p>
+          <p>$$I_C = \beta I_B = 93\ \text{mA} \qquad I_E = I_C + I_B = 93{,}93\ \text{mA}$$</p>
+          <p>Maille de sortie : $V_{cc} = R_C I_C + V_{CE}$.</p>
+          <p>$$V_{CE} = 10 - 50 \times 0{,}093 = 5{,}35\ \text{V} \qquad V_{BE} = 0{,}7\ \text{V}$$</p>
+          <p class="ans">$0 &lt; V_{CE} &lt; V_{cc}$ : linéaire, presque au milieu. Idéal pour amplifier.</p>
+          <button class="load" data-preset="td2">Voir dans le labo</button>
+        </div></details>
+      </div>
+
+      <div class="card qcard">
+        <div class="qt"><span class="qn">B1</span><p>Schéma équivalent petits signaux.</p></div>
+        <div class="asks"><div class="ask" data-id="td2-b1" data-choices="R_B se retrouve entre la base et la masse|R_B disparaît|R_B est en série avec r" data-ans="0"><span class="al">En variable, $V_{cc}$ devient la masse, donc…</span></div></div>
+        <details class="corr"><summary>Correction</summary><div class="body">
+          <p>$C_1$, $C_2$ → fils. $V_{cc}$ → masse.</p>
+          <p>$R_B$ et $R_C$ tombent vers la masse par le haut.</p>
+          <p>Transistor → $r$ + source $\beta i_b$.</p>
+          <div class="schem" data-schem="td2ss"></div>
+        </div></details>
+      </div>
+
+      <div class="card qcard">
+        <div class="qt"><span class="qn">B2</span><p>$Z_e$, $Z_s$ et amplification $A_v$ (on néglige $\rho$).</p></div>
+        <div class="asks">
+          <div class="ask" data-id="td2-ze" data-choices="$Z_e = R_B /\!/ r$|$Z_e = R_B + r$|$Z_e = R_C$" data-ans="0"><span class="al">Résistance d'entrée</span></div>
+          <div class="ask" data-id="td2-av" data-choices="$A_v = -\dfrac{\beta (R_C /\!/ R_L)}{r}$|$A_v = \dfrac{r}{\beta R_C}$|$A_v = -\beta$" data-ans="0"><span class="al">Amplification</span></div>
+        </div>
+        <details class="corr"><summary>Correction</summary><div class="body">
+          <p>$v$ voit $R_B$ et $r$ en parallèle vers la masse :</p>
+          <p>$$Z_e = R_B /\!/ r = \frac{R_B\, r}{R_B + r}$$</p>
+          <p>Source éteinte ($\beta i_b = 0$), la sortie voit $R_C$ : $Z_s = R_C$.</p>
+          <p>Entrée : $v = r\, i_b$.</p>
+          <p>Sortie : $u = -\beta i_b\,(R_C /\!/ R_L)$. Le signe − : le courant monte dans $R_C$.</p>
+          <p>$$A_v = \frac{u}{v} = -\frac{\beta\,(R_C /\!/ R_L)}{r} \qquad \text{à vide : } A_v = -\frac{\beta R_C}{r}$$</p>
+          <p class="tip">Signe − : la sortie est inversée. Quand $v$ monte, $u$ descend (regarde le petit signal du labo).</p>
+        </div></details>
+      </div>
+    </div>
+
+    <!-- EXO 3 -->
+    <div class="exo" data-exo="td3">
+      <div class="exo-head"><h3>Exercice 3 · Ampli émetteur commun, polarisation par pont</h3><span class="prog"></span></div>
+      <p class="ctx">Station météo : signal très faible. Le pont de résistances rend le montage stable malgré la température. $C_E$ est un condensateur de découplage.</p>
+      <div class="card"><div class="schem" data-schem="td3"></div></div>
+      <div class="given"><span>$V_E = 2\ \text{V}$</span><span>$V_C = 6\ \text{V}$</span><span>$I_B = 100\ \mu\text{A}$</span><span>$V_{cc} = 10\ \text{V}$</span><span>$\beta = 100$</span><span>$R_1 = 10\ \text{k}\Omega$</span></div>
+
+      <div class="card qcard">
+        <div class="qt"><span class="qn">A1</span><p>Schéma de polarisation.</p></div>
+        <div class="asks"><div class="ask" data-id="td3-a1" data-choices="R_E reste seule, C_E est ouvert|R_E est court-circuitée par C_E|R_E et R_1 sont en parallèle" data-ans="0"><span class="al">En continu, côté émetteur…</span></div></div>
+        <details class="corr"><summary>Correction</summary><div class="body">
+          <p>$C_1$, $C_2$, $C_E$ ouverts : $e_G$, $R_G$, $R_L$ disparaissent, $R_E$ reste seule.</p>
+          <div class="schem" data-schem="td3pol"></div>
+        </div></details>
+      </div>
+
+      <div class="card qcard">
+        <div class="qt"><span class="qn">A2</span><p>Calculer $R_2$, $R_C$ et $R_E$. Ici on part des tensions et on remonte.</p></div>
+        <div class="asks">
+          <div class="ask" data-id="td3-ic" data-ans="10" data-unit="mA"><span class="al">$I_C = \beta I_B =$</span></div>
+          <div class="ask" data-id="td3-ie" data-ans="10.1" data-unit="mA" data-tol="0.005"><span class="al">$I_E =$</span></div>
+          <div class="ask" data-id="td3-re" data-ans="198" data-unit="Ω" data-tol="0.012" data-hint="R_E porte V_E et est traversée par I_E."><span class="al">$R_E =$</span></div>
+          <div class="ask" data-id="td3-rc" data-ans="400" data-unit="Ω" data-hint="R_C porte V_cc − V_C et est traversée par I_C."><span class="al">$R_C =$</span></div>
+          <div class="ask" data-id="td3-vb" data-ans="2.7" data-unit="V"><span class="al">$V_B =$</span></div>
+          <div class="ask" data-id="td3-r2" data-ans="19.73" data-unit="kΩ" data-tol="0.015" data-hint="Courant dans R_1 = V_B / R_1, puis loi des nœuds en B pour le courant dans R_2."><span class="al">$R_2 =$</span></div>
+        </div>
+        <details class="corr"><summary>Correction</summary><div class="body">
+          <p><b>Courants.</b> $I_C = \beta I_B = 10\ \text{mA}$ et $I_E = I_C + I_B = 10{,}1\ \text{mA}$.</p>
+          <p><b>$R_E$</b> : tension $V_E$, courant $I_E$.</p>
+          <p>$$R_E = \frac{V_E}{I_E} = \frac{2}{10{,}1 \times 10^{-3}} \approx 198\ \Omega$$</p>
+          <p><b>$R_C$</b> : tension $V_{cc} - V_C$, courant $I_C$.</p>
+          <p>$$R_C = \frac{V_{cc} - V_C}{I_C} = \frac{10 - 6}{10 \times 10^{-3}} = 400\ \Omega$$</p>
+          <p><b>$R_2$</b> : il faut la tension de base, $V_B = V_E + V_{BE} = 2{,}7\ \text{V}$.</p>
+          <p>Courant dans $R_1$ : $I_1 = \dfrac{V_B}{R_1} = 0{,}27\ \text{mA}$.</p>
+          <p>Nœud $B$ : $I_2 = I_1 + I_B = 0{,}37\ \text{mA}$.</p>
+          <p>$$R_2 = \frac{V_{cc} - V_B}{I_2} = \frac{10 - 2{,}7}{0{,}37 \times 10^{-3}} \approx 19{,}7\ \text{k}\Omega$$</p>
+          <p class="tip">Vérif : $V_{CE} = V_C - V_E = 4\ \text{V} &gt; 0$, donc linéaire.</p>
+          <button class="load" data-preset="td3">Voir dans le labo</button>
+        </div></details>
+      </div>
+
+      <div class="card qcard">
+        <div class="qt"><span class="qn">B1</span><p>Petits signaux avec $C_E$ : $Z_e$, $Z_s$, $A_v$.</p></div>
+        <div class="asks">
+          <div class="ask" data-id="td3-ze" data-choices="$Z_e = R_1 /\!/ R_2 /\!/ r$|$Z_e = R_1 + R_2 + r$|$Z_e = R_E$" data-ans="0"><span class="al">Résistance d'entrée</span></div>
+          <div class="ask" data-id="td3-av" data-choices="$-\dfrac{\beta (R_C /\!/ R_L)}{r}$|$-\dfrac{\beta R_C}{r + (\beta+1) R_E}$|$-\dfrac{R_C}{R_E}$" data-ans="0"><span class="al">$A_v =$</span></div>
+        </div>
+        <details class="corr"><summary>Correction</summary><div class="body">
+          <p>$C_E$ → fil : $R_E$ est court-circuitée, l'émetteur est à la masse.</p>
+          <p>$V_{cc}$ → masse : $R_1$ et $R_2$ sont en parallèle.</p>
+          <div class="schem" data-schem="td3ss"></div>
+          <p>$$Z_e = R_1 /\!/ R_2 /\!/ r \qquad Z_s = R_C \qquad A_v = -\frac{\beta\,(R_C /\!/ R_L)}{r}$$</p>
+          <p class="tip">Même résultat que l'exo 2 : seule la résistance de base change.</p>
+        </div></details>
+      </div>
+
+      <div class="card qcard">
+        <div class="qt"><span class="qn">B2</span><p>Émetteur partiellement découplé : $C_E$ ne court-circuite que $R_{E2}$.</p></div>
+        <div class="schem" data-schem="td3b"></div>
+        <div class="asks">
+          <div class="ask" data-id="td3-av2" data-choices="$-\dfrac{\beta (R_C /\!/ R_L)}{r + (\beta+1) R_{E1}}$|$-\dfrac{\beta (R_C /\!/ R_L)}{r}$|$-\dfrac{\beta R_{E1}}{r}$" data-ans="0"><span class="al">$A_v =$</span></div>
+        </div>
+        <details class="corr"><summary>Correction</summary><div class="body">
+          <p>$R_{E1}$ reste entre l'émetteur et la masse.</p>
+          <div class="schem" data-schem="td3ss2"></div>
+          <p>$R_{E1}$ est traversée par $i_b + \beta i_b = (\beta+1)\, i_b$.</p>
+          <p>$$v = r\, i_b + (\beta+1) R_{E1}\, i_b \qquad u = -\beta i_b\,(R_C /\!/ R_L)$$</p>
+          <p>$$A_v = -\frac{\beta\,(R_C /\!/ R_L)}{r + (\beta+1) R_{E1}} \approx -\frac{R_C /\!/ R_L}{R_{E1}}$$</p>
+          <p>$$Z_e = R_1 /\!/ R_2 /\!/ \big(r + (\beta+1) R_{E1}\big) \qquad Z_s = R_C$$</p>
+          <p class="tip">Gain plus petit, mais il ne dépend presque plus de $\beta$ : plus stable. $\rho$ (résistance de sortie du transistor) est négligée, comme demandé.</p>
+        </div></details>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="annale">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Niveau 4 · annale · mars 2026</div>
+      <h2>Examen Électronique · Transistors bipolaires</h2>
+      <p>Le vrai sujet, corrigé. Sans calculatrice le jour J : entraîne-toi à poser les calculs à la main.</p>
+    </div>
+
+    <div class="exo" data-exo="an1">
+      <div class="exo-head"><h3>Exercice 1 · Amplificateur <span class="muted" style="font-size:.7em">(10 pts)</span></h3><span class="prog"></span></div>
+      <div class="card"><div class="schem" data-schem="an1"></div></div>
+      <div class="given"><span>$R_B = 150\ \text{k}\Omega$</span><span>$R_C = 1\ \text{k}\Omega$</span><span>$R_E = 1\ \text{k}\Omega$</span><span>$V_{cc} = 10\ \text{V}$</span><span>$V_{BE} = 0{,}7\ \text{V}$</span><span>$\beta = 150$</span></div>
+      <p class="warn">Ici $R_E$ n'a pas de condensateur de découplage : elle reste aussi en petits signaux.</p>
+
+      <div class="card qcard">
+        <div class="qt"><span class="qn">A1</span><p>Dessiner le schéma de polarisation.</p></div>
+        <details class="corr"><summary>Correction</summary><div class="body">
+          <p>$C_1$, $C_2$ ouverts. On note les tensions sur chaque résistance, ça prépare les mailles.</p>
+          <div class="schem" data-schem="an1pol"></div>
+        </div></details>
+      </div>
+
+      <div class="card qcard">
+        <div class="qt"><span class="qn">A2</span><p>$I_B$, $I_C$, $V_{CE}$ (linéaire admis, $\beta + 1 \approx \beta$).</p></div>
+        <div class="asks">
+          <div class="ask" data-id="an1-ib" data-ans="31" data-unit="µA"><span class="al">$I_B =$</span></div>
+          <div class="ask" data-id="an1-ic" data-ans="4.65" data-unit="mA"><span class="al">$I_C =$</span></div>
+          <div class="ask" data-id="an1-vce" data-ans="0.7" data-unit="V" data-abs="0.03" data-hint="Maille de sortie : V_cc = R_C·I_C + V_CE + R_E·I_E, avec I_E ≈ I_C."><span class="al">$V_{CE} =$</span></div>
+        </div>
+        <details class="corr"><summary>Correction</summary><div class="body">
+          <p>Linéaire : $V_{BE} = 0{,}7\ \text{V}$, $I_C = \beta I_B$, $I_E = (\beta+1) I_B \approx I_C$.</p>
+          <p>Maille d'entrée :</p>
+          <p>$$V_{cc} = R_B I_B + V_{BE} + R_E \beta I_B \;\Rightarrow\; I_B = \frac{V_{cc} - V_{BE}}{R_B + \beta R_E}$$</p>
+          <p>$$I_B = \frac{9{,}3}{150\,000 + 150\,000} = 31\ \mu\text{A} \qquad I_C = \beta I_B = 4{,}65\ \text{mA}$$</p>
+          <p>Maille de sortie :</p>
+          <p>$$V_{CE} = V_{cc} - (R_C + R_E)\, I_C = 10 - 2000 \times 4{,}65 \times 10^{-3} = 0{,}7\ \text{V}$$</p>
+          <p class="ans">$I_B = 31\ \mu\text{A}$, $I_C = 4{,}65\ \text{mA}$, $V_{CE} = 0{,}7\ \text{V}$.</p>
+          <p class="tip">Calcul de tête : $\beta R_E = 150 \times 1\ \text{k} = 150\ \text{k}$, donc le dénominateur vaut $300\ \text{k}\Omega$. Et $9{,}3 / 300 = 0{,}031$.</p>
+          <p class="tip">Regarde dans le labo : $V_{CE} = 0{,}7\ \text{V}$, c'est très près de la saturation ! Le petit signal y est coupé.</p>
+          <button class="load" data-preset="an1">Voir dans le labo</button>
+        </div></details>
+      </div>
+
+      <div class="card qcard">
+        <div class="qt"><span class="qn">B1</span><p>Schéma équivalent petits signaux.</p></div>
+        <details class="corr"><summary>Correction</summary><div class="body">
+          <p>$C_1$, $C_2$ → fils. $V_{cc}$ → masse. Pas de $C_E$ : $R_E$ reste sous l'émetteur.</p>
+          <div class="schem" data-schem="an1ss"></div>
+          <p>$R_E$ est traversée par $(\beta+1)\, i_b$, d'où la tension $R_E (\beta+1)\, i_b$.</p>
+        </div></details>
+      </div>
+
+      <div class="card qcard">
+        <div class="qt"><span class="qn">B2</span><p>Expression de $A_v$ ($\beta+1 \approx \beta$, $\rho$ négligée). Exprime $v$ et $u$ en fonction de $i_b$.</p></div>
+        <div class="asks">
+          <div class="ask" data-id="an1-v" data-choices="$v = (r + \beta R_E)\, i_b$|$v = r\, i_b$|$v = R_B\, i_b$" data-ans="0"><span class="al">Entrée</span></div>
+          <div class="ask" data-id="an1-av" data-choices="$-\dfrac{\beta R_C R_u}{(r + \beta R_E)(R_C + R_u)}$|$-\dfrac{\beta R_C}{r}$|$-\dfrac{R_C R_u}{R_E (R_C + R_u)}\beta$" data-ans="0"><span class="al">$A_v =$</span></div>
+        </div>
+        <details class="corr"><summary>Correction</summary><div class="body">
+          <p>$$v = r\, i_b + (\beta+1) R_E\, i_b \approx (r + \beta R_E)\, i_b$$</p>
+          <p>$$u = -\frac{R_C R_u}{R_C + R_u}\, \beta i_b$$</p>
+          <p>$$A_v = \frac{u}{v} = -\frac{\beta R_C R_u}{(r + \beta R_E)(R_C + R_u)}$$</p>
+        </div></details>
+      </div>
+    </div>
+
+    <div class="exo" data-exo="an2">
+      <div class="exo-head"><h3>Exercice 2 · Polarisation <span class="muted" style="font-size:.7em">(4 pts + 1 bonus)</span></h3><span class="prog"></span></div>
+      <div class="grid2">
+        <div class="card"><div class="schem" data-schem="an2"></div></div>
+        <div class="card lines">
+          <div class="given"><span>$R_1 = 10\ \text{k}\Omega$</span><span>$R_2 = 5\ \text{k}\Omega$</span><span>$R_E = 1000\ \Omega$</span><span>$V_{cc} = 15\ \text{V}$</span><span>$\beta = 200$</span><span>$V_{BE} = 0{,}6\ \text{V}$</span></div>
+          <p class="warn">Piège : ici $V_{BE} = 0{,}6\ \text{V}$, et le collecteur est relié directement à $V_{cc}$ (pas de $R_C$).</p>
+          <p class="tip">Attention aux noms : ici $R_1$ est en haut et $R_2$ en bas, l'inverse du TD.</p>
+        </div>
+      </div>
+
+      <div class="card qcard">
+        <div class="qt"><span class="qn">1</span><p>Courant de saturation $I_{C,sat}$ (quand $V_{CE} = 0$).</p></div>
+        <div class="asks"><div class="ask" data-id="an2-sat" data-ans="15" data-unit="mA"><span class="al">$I_{C,sat} =$</span></div></div>
+        <details class="corr"><summary>Correction</summary><div class="body">
+          <p>Maille de sortie : $V_{cc} = V_{CE} + R_E I_E$.</p>
+          <p>Saturé : $V_{CE} = 0$ et $I_{C,sat} = I_{E,sat}$.</p>
+          <p>$$I_{C,sat} = \frac{V_{cc}}{R_E} = \frac{15}{1000} = 15\ \text{mA}$$</p>
+        </div></details>
+      </div>
+
+      <div class="card qcard">
+        <div class="qt"><span class="qn">2</span><p>$I_E$ si $I_B$ est négligeable devant les courants dans $R_1$ et $R_2$.</p></div>
+        <div class="asks"><div class="ask" data-id="an2-ie" data-ans="4.4" data-unit="mA" data-hint="I_B négligeable → R_1 et R_2 en série → pont diviseur pour la tension sur R_2."><span class="al">$I_E =$</span></div>
+          <div class="ask" data-id="an2-bonus" data-choices="Car I_C < I_C,sat|Car V_BE = 0,6 V|Car R_1 > R_2" data-ans="0"><span class="al">Bonus · pourquoi linéaire ?</span></div></div>
+        <details class="corr"><summary>Correction</summary><div class="body">
+          <p>$I_B$ négligeable : le même courant traverse $R_1$ et $R_2$, elles sont en série.</p>
+          <div class="schem" data-schem="an2pont"></div>
+          <p>Pont diviseur : $U_{R_2} = \dfrac{R_2}{R_1 + R_2}\, V_{cc} = \dfrac{5}{15} \times 15 = 5\ \text{V}$.</p>
+          <p>Maille : $U_{R_2} - V_{BE} - R_E I_E = 0$.</p>
+          <p>$$I_E = \frac{1}{R_E}\left(\frac{R_2}{R_1 + R_2} V_{cc} - V_{BE}\right) = \frac{5 - 0{,}6}{1000} = 4{,}4\ \text{mA}$$</p>
+          <p class="ans">Bonus : $I_C \approx I_E = 4{,}4\ \text{mA} &lt; I_{C,sat} = 15\ \text{mA}$, donc linéaire.</p>
+        </div></details>
+      </div>
+
+      <div class="card qcard">
+        <div class="qt"><span class="qn">3</span><p>En déduire $I_B$ et $V_{CE}$.</p></div>
+        <div class="asks">
+          <div class="ask" data-id="an2-ib" data-ans="22" data-unit="µA"><span class="al">$I_B =$</span></div>
+          <div class="ask" data-id="an2-vce" data-ans="10.6" data-unit="V"><span class="al">$V_{CE} =$</span></div>
+        </div>
+        <details class="corr"><summary>Correction</summary><div class="body">
+          <p>$$I_B = \frac{I_C}{\beta} \approx \frac{I_E}{\beta} = \frac{4{,}4\ \text{mA}}{200} = 22\ \mu\text{A}$$</p>
+          <p>$$V_{CE} = V_{cc} - R_E I_E = 15 - 4{,}4 = 10{,}6\ \text{V}$$</p>
+          <p class="tip">Le labo calcule sans négliger $I_B$ : il trouve $I_E \approx 4{,}34\ \text{mA}$ et $V_{CE} \approx 10{,}7\ \text{V}$. L'approximation de l'énoncé est très bonne.</p>
+          <button class="load" data-preset="an2">Voir dans le labo</button>
+        </div></details>
+      </div>
+    </div>
+
+    <div class="exo" data-exo="an3">
+      <div class="exo-head"><h3>Exercice 3 · QCM <span class="muted" style="font-size:.7em">(6 pts, pas de points négatifs)</span></h3><span class="prog"></span></div>
+      <div class="quiz" id="qcmAnnale"></div>
+    </div>
+  </div>
+</section>
+
+<section id="boss">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Niveau final</div>
+      <h2>Le boss du chapitre</h2>
+      <p>Les pièges classiques, mélangés. Vise le sans-faute pour le badge.</p>
+    </div>
+    <div class="exo" data-exo="boss" style="margin-top:0">
+      <div class="exo-head"><span class="prog"></span></div>
+      <div class="quiz" id="qcmBoss"></div>
+    </div>
+  </div>
+</section>
+
+<section id="trophees">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Ta progression</div>
+      <h2>Trophées</h2>
+    </div>
+    <div class="statrow">
+      <div class="stat"><b id="stXP">0</b><span>XP</span></div>
+      <div class="stat"><b id="stAns">0</b><span>réponses justes</span></div>
+      <div class="stat"><b id="stBest">0</b><span>meilleur combo</span></div>
+      <div class="stat"><b id="stBadges">0</b><span>trophées</span></div>
+    </div>
+    <div class="badges" id="badges"></div>
+    <div style="margin-top:18px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <button class="reset" id="resetBtn">Remettre à zéro</button>
+      <span class="muted" style="font-size:13.5px">La progression reste dans ce navigateur.</span>
+    </div>
+  </div>
+</section>
+
+<footer><div class="wrap">Labo du Transistor · TD Les transistors bipolaires (Promo 2030) et examen de mars 2026 · EPITA</div></footer>
+</main>
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* =================== formats =================== */
+function sig(x){ if(!isFinite(x)||x===0) return x; const p=Math.pow(10,2-Math.floor(Math.log10(Math.abs(x)))); return Math.round(x*p)/p; }
+function fr(n,d){ return (Math.round(n*Math.pow(10,d))/Math.pow(10,d)).toString().replace(".",","); }
+function nice(x){ const a=Math.abs(x); return a>=100?fr(x,0):a>=10?fr(x,1):fr(x,2); }
+function fI(A){ if(!isFinite(A)) return "∞"; const a=Math.abs(A); if(a===0) return "0 A"; if(a>=1) return nice(A)+" A"; if(a>=1e-3) return nice(A*1e3)+" mA"; return nice(A*1e6)+" µA"; }
+function fV(V){ return nice(V)+" V"; }
+function fR(R){ if(R===Infinity) return "∞"; if(R===0) return "0 Ω"; if(R>=1e6) return nice(R/1e6)+" MΩ"; if(R>=1e3) return nice(R/1e3)+" kΩ"; return nice(R)+" Ω"; }
+const tn = x => nice(x).replace(",","{,}");
+function tI(A){ if(!isFinite(A)) return "\\infty"; const a=Math.abs(A); if(a===0) return "0"; if(a>=1) return tn(A)+"\\,\\text{A}"; if(a>=1e-3) return tn(A*1e3)+"\\,\\text{mA}"; return tn(A*1e6)+"\\,\\mu\\text{A}"; }
+function tV(V){ return tn(V)+"\\,\\text{V}"; }
+function tR(R){ if(R===Infinity) return "\\infty"; if(R>=1e6) return tn(R/1e6)+"\\,\\text{M}\\Omega"; if(R>=1e3) return tn(R/1e3)+"\\,\\text{k}\\Omega"; return tn(R)+"\\,\\Omega"; }
+function texName(n){ return n.replace(/_(\w+)/, "_{$1}"); }
+
+/* =================== MathJax =================== */
+function typeset(nodes){
+  const MJ = window.MathJax;
+  if(!MJ || !MJ.typesetPromise || !MJ.startup) return Promise.resolve(false);
+  return MJ.startup.promise.then(()=>MJ.typesetPromise(nodes)).then(()=>true).catch(()=>false);
+}
+
+/* =================== état & modèle =================== */
+const S = { mode:"simple", Vcc:10, RC:50, RE:0, beta:100, VBE:0.7, Rbot:10000, Rk:10000, top:"R_B", bot:"R_1", sig:true, amp:.35 };
+
+function toA(R){ if(R===Infinity) return 0; if(R<=0) return 1; return Math.min(.97,Math.max(.03,.03+.94*(6.3-Math.log10(R))/5.3)); }
+function fromA(a){ if(a<=.015) return Infinity; if(a>=.985) return 0; const aa=Math.min(.97,Math.max(.03,a)); return sig(Math.pow(10,6.3-5.3*(aa-.03)/.94)); }
+const r0To = v => v<=0?0:sig(10*Math.pow(1000,v/1000));
+const r0From = R => R<=0?0:Math.max(1,1000*Math.log(Math.max(R,10)/10)/Math.log(1000));
+const rbTo = v => sig(1000*Math.pow(100,v/1000)), rbFrom = R => 1000*Math.log(R/1000)/Math.log(100);
+
+function thev(){
+  const {mode,Vcc,Rbot,Rk}=S;
+  if(mode==="simple") return Rk===Infinity ? {Vth:0,Rth:Infinity} : {Vth:Vcc,Rth:Rk};
+  if(Rk===Infinity) return {Vth:0,Rth:Rbot};
+  if(Rk===0) return {Vth:Vcc,Rth:0};
+  return {Vth:Vcc*Rbot/(Rbot+Rk), Rth:Rbot*Rk/(Rbot+Rk)};
+}
+function baseIB(){
+  const {Vth,Rth}=thev(); const den=Rth+(S.beta+1)*S.RE;
+  if(Vth<=S.VBE) return {IB:0,Vth,Rth,den,off:true,burnt:false};
+  if(den===0) return {IB:Infinity,Vth,Rth,den,off:false,burnt:true};
+  return {IB:(Vth-S.VBE)/den,Vth,Rth,den,off:false,burnt:false};
+}
+function outFromIB(IB){
+  const {Vcc,RC,RE,beta}=S; const RT=RC+RE; const ICsat = RT>0 ? Vcc/RT : Infinity;
+  if(IB<=0) return {IB:0,dem:0,ICsat,IC:0,VCE:Vcc,VCElin:Vcc,mode:"bloque"};
+  if(!isFinite(IB)) return {IB,dem:Infinity,ICsat,IC:ICsat,VCE:0,VCElin:-Infinity,mode:"grille"};
+  const dem=beta*IB; const VCElin=Vcc-RC*dem-RE*(dem+IB);
+  if(VCElin<=0) return {IB,dem,ICsat,IC:ICsat,VCE:0,VCElin,mode:"sature"};
+  return {IB,dem,ICsat,IC:dem,VCE:VCElin,VCElin,mode:"lineaire"};
+}
+
+/* =================== scène =================== */
+let knobA=toA(S.Rk), wobble=0;
+function setAttr(id,o){ const e=$(id); for(const k in o) e.setAttribute(k,o[k]); return e; }
+function gaugeXY(cx,cy,L,f){ const t=(-135+270*f)*Math.PI/180; return [cx+L*Math.sin(t), cy-L*Math.cos(t)]; }
+function drawScene(o){
+  const {Vcc,RC,RE}=S;
+  const wh = 10 + 126*Math.min(1,Vcc/20); setAttr("tankWater",{y:182-wh,height:wh+10});
+  $("tankWave").setAttribute("transform",`translate(0 ${182-wh-100})`);
+  $("vccTxt").textContent = "Vcc = "+fV(Vcc);
+  const blk=(R)=>R<=0?0:9*(1-Math.min(1,Math.max(.12,1-Math.log10(Math.max(R,10)/10)/3.6)));
+  const hc=blk(RC), he=blk(RE);
+  setAttr("rcTop",{height:hc}); setAttr("rcBot",{y:239-hc,height:hc});
+  setAttr("reTop",{height:he}); setAttr("reBot",{y:239-he,height:he});
+  $("rcTxt").textContent = "R_C "+(RC>0?fR(RC):"= 0"); $("rcBlock").setAttribute("opacity",RC>0?1:.4);
+  $("reTxt").textContent = "R_E "+(RE>0?fR(RE):"= 0"); $("reBlock").setAttribute("opacity",RE>0?1:.4);
+  $("gaugeE").setAttribute("opacity",RE>0?1:.25);
+  const burnt=o.mode==="grille";
+  const frac = burnt?1 : (isFinite(o.ICsat)&&o.ICsat>0 ? Math.min(1,o.IC/o.ICsat) : (o.IC>0?.7:0));
+  const IE = burnt?o.ICsat:o.IC+(isFinite(o.IB)?o.IB:0);
+  const VE = burnt?0:RE*IE, VC = burnt?0:VE+o.VCE;
+  const fc = Math.max(0,Math.min(1,VC/Vcc)); const [nx,ny]=gaugeXY(340,158,20,fc);
+  setAttr("needleC",{x2:nx,y2:ny});
+  const [ax,ay]=gaugeXY(340,158,26,0), [bx,by]=gaugeXY(340,158,26,fc);
+  $("gaugeCArc").setAttribute("d", fc>0.004?`M${ax.toFixed(1)} ${ay.toFixed(1)} A26 26 0 ${fc*270>180?1:0} 1 ${bx.toFixed(1)} ${by.toFixed(1)}`:"");
+  $("gaugeCTxt").textContent = "V_C = "+fV(VC);
+  const fe=Math.max(0,Math.min(1,VE/Vcc)); const [ex,ey]=gaugeXY(579,168,15,fe);
+  setAttr("needleE",{x2:ex,y2:ey}); $("gaugeETxt").textContent = "V_E = "+fV(VE);
+  const flowing = frac>0.03;
+  $("wDown").setAttribute("stroke-width",(18*Math.max(frac,0)).toFixed(1));
+  const spd=(1.5-1.2*frac).toFixed(2)+"s";
+  ["wUpFlow","wDownFlow"].forEach(id=>{ const e=$(id); e.setAttribute("opacity",flowing?.85:0); e.style.setProperty("--spd",spd); });
+  $("stream").setAttribute("stroke-width", flowing?(3+12*frac).toFixed(1):0);
+  $("streamFall").setAttribute("stroke-width", flowing?(1.5+4*frac).toFixed(1):0);
+  $("cross").setAttribute("opacity",o.mode==="bloque"?1:0);
+  $("burst").setAttribute("opacity",burnt?1:0);
+  const ibw = o.IB<=0?0 : !isFinite(o.IB)?9 : Math.max(1.5,Math.min(8,2+1.3*Math.log10(o.IB/1e-6)));
+  setAttr("ibArrow",{"stroke-width":ibw,opacity:o.IB>0?1:.2});
+  $("ibTxt").textContent = burnt?"→ ∞":fI(o.IB);
+  $("icVal").textContent = " = "+(burnt?"énorme":fI(o.IC));
+  $("wheelRot").setAttribute("transform",`rotate(${(-150+300*knobA+wobble).toFixed(1)} 432 104)`);
+  const w=$("wheel"); w.setAttribute("aria-valuenow",Math.round(knobA*100)); w.setAttribute("aria-valuetext",S.top+" = "+fR(S.Rk));
+}
+
+/* roue */
+const scene=$("scene"), wheel=$("wheel");
+let drag=null, touched=false;
+function svgPt(e){ const p=scene.createSVGPoint(); p.x=e.clientX; p.y=e.clientY; return p.matrixTransform(scene.getScreenCTM().inverse()); }
+function firstTouch(){ if(!touched){ touched=true; $("wheelHint").style.opacity=0; } }
+wheel.addEventListener("pointerdown",e=>{ wheel.setPointerCapture(e.pointerId); const p=svgPt(e); drag={a:Math.atan2(p.y-104,p.x-432)}; wheel.style.cursor="grabbing"; firstTouch(); e.preventDefault(); });
+wheel.addEventListener("pointermove",e=>{ if(!drag) return; const p=svgPt(e); const a=Math.atan2(p.y-104,p.x-432); let d=a-drag.a; if(d>Math.PI) d-=2*Math.PI; if(d<-Math.PI) d+=2*Math.PI; drag.a=a; setKnob(knobA+d/(300*Math.PI/180)); });
+["pointerup","pointercancel"].forEach(t=>wheel.addEventListener(t,()=>{ drag=null; wheel.style.cursor="grab"; }));
+wheel.addEventListener("keydown",e=>{ const st=e.shiftKey?.05:.01;
+  if(e.key==="ArrowRight"||e.key==="ArrowUp"){ setKnob(knobA+st); e.preventDefault(); }
+  if(e.key==="ArrowLeft"||e.key==="ArrowDown"){ setKnob(knobA-st); e.preventDefault(); }
+  if(e.key==="Home"){ setKnob(0); e.preventDefault(); } if(e.key==="End"){ setKnob(1); e.preventDefault(); } firstTouch(); });
+function setKnob(a){ knobA=Math.min(1,Math.max(0,a)); S.Rk=fromA(knobA); clearPreset(); update(true); }
+$("knob").addEventListener("input",e=>{ firstTouch(); setKnob(e.target.value/1000); });
+$("rkExact").addEventListener("change",e=>{
+  const t=e.target.value.trim().toLowerCase().replace(",",".").replace(/\s/g,"");
+  let R; if(["inf","∞","infini"].includes(t)) R=Infinity; else { const m=t.match(/^([\d.]+)(k|m|meg)?/); if(!m){ update(); return; } R=parseFloat(m[1])*(m[2]==="k"?1e3:m[2]?1e6:1); }
+  if(isNaN(R)){ update(); return; } S.Rk=R; knobA=toA(R); clearPreset(); update(true); });
+
+/* =================== graphe & signal =================== */
+function el(tag,attrs,parent,txt){ const e=document.createElementNS(NS,tag); for(const k in attrs) e.setAttribute(k,attrs[k]); if(txt!=null) e.textContent=txt; if(parent) parent.appendChild(e); return e; }
+const MCOL={bloque:"var(--off)",lineaire:"var(--lin)",sature:"var(--sat)",grille:"var(--bad)"};
+let gDot=null, gScale=null;
+function drawGraph(o,sw){
+  const g=$("graph"); g.innerHTML=""; const L=60,R=18,T=18,B=46,W=440,H=290, w=W-L-R, h=H-T-B, {Vcc}=S;
+  const ytop = isFinite(o.ICsat)? o.ICsat*1.3 : Math.max(o.IC*1.3,1e-3);
+  const X=v=>L+w*v/Vcc, Y=i=>T+h*(1-Math.min(i,ytop)/ytop); gScale={X,Y};
+  el("rect",{x:L,y:T,width:w*.05,height:h,style:"fill:var(--sat-soft)"},g);
+  el("rect",{x:L,y:T+h*.95,width:w,height:h*.05,style:"fill:var(--off-soft)"},g);
+  el("text",{x:L+w*.05+6,y:T+14,style:"font:600 11.5px var(--f-body);fill:var(--sat)"},g,"saturé");
+  el("text",{x:L+w-4,y:T+h*.95-6,"text-anchor":"end",style:"font:600 11.5px var(--f-body);fill:var(--off)"},g,"bloqué");
+  el("line",{x1:L,y1:T+h,x2:L+w,y2:T+h,style:"stroke:var(--muted)"},g); el("line",{x1:L,y1:T,x2:L,y2:T+h,style:"stroke:var(--muted)"},g);
+  [0,Vcc/2,Vcc].forEach(v=>{ el("line",{x1:X(v),y1:T+h,x2:X(v),y2:T+h+5,style:"stroke:var(--muted)"},g); el("text",{x:X(v),y:T+h+19,"text-anchor":"middle",style:"font:500 11px var(--f-mono);fill:var(--muted)"},g,fV(v)); });
+  el("text",{x:L+w/2,y:H-6,"text-anchor":"middle",style:"font:italic 15px var(--f-math);fill:var(--ink)"},g,"V_CE");
+  el("text",{x:8,y:T+10,style:"font:italic 15px var(--f-math);fill:var(--ink)"},g,"I_C");
+  if(isFinite(o.ICsat)){
+    el("line",{x1:L-5,y1:Y(o.ICsat),x2:L,y2:Y(o.ICsat),style:"stroke:var(--muted)"},g);
+    el("text",{x:L-8,y:Y(o.ICsat)+4,"text-anchor":"end",style:"font:500 11px var(--f-mono);fill:var(--muted)"},g,fI(o.ICsat).replace(" ",""));
+    el("line",{x1:X(0),y1:Y(o.ICsat),x2:X(Vcc),y2:Y(0),style:"stroke:var(--mauve)","stroke-width":2.5},g);
+    el("text",{x:X(Vcc*.55),y:Y(o.ICsat*.45)-12,style:"font:600 11.5px var(--f-body);fill:var(--mauve)"},g,"droite de charge");
+  }
+  if(o.dem>0&&o.mode!=="bloque"){
+    if(isFinite(o.dem)&&o.dem<=ytop){ el("line",{x1:L,y1:Y(o.dem),x2:L+w,y2:Y(o.dem),style:"stroke:var(--rose)","stroke-width":1.3,"stroke-dasharray":"5 5"},g); el("text",{x:L+w-4,y:Y(o.dem)-6,"text-anchor":"end",style:"font:600 11.5px var(--f-body);fill:var(--rose)"},g,"β·I_B demandé"); }
+    else el("text",{x:L+w-4,y:T+14,"text-anchor":"end",style:"font:600 11.5px var(--f-body);fill:var(--rose)"},g,"β·I_B = "+(isFinite(o.dem)?fI(o.dem):"∞")+" ↑ hors cadre");
+  }
+  if(sw) el("line",{x1:X(sw.v0),y1:Y(sw.i0),x2:X(sw.v1),y2:Y(sw.i1),style:"stroke:var(--rose)","stroke-width":8,"stroke-linecap":"round",opacity:.3},g);
+  gDot=el("circle",{cx:X(o.VCE),cy:Y(o.IC),r:8,style:`fill:${MCOL[o.mode]};stroke:var(--surface)`,"stroke-width":2.5},g);
+  el("text",{x:Math.min(X(o.VCE)+12,L+w-20),y:Math.max(Y(o.IC)-12,T+30),style:`font:italic 700 16px var(--f-math);fill:${MCOL[o.mode]}`},g,"Q");
+}
+function sweep(base){
+  if(!S.sig||base.burnt) return null;
+  const o0=outFromIB(base.IB); const ref=isFinite(o0.ICsat)?o0.ICsat/S.beta:(base.IB||1e-4); const d=S.amp*.9*ref;
+  const pts=[]; for(let k=0;k<=240;k++){ const t=k/120; const ib=Math.max(0,base.IB+d*Math.sin(Math.PI*2*t)); const o=outFromIB(ib); pts.push({t,ib,ic:o.IC,vce:o.VCE}); }
+  let v0=Infinity,v1=-Infinity,i0=0,i1=0; pts.forEach(p=>{ if(p.vce<v0){v0=p.vce;i0=p.ic;} if(p.vce>v1){v1=p.vce;i1=p.ic;} });
+  const clipLow=pts.some(p=>p.vce<=1e-9), clipHigh=pts.some(p=>p.ib<=0);
+  return {pts,d,v0,v1,i0,i1,base:base.IB,clipLow,clipHigh};
+}
+function drawWave(sw,o){
+  const g=$("wave"); g.innerHTML=""; const L=58,R=14,W=440,t1=12,h1=56,t2=92,h2=80,w=W-L-R;
+  el("text",{x:6,y:t1+h1/2+4,style:"font:700 12px var(--f-body);fill:var(--rose)"},g,"entrée");
+  el("text",{x:6,y:t2+h2/2+4,style:"font:700 12px var(--f-body);fill:var(--water)"},g,"sortie");
+  el("rect",{x:L,y:t1,width:w,height:h1,rx:9,style:"fill:var(--soft)"},g); el("rect",{x:L,y:t2,width:w,height:h2,rx:9,style:"fill:var(--soft)"},g);
+  const yv=v=>t2+h2-5-(h2-10)*v/S.Vcc;
+  [0,S.Vcc].forEach(v=>{ el("line",{x1:L,y1:yv(v),x2:L+w,y2:yv(v),style:"stroke:var(--muted)","stroke-dasharray":"3 4"},g); el("text",{x:L+w-5,y:yv(v)+(v?13:-5),"text-anchor":"end",style:"font:500 10.5px var(--f-mono);fill:var(--muted)"},g,v?"Vcc":"0 V"); });
+  if(!sw){ el("text",{x:L+w/2,y:t1+h1/2+4,"text-anchor":"middle",style:"font:600 12.5px var(--f-body);fill:var(--muted)"},g,o.mode==="grille"?"Plus rien à amplifier : c'est grillé.":"Coche « Secouer la roue »."); el("line",{x1:L,y1:yv(o.VCE),x2:L+w,y2:yv(o.VCE),style:"stroke:var(--water)","stroke-width":2.5},g); return; }
+  const lo=sw.base-sw.d, span=Math.max(2*sw.d,1e-12), yi=ib=>t1+h1-6-(h1-12)*(ib-lo)/span, X=t=>L+w*t/2;
+  let d1="",d2=""; sw.pts.forEach((p,k)=>{ d1+=(k?"L":"M")+X(p.t).toFixed(1)+" "+yi(p.ib).toFixed(1); d2+=(k?"L":"M")+X(p.t).toFixed(1)+" "+yv(p.vce).toFixed(1); });
+  el("path",{d:d1,fill:"none",style:"stroke:var(--rose)","stroke-width":2.3},g); el("path",{d:d2,fill:"none",style:"stroke:var(--water)","stroke-width":2.8},g);
+  let msg="Sinusoïde propre, inversée et amplifiée.", c="var(--lin)";
+  if(sw.clipLow&&sw.clipHigh){ msg="Coupée des deux côtés : signal trop grand."; c="var(--bad)"; }
+  else if(sw.clipLow){ msg="Bas coupé : le point touche la saturation."; c="var(--sat)"; }
+  else if(sw.clipHigh){ msg="Haut coupé : le point touche le blocage."; c="var(--off)"; }
+  el("text",{x:L+w/2,y:192,"text-anchor":"middle",style:`font:700 13px var(--f-body);fill:${c}`},g,msg);
+}
+let anim=null, phase=0, lastT=0, curSweep=null, curBase=0;
+function loop(ts){
+  if(!curSweep){ anim=null; wobble=0; return; }
+  const dt=lastT?(ts-lastT)/1000:0; lastT=ts; phase=(phase+dt*.5)%1;
+  const ib=Math.max(0,curBase+curSweep.d*Math.sin(2*Math.PI*phase)); const o=outFromIB(ib);
+  if(gDot&&gScale){ gDot.setAttribute("cx",gScale.X(o.VCE)); gDot.setAttribute("cy",gScale.Y(o.IC)); }
+  wobble=10*Math.sin(2*Math.PI*phase)*S.amp; drawScene(o);
+  anim=requestAnimationFrame(loop);
+}
+
+/* =================== lecture & raisonnement =================== */
+const ICO={
+  bloque:'<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+  lineaire:'<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M2 12c2.5-6 5-6 7.5 0s5 6 7.5 0 3.5-4 5-2"/></svg>',
+  sature:'<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 20h16M7 16V9M12 16V5M17 16V5M14.5 5h5"/></svg>',
+  grille:'<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 4 6 5 6 11a6 6 0 0 1-12 0c0-3 2-4 2-7 2 1 3 3 3 5 1-2 1-6 1-9z"/></svg>'
+};
+const MODES={
+  bloque:{n:"Bloqué",c:"var(--off)",cs:"var(--off-soft)",why:"Vanne fermée : rien ne coule. La pression reste au max au collecteur : V_CE = V_cc."},
+  lineaire:{n:"Linéaire",c:"var(--lin)",cs:"var(--lin-soft)",why:"Vanne entrouverte : le débit suit la roue, I_C = β·I_B. C'est le mode ampli."},
+  sature:{n:"Saturé",c:"var(--sat)",cs:"var(--sat-soft)",why:"Vanne à fond : tu demandes plus que le tuyau ne peut donner. Interrupteur fermé, V_CE ≈ 0."},
+  grille:{n:"Grillé",c:"var(--bad)",cs:"var(--bad-soft)",why:"Aucune résistance ne limite I_B : la jonction base-émetteur brûle."}
+};
+function reasoning(base,o){
+  const L=[]; const {Vcc,RC,RE,beta,VBE,mode,Rk}=S; const T=texName(S.top), Bn=texName(S.bot);
+  const vbe=`V_{BE} = ${tV(VBE)}`;
+  if(mode==="simple"){
+    if(Rk===Infinity) L.push(`$${T} = \\infty$ : rien n'alimente la base, donc $V_{BE} = 0 < ${tn(VBE)}\\,\\text{V}$.`);
+    else L.push(`La base est alimentée par $V_{cc} = ${tV(Vcc)} > ${vbe}$ : la jonction peut conduire.`);
+  } else {
+    L.push(`Pont : $V_{th} = V_{cc}\\dfrac{${Bn}}{${Bn} + ${T}} = ${tV(base.Vth)}$ ${base.Vth>VBE?`$> ${vbe}$, ça peut conduire.`:`$< ${vbe}$ : <b>bloqué</b>.`}`);
+  }
+  if(base.off){ L.push(`$I_B = 0 \\Rightarrow I_C = 0$`); L.push(`$V_{CE} = V_{cc} = ${tV(Vcc)}$ → <b>bloqué</b>.`); return L; }
+  if(base.burnt){ L.push(`$I_B = \\dfrac{V_{cc} - V_{BE}}{0} \\to \\infty$ : rien ne limite le courant.`); L.push(`La jonction reçoit $${tV(Vcc)}$ au lieu de $${tV(VBE)}$ → <b>elle grille</b>.`); return L; }
+  const num = mode==="simple"?`V_{cc} - V_{BE}`:`V_{th} - V_{BE}`;
+  const rb = mode==="simple"?T:`R_{th}`;
+  const den = RE>0?`${rb} + (\\beta+1) R_E`:rb;
+  L.push(`Maille d'entrée : $I_B = \\dfrac{${num}}{${den}} = \\dfrac{${tn(base.Vth-VBE)}}{${tR(base.den)}} = ${tI(base.IB)}$`);
+  L.push(`Si linéaire : $I_C = \\beta I_B = ${beta} \\times ${tI(base.IB)} = ${tI(o.dem)}$`);
+  const terms=[]; if(RC>0) terms.push("R_C I_C"); if(RE>0) terms.push("R_E I_E");
+  const eq = `V_{CE} = V_{cc}${terms.map(t=>" - "+t).join("")}`;
+  if(o.mode==="lineaire"){
+    const r=o.VCE/Vcc; const tail = r<.15?" Attention : proche de la saturation.":r>.85?" Attention : proche du blocage.":" Bien centré pour amplifier.";
+    L.push(`Maille de sortie : $${eq} = ${tV(o.VCE)} > 0$ → <b>linéaire</b>.${tail}`);
+  } else {
+    L.push(`Maille de sortie : $${eq} = ${tV(o.VCElin)} < 0$ : <b>impossible</b> !`);
+    L.push(`Le tuyau plafonne à $I_{C,sat} = \\dfrac{V_{cc}}{${[RC>0?"R_C":"",RE>0?"R_E":""].filter(Boolean).join(" + ")}} = ${tI(o.ICsat)}$ → <b>saturé</b>, $V_{CE} \\approx 0$.`);
+  }
+  return L;
+}
+let rToken=0, rTimer=null, lastReason="";
+function renderReason(lines){
+  const html=lines.map(t=>`<li><div>${t}</div></li>`).join("");
+  if(html===lastReason) return; lastReason=html;
+  const MJ=window.MathJax;
+  if(!MJ||!MJ.typesetPromise){ $("reason").innerHTML=html; return; }
+  clearTimeout(rTimer);
+  rTimer=setTimeout(()=>{ const tok=++rToken; const buf=$("reasonBuf"); buf.innerHTML=`<ol>${html}</ol>`;
+    typeset([buf]).then(()=>{ if(tok!==rToken) return; const ol=buf.querySelector("ol"); $("reason").replaceChildren(...ol.childNodes); buf.innerHTML=""; }); }, 90);
+}
+
+function update(user){
+  const base=baseIB(); const o=outFromIB(base.burnt?Infinity:base.IB); const M=MODES[o.mode];
+  const mc=$("modecard"); mc.style.setProperty("--c",M.c); mc.style.setProperty("--cs",M.cs);
+  $("modeName").textContent=M.n; $("modeWhy").textContent=M.why; $("modeIco").innerHTML=ICO[o.mode];
+  const burnt=o.mode==="grille";
+  $("vIB").textContent=burnt?"→ ∞":fI(o.IB); $("vDem").textContent=burnt?"→ ∞":fI(o.dem); $("vSat").textContent=fI(o.ICsat);
+  $("vIC").textContent=burnt?"—":fI(o.IC);
+  const VE=S.RE*(o.IC+(isFinite(o.IB)?o.IB:0));
+  $("vVEC").textContent=burnt?"—":`${fV(VE)} · ${fV(VE+o.VCE)}`;
+  $("vVCE").textContent=burnt?"—":o.mode==="sature"?"≈ 0 V":fV(o.VCE);
+  renderReason(reasoning(base,o));
+  $("knob").value=Math.round(knobA*1000);
+  if(document.activeElement!==$("rkExact")) $("rkExact").value = S.Rk===Infinity?"inf":String(Math.round(S.Rk*100)/100);
+  $("rkName").innerHTML=S.top.replace(/_(\w+)/,"<sub>$1</sub>");
+  $("rbotName").innerHTML=S.bot.replace(/_(\w+)/,"<sub>$1</sub>");
+  $("oVcc").textContent=fV(S.Vcc); $("oRC").textContent=fR(S.RC); $("oRE").textContent=fR(S.RE); $("oBeta").textContent=S.beta; $("oVBE").textContent=fV(S.VBE); $("oRbot").textContent=fR(S.Rbot);
+  $("sVcc").value=S.Vcc; $("sRC").value=r0From(S.RC); $("sRE").value=r0From(S.RE); $("sBeta").value=S.beta; $("sVBE").value=S.VBE; $("sRbot").value=rbFrom(S.Rbot);
+  $("wrapRbot").hidden=S.mode!=="pont";
+  $("mSimple").setAttribute("aria-pressed",S.mode==="simple"); $("mPont").setAttribute("aria-pressed",S.mode==="pont");
+  $("sigAmpV").textContent=Math.round(S.amp*100)+" %";
+  const sw=sweep(base); wobble=0; drawScene(o); drawGraph(o,sw); drawWave(sw,o);
+  curSweep=(sw&&!reduce&&!burnt)?sw:null; curBase=base.IB;
+  if(curSweep&&!anim){ lastT=0; anim=requestAnimationFrame(loop); }
+  if(user) checkMissions(o,sw);
+}
+
+/* réglages */
+$("sVcc").addEventListener("input",e=>{S.Vcc=+e.target.value;clearPreset();update(true);});
+$("sRC").addEventListener("input",e=>{S.RC=r0To(+e.target.value);clearPreset();update(true);});
+$("sRE").addEventListener("input",e=>{S.RE=r0To(+e.target.value);clearPreset();update(true);});
+$("sBeta").addEventListener("input",e=>{S.beta=+e.target.value;clearPreset();update(true);});
+$("sVBE").addEventListener("input",e=>{S.VBE=+e.target.value;clearPreset();update(true);});
+$("sRbot").addEventListener("input",e=>{S.Rbot=rbTo(+e.target.value);clearPreset();update(true);});
+$("mSimple").addEventListener("click",()=>{S.mode="simple";S.top="R_B";clearPreset();update(true);});
+$("mPont").addEventListener("click",()=>{S.mode="pont";S.top="R_2";S.bot="R_1";if(S.Rk===0||S.Rk===Infinity){S.Rk=20000;knobA=toA(S.Rk);}clearPreset();update(true);});
+$("sigOn").addEventListener("change",e=>{S.sig=e.target.checked;update(true);});
+$("sigAmp").addEventListener("input",e=>{S.amp=e.target.value/100;update(true);});
+
+/* préréglages */
+const P={
+  td1a:{mode:"simple",Vcc:10,RC:1000,RE:0,beta:50,VBE:.7,Rk:Infinity,top:"R_B",note:"TD 1a : base reliée à l'émetteur, la roue ne peut rien faire. (R_C non donné, pris à 1 kΩ.)"},
+  td1b:{mode:"simple",Vcc:10,RC:1000,RE:0,beta:50,VBE:.7,Rk:0,top:"R_B",note:"TD 1b : base directement sur V_cc. (R_C non donné, pris à 1 kΩ.)"},
+  td1c:{mode:"simple",Vcc:10,RC:200,RE:0,beta:50,VBE:.7,Rk:1500,top:"R_B",note:"TD 1c : R_B = 1500 Ω est trop petite. Ferme la roue jusqu'à R_B > 10 kΩ."},
+  td2:{mode:"simple",Vcc:10,RC:50,RE:0,beta:100,VBE:.7,Rk:10000,top:"R_B",note:"TD 2 : R_B = 10 kΩ, R_C = 50 Ω, β = 100. Point de repos bien centré."},
+  td3:{mode:"pont",Vcc:10,RC:400,RE:198,beta:100,VBE:.7,Rbot:10000,Rk:19730,top:"R_2",bot:"R_1",note:"TD 3 : R_1 = 10 kΩ, R_2 ≈ 19,7 kΩ, R_C = 400 Ω, R_E ≈ 198 Ω. Les manomètres montrent V_C ≈ 6 V et V_E ≈ 2 V."},
+  an1:{mode:"simple",Vcc:10,RC:1000,RE:1000,beta:150,VBE:.7,Rk:150000,top:"R_B",note:"Annale ex. 1 : R_B = 150 kΩ, R_C = R_E = 1 kΩ, β = 150. V_CE ≈ 0,7 V : tout près de la saturation."},
+  an2:{mode:"pont",Vcc:15,RC:0,RE:1000,beta:200,VBE:.6,Rbot:5000,Rk:10000,top:"R_1",bot:"R_2",note:"Annale ex. 2 : pont R_1 = 10 kΩ (haut), R_2 = 5 kΩ (bas), R_E = 1 kΩ, pas de R_C, V_BE = 0,6 V."}
+};
+function clearPreset(){ document.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed","false")); $("presetNote").textContent="Mode libre : tous les réglages sont à toi."; }
+function loadPreset(k,scroll){
+  const p=P[k]; ["mode","Vcc","RC","RE","beta","VBE","Rk","top"].forEach(x=>S[x]=p[x]); if(p.Rbot) S.Rbot=p.Rbot; if(p.bot) S.bot=p.bot;
+  knobA=toA(S.Rk); update(false);
+  document.querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",String(c.dataset.preset===k)));
+  $("presetNote").textContent=p.note;
+  if(scroll) $("labo").scrollIntoView({behavior:reduce?"auto":"smooth"});
+}
+document.querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>loadPreset(c.dataset.preset)));
+document.querySelectorAll(".load").forEach(c=>c.addEventListener("click",()=>loadPreset(c.dataset.preset,true)));
+
+/* =================== progression =================== */
+const KEY="labo-transistor-v2";
+let G={xp:0,solved:{},miss:{},badges:{},best:0,combo:0,right:0,quiz:{}};
+try{ const s=JSON.parse(localStorage.getItem(KEY)||"null"); if(s) G=Object.assign(G,s); }catch(e){}
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(G)); }catch(e){} }
+const LEVELS=[[0,"Électron libre"],[120,"Apprenti soudeur"],[300,"Dompteur de jonction"],[550,"Maître du β"],[850,"Polarisateur fou"],[1200,"Légende du NPN"]];
+function lvlOf(x){ let i=0; LEVELS.forEach((l,k)=>{ if(x>=l[0]) i=k; }); return i; }
+function hud(){
+  const i=lvlOf(G.xp), cur=LEVELS[i][0], nxt=LEVELS[i+1]?LEVELS[i+1][0]:null;
+  $("lvlName").textContent=`Niv. ${i+1} · ${LEVELS[i][1]}`;
+  $("xpTxt").textContent= nxt?`${G.xp} / ${nxt} XP`:`${G.xp} XP · max`;
+  $("xpFill").style.width = (nxt?Math.min(100,100*(G.xp-cur)/(nxt-cur)):100)+"%";
+  const cb=$("combo"); if(G.combo>=2){ cb.hidden=false; cb.textContent=`Combo ×${G.combo}`; } else cb.hidden=true;
+  $("stXP").textContent=G.xp; $("stAns").textContent=G.right; $("stBest").textContent=G.best; $("stBadges").textContent=Object.keys(G.badges).length;
+}
+function toast(txt,xp,big){
+  const t=document.createElement("div"); t.className="toast"+(big?" big":"");
+  t.innerHTML=(xp?`<span class="x">+${xp} XP</span>`:"")+`<span></span>`; t.lastChild.textContent=txt;
+  $("toasts").appendChild(t); setTimeout(()=>t.remove(), big?3600:2200);
+  while($("toasts").children.length>4) $("toasts").firstChild.remove();
+}
+function gain(n,why){
+  const before=lvlOf(G.xp); G.xp+=n; const after=lvlOf(G.xp);
+  toast(why,n); if(after>before){ toast(`Niveau ${after+1} : ${LEVELS[after][1]} !`,0,true); confetti(160); if(after===LEVELS.length-1) badge("legend"); }
+  save(); hud();
+}
+function streak(ok){
+  if(ok){ G.combo++; G.right++; if(G.combo>G.best) G.best=G.combo; if(G.combo===5) badge("combo5"); if(G.combo===10) badge("combo10"); }
+  else G.combo=0;
+  if(!G.badges.first&&ok) badge("first");
+  save(); hud();
+}
+
+/* badges */
+const BADGES=[
+  ["first","Premier courant","Une première bonne réponse",'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>'],
+  ["plombier","Plombier","Saturer le transistor",'<path d="M4 20h16M7 16V9M12 16V5M17 16V5"/>'],
+  ["pyro","Pyromane","Faire griller la jonction",'<path d="M12 3c1 4 6 5 6 11a6 6 0 0 1-12 0c0-3 2-4 2-7 2 1 3 3 3 5 1-2 1-6 1-9z"/>'],
+  ["zen","Pile au milieu","V_CE à V_cc/2 près",'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>'],
+  ["sinus","Sinusoïde parfaite","Gros signal, zéro écrêtage",'<path d="M2 12c2.5-6 5-6 7.5 0s5 6 7.5 0 3.5-4 5-2"/>'],
+  ["td1","TD 1 bouclé","Toutes les réponses de l'exo 1",'<path d="M5 12l5 5L20 7"/>'],
+  ["td2","TD 2 bouclé","Toutes les réponses de l'exo 2",'<path d="M5 12l5 5L20 7"/>'],
+  ["td3","TD 3 bouclé","Toutes les réponses de l'exo 3",'<path d="M5 12l5 5L20 7"/>'],
+  ["annale","Annale vaincue","Les 3 exercices de l'annale",'<path d="M6 3h12v4a6 6 0 0 1-12 0zM9 21h6M12 13v8"/>'],
+  ["boss","Boss sans faute","Tout le boss du premier coup",'<path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/>'],
+  ["combo5","Série de 5","5 bonnes réponses d'affilée",'<path d="M12 2l3 7h7l-5.5 4.5 2 7.5L12 17l-6.5 4 2-7.5L2 9h7z"/>'],
+  ["combo10","Inarrêtable","10 bonnes réponses d'affilée",'<path d="M12 2l3 7h7l-5.5 4.5 2 7.5L12 17l-6.5 4 2-7.5L2 9h7z"/><circle cx="12" cy="12" r="2"/>'],
+  ["legend","Légende du NPN","Atteindre le dernier niveau",'<path d="M12 2l2.5 5 5.5.8-4 3.9.9 5.5L12 14.6 7.1 17.2 8 11.7 4 7.8l5.5-.8z"/><path d="M8 22h8"/>']
+];
+function renderBadges(){
+  $("badges").innerHTML=BADGES.map(([id,n,d,ic])=>`<div class="badge${G.badges[id]?" on":""}"><div class="bi"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ic}</svg></div><b>${n}</b><span>${d}</span></div>`).join("");
+}
+function badge(id){
+  if(G.badges[id]) return; G.badges[id]=Date.now(); save();
+  const b=BADGES.find(x=>x[0]===id); toast(`Trophée : ${b[1]}`,0,true); confetti(120); renderBadges(); hud();
+}
+
+/* défis */
+const MISS=[
+  ["ferme","Ferme tout","Mets le transistor en mode bloqué",'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'],
+  ["sature","Plein gaz","Fais-le saturer","sature"],
+  ["grille","Pyromane","Fais griller la jonction B–E","grille"],
+  ["milieu","Pile au milieu","Linéaire avec V_CE = V_cc/2 à 3 % près","zen"],
+  ["sinus","Sinusoïde parfaite","Signal ≥ 60 %, aucune coupure","sinus"],
+  ["sauve","Sauve l'exo 1c","Avec R_C = 200 Ω, β = 50, V_cc = 10 V : repasse en linéaire",""],
+  ["ingenieur","Ingénieur du pont","En pont, avec R_E, V_CE = V_cc/2 à 5 % près",""]
+];
+function renderMissions(){
+  $("missions").innerHTML=MISS.map(([id,n,d])=>`<div class="mission${G.miss[id]?" done":""}"><div class="m-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${G.miss[id]?'<path d="M5 12l5 5L20 7"/>':'<circle cx="12" cy="12" r="8"/>'}</svg></div><div><b>${n}</b><span>${d.replace(/_(\w+)/g,"<sub>$1</sub>")}</span></div><span class="xpv">+50</span></div>`).join("");
+  $("missProg").textContent=`${Object.keys(G.miss).length} / ${MISS.length}`;
+}
+function checkMissions(o,sw){
+  const done=id=>{ if(G.miss[id]) return; G.miss[id]=1; const m=MISS.find(x=>x[0]===id); gain(50,`Défi réussi : ${m[1]}`); confetti(90);
+    if(id==="sature") badge("plombier"); if(id==="grille") badge("pyro"); if(id==="milieu") badge("zen"); if(id==="sinus") badge("sinus"); renderMissions(); };
+  if(o.mode==="bloque") done("ferme");
+  if(o.mode==="sature") done("sature");
+  if(o.mode==="grille") done("grille");
+  if(o.mode==="lineaire"&&Math.abs(o.VCE-S.Vcc/2)<=.03*S.Vcc) done("milieu");
+  if(sw&&o.mode==="lineaire"&&S.amp>=.6&&!sw.clipLow&&!sw.clipHigh) done("sinus");
+  if(o.mode==="lineaire"&&S.mode==="simple"&&S.RC===200&&S.beta===50&&S.Vcc===10&&S.RE===0) done("sauve");
+  if(o.mode==="lineaire"&&S.mode==="pont"&&S.RE>0&&Math.abs(o.VCE-S.Vcc/2)<=.05*S.Vcc) done("ingenieur");
+}
+
+/* confettis */
+const cv=$("confetti"), cx=cv.getContext("2d"); let parts=[], craf=null;
+function confetti(n){
+  if(reduce||!cx) return; const dpr=window.devicePixelRatio||1; cv.width=innerWidth*dpr; cv.height=innerHeight*dpr; cx.setTransform(dpr,0,0,dpr,0,0);
+  const cs=getComputedStyle(document.documentElement); const cols=["--rose","--mauve","--gold","--water","--lin"].map(v=>cs.getPropertyValue(v).trim());
+  for(let i=0;i<n;i++) parts.push({x:innerWidth*(.25+.5*Math.random()),y:innerHeight*.35,vx:(Math.random()-.5)*12,vy:-Math.random()*12-4,r:Math.random()*6+3,c:cols[i%cols.length],a:Math.random()*6,va:(Math.random()-.5)*.4,life:1});
+  if(!craf) craf=requestAnimationFrame(tick);
+}
+function tick(){
+  cx.clearRect(0,0,innerWidth,innerHeight);
+  parts.forEach(p=>{ p.vy+=.35; p.vx*=.99; p.x+=p.vx; p.y+=p.vy; p.a+=p.va; p.life-=.008; cx.save(); cx.globalAlpha=Math.max(0,p.life); cx.translate(p.x,p.y); cx.rotate(p.a); cx.fillStyle=p.c; cx.fillRect(-p.r,-p.r/2,p.r*2,p.r); cx.restore(); });
+  parts=parts.filter(p=>p.life>0&&p.y<innerHeight+40);
+  craf = parts.length?requestAnimationFrame(tick):(cx.clearRect(0,0,innerWidth,innerHeight),null);
+}
+
+/* =================== schémas façon TD =================== */
+let sid=0;
+function lab(s){
+  let out="", i=0;
+  while(i<s.length){
+    if(s[i]==="_"){ let sub=""; i++; if(s[i]==="{"){ i++; while(i<s.length&&s[i]!=="}") sub+=s[i++]; i++; } else sub=s[i++]; out+=`<tspan class="s" dy="4">${sub}</tspan><tspan dy="-4">​</tspan>`; }
+    else { let run=""; while(i<s.length&&s[i]!=="_") run+=s[i++]; out+=run.replace(/&/g,"&amp;").replace(/</g,"&lt;"); }
+  }
+  return out;
+}
+function T(x,y,s,o){ o=o||{}; return `<text x="${x}" y="${y}" class="${o.c||"t"}" text-anchor="${o.a||"start"}">${lab(s)}</text>`; }
+function Wr(d){ return `<path class="w" d="${d}"/>`; }
+function Rv(cx,cy,len){ len=len||46; return `<rect class="r" x="${cx-7}" y="${cy-len/2}" width="14" height="${len}"/>`; }
+function Rh(cx,cy,len){ len=len||46; return `<rect class="r" x="${cx-len/2}" y="${cy-7}" width="${len}" height="14"/>`; }
+function Cv(cx,cy){ return `<path class="w" d="M${cx-13} ${cy-4}H${cx+13}M${cx-13} ${cy+4}H${cx+13}" style="stroke-width:2.4"/>`; }
+function Ch(cx,cy){ return `<path class="w" d="M${cx-4} ${cy-13}V${cy+13}M${cx+4} ${cy-13}V${cy+13}" style="stroke-width:2.4"/>`; }
+function Gnd(x,y){ return `<path class="w" d="M${x-16} ${y}H${x+16}M${x-12} ${y}l-5 7M${x-4} ${y}l-5 7M${x+4} ${y}l-5 7M${x+12} ${y}l-5 7"/>`; }
+function Dot(x,y){ return `<circle class="dot" cx="${x}" cy="${y}" r="3.2"/>`; }
+function Term(x,y){ return `<circle class="term" cx="${x}" cy="${y}" r="3.6"/>`; }
+function NPN(bx,by){ return `<path class="w" d="M${bx} ${by-18}V${by+18}" style="stroke-width:3.2"/>`+Wr(`M${bx} ${by-8}L${bx+28} ${by-26}V${by-40}`)+`<path class="w" d="M${bx} ${by+8}L${bx+27} ${by+25}" marker-end="url(#{M}k)"/>`+Wr(`M${bx+28} ${by+25}V${by+40}`); }
+function Ua(x,y1,y2,s,side){ return `<path class="ta" d="M${x} ${y1}V${y2}" marker-end="url(#{M}r)"/>`+T(side==="l"?x-7:x+7,(y1+y2)/2+5,s,{c:"tt",a:side==="l"?"end":"start"}); }
+function Ia(x1,y1,x2,y2,s,lx,ly,a){ return `<path class="ca" d="M${x1} ${y1}L${x2} ${y2}" marker-end="url(#{M}m)"/>`+T(lx,ly,s,{c:"tc",a:a||"start"}); }
+function Src(cx,cy,s){ return `<circle class="r" cx="${cx}" cy="${cy}" r="15"/>`+`<path class="ta" d="M${cx-26} ${cy+16}V${cy-16}" marker-end="url(#{M}r)"/>`+T(cx-32,cy+5,s,{c:"tt",a:"end"}); }
+function ISrc(cx,cy){ return `<circle class="r" cx="${cx}" cy="${cy}" r="15"/><path class="w" d="M${cx} ${cy-9}V${cy+6}" marker-end="url(#{M}k)"/>`; }
+function svg(w,h,body){
+  const m="s"+(++sid);
+  const defs=`<defs><marker id="${m}k" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M1 1L9 5L1 9z" style="fill:var(--ink)"/></marker><marker id="${m}r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1L9 5L1 9z" style="fill:var(--rose)"/></marker><marker id="${m}m" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1L9 5L1 9z" style="fill:var(--mauve)"/></marker></defs>`;
+  return `<svg class="sc" viewBox="0 0 ${w} ${h}" width="${w}" role="img" aria-label="Schéma électrique">${defs}${body.replace(/\{M\}/g,m)}</svg>`;
+}
+
+/* ampli émetteur commun, dessiné comme dans le TD */
+function amp(o){
+  const full=o.full!==false, pont=o.bias==="pont", em=o.em||"none", ann=!!o.ann;
+  const Gy = em==="RE12"?332:300; let b="";
+  const xs = full?40:230, xe = full?520:(ann?470:340);
+  b+=Wr(`M230 30H${full?560:(ann?470:360)}`); if(full){ b+=Term(560,30)+T(568,35,"V_{cc}"); } else if(!ann){ b+=Term(360,30)+T(368,35,"V_{cc}"); }
+  b+=Wr("M230 30V56")+Rv(230,80,48)+Wr("M230 104V170")+T(214,86,o.top||(pont?"R_2":"R_B"),{a:"end"});
+  if(pont){ b+=Wr(`M230 170V206`)+Rv(230,230,48)+Wr(`M230 254V${Gy}`)+T(214,236,o.bot||"R_1",{a:"end"})+Dot(230,170); }
+  b+=Wr("M230 170H312")+NPN(312,170);
+  b+=Wr("M340 30V56")+Rv(340,80,48)+Wr("M340 104V130")+T(ann?326:356,ann?66:86,"R_C",{a:ann?"end":"start"});
+  if(em==="none") b+=Wr(`M340 210V${Gy}`);
+  if(em==="RE"||em==="REdec"){ b+=Wr("M340 210V222")+Rv(340,246,48)+Wr(`M340 270V${Gy}`)+T(ann?326:356,252,"R_E",{a:ann?"end":"start"}); }
+  if(em==="REdec"){ b+=Dot(340,216)+Wr(`M340 216H410V240`)+Cv(410,244)+Wr(`M410 248V${Gy}`)+T(426,250,"C_E"); }
+  if(em==="RE12"){ b+=Wr("M340 210V220")+Rv(340,240,40)+T(356,246,"R_{E1}")+Wr("M340 260V274")+Dot(340,266)+Rv(340,294,40)+T(320,300,"R_{E2}",{a:"end"})+Wr(`M340 314V${Gy}`)+Wr(`M340 266H410V290`)+Cv(410,294)+Wr(`M410 298V${Gy}`)+T(426,300,"C_E"); }
+  if(full){
+    b+=Dot(340,118)+Wr("M340 118H436")+Ch(440,118)+Wr("M444 118H520V206")+T(440,98,o.c2||"C_2",{a:"middle"});
+    b+=Rv(520,230,48)+Wr(`M520 254V${Gy}`)+T(536,236,o.rl||"R_L");
+    b+=Wr(`M520 118H580`)+Term(580,118)+Term(580,Gy)+Wr(`M520 ${Gy}H580`)+Ua(592,Gy-8,128,o.u||"u");
+    b+=Wr("M60 170H88")+Rh(110,170,44)+T(110,152,o.rg||"R_G",{a:"middle"})+Wr("M132 170H176")+Ch(180,170)+T(180,148,o.c1||"C_1",{a:"middle"})+Wr("M184 170H230");
+    b+=Wr(`M60 170V218`)+Src(60,233,o.eg||"e_G")+Wr(`M60 248V${Gy}`)+Ua(150,Gy-8,182,o.v||"v");
+    b+=Dot(150,170)+Dot(150,Gy);
+  }
+  if(ann){
+    b+=Wr(`M470 30V148`)+`<circle class="r" cx="470" cy="165" r="17"/>`+Wr(`M470 182V${Gy}`)+Ua(500,182,148,"V_{cc}");
+    b+=Ua(252,102,58,"R_B·I_B")+Ua(362,102,58,"R_C·I_C")+Ua(362,268,224,"R_E·I_E");
+    b+=Ia(256,160,296,160,"I_B",262,153)+Ia(352,112,352,128,"I_C",360,124)+Ia(352,212,352,224,"I_E",358,206);
+    b+=Ua(396,205,136,"V_{CE}")+Ua(300,214,182,"V_{BE}","l");
+  }
+  b+=Wr(`M${xs} ${Gy}H${xe}`)+Gnd(full?300:285,Gy)+T(full?318:(ann?400:300),Gy+22,"M",{a:"start"});
+  if(o.vc){ b+=Dot(340,118)+T(352,124,o.vc,{c:"tt"}); }
+  if(o.ve){ b+=Dot(340,216)+T(352,214,o.ve,{c:"tt"}); }
+  const h = Gy+34;
+  return svg(full?620:(ann?560:420),h,b);
+}
+/* schéma petits signaux */
+function ss(o){
+  const re=o.re||null, G=re?260:220, Ey=re?178:G, x0=o.rg?60:70; let b="";
+  if(o.rg){ b+=Wr("M60 50H68")+Rh(90,50,44)+T(90,34,"R_G",{a:"middle"})+Wr("M112 50H300")+Wr("M60 50V112")+Src(60,127,o.eg||"e_G")+Wr(`M60 142V${G}`)+Ua(140,G-8,62,"v")+Dot(140,50)+Dot(140,G); }
+  else { b+=Term(70,50)+Term(70,G)+Wr("M70 50H300")+Ua(84,G-8,62,"v"); }
+  b+=Dot(190,50)+Wr("M190 50V78")+Rv(190,105,54)+Wr(`M190 132V${G}`)+T(204,111,o.rb||"R_B");
+  b+=Dot(300,50)+T(300,38,"B",{a:"middle"})+Wr("M300 50V78")+Rv(300,105,54)+Wr(`M300 132V${Ey}`)+T(286,111,"r",{a:"end"})+Ia(318,62,318,92,"i_b",324,82);
+  b+=Wr("M400 50V90")+ISrc(400,105)+Wr(`M400 120V${Ey}`)+T(422,96,"β·i_b")+T(400,38,"C",{a:"middle"})+Dot(400,50);
+  if(o.rho){ b+=Dot(460,50)+Wr("M460 50V78")+`<rect class="r" x="453" y="78" width="14" height="54" style="stroke-dasharray:4 3"/>`+Wr(`M460 132V${Ey}`)+T(474,111,"ρ"); }
+  b+=Wr("M400 50H600")+Dot(520,50)+Wr("M520 50V78")+Rv(520,105,54)+Wr(`M520 132V${G}`)+T(534,111,"R_C");
+  b+=Wr("M600 50V78")+Rv(600,105,54)+Wr(`M600 132V${G}`)+T(586,111,o.rl||"R_L",{a:"end"})+Term(620,50)+Term(620,G)+Wr("M600 50H620M600 "+G+"H620")+Ua(632,G-8,62,"u");
+  if(re){ b+=Wr(`M300 ${Ey}H${o.rho?460:400}`)+Dot(300,Ey)+T(286,Ey+5,"E",{a:"end"})+Dot(350,Ey)+Wr(`M350 ${Ey}V196`)+Rv(350,218,44)+Wr(`M350 240V${G}`)+T(364,224,re)+(o.reAnn?Ua(380,240,198,o.reAnn):""); if(o.rho) b+=Dot(400,Ey); }
+  else b+=T(300,G+22,"E à la masse",{c:"cap",a:"middle"});
+  b+=Wr(`M${x0} ${G}H600`)+Gnd(450,G);
+  return svg(650,G+34,b);
+}
+const SCH={
+  npn:()=>svg(280,210,Wr("M30 100H110")+NPN(110,100)+Wr("M138 60V18")+Wr("M138 140V190")+Term(30,100)+Term(138,18)+Term(138,190)+T(18,92,"B",{a:"end"})+T(130,14,"C",{a:"end"})+T(130,206,"E",{a:"end"})+Ia(46,90,86,90,"I_B",52,82)+Ia(150,24,150,52,"I_C",158,42)+Ia(150,148,150,180,"I_E",158,170)+Ua(220,182,26,"V_{CE}")+Ua(96,190,112,"V_{BE}","l")),
+  model:()=>svg(360,200,Term(30,40)+Wr("M30 40H100V68")+Rv(100,95,54)+Wr("M100 122V160H300")+T(84,101,"r",{a:"end"})+Ia(118,52,118,82,"i_b",124,72)+Term(330,40)+Wr("M330 40H230V80")+ISrc(230,95)+Wr("M230 110V160")+T(208,90,"β·i_b",{a:"end"})+Dot(290,40)+Wr("M290 40V68")+`<rect class="r" x="283" y="68" width="14" height="54" style="stroke-dasharray:4 3"/>`+Wr("M290 122V160")+T(304,101,"ρ")+Dot(230,160)+Wr("M200 160V176")+Term(200,180)+T(18,34,"B",{a:"end"})+T(342,34,"C")+T(212,196,"E")),
+  td1a:()=>svg(220,240,Term(118,22)+T(130,27,"V_{cc}")+Wr("M118 26V52")+Rv(118,76,46)+T(104,82,"R_C",{a:"end"})+Wr("M118 99V122")+NPN(90,162)+Wr("M90 162H50V210H118")+Wr("M118 202V210")+Gnd(118,214)+Wr("M118 210V214")),
+  td1b:()=>svg(220,240,Wr("M50 26H150")+Term(150,26)+T(150,14,"V_{cc}",{a:"middle"})+Wr("M50 26V162H90")+Wr("M118 26V52")+Rv(118,76,46)+T(134,82,"R_C")+Wr("M118 99V122")+NPN(90,162)+Wr("M118 202V214")+Gnd(118,214)),
+  td1c:()=>svg(230,240,Wr("M50 26H170")+Term(170,26)+T(170,14,"V_{cc}",{a:"middle"})+Wr("M50 26V52")+Rv(50,76,46)+T(36,74,"R_B",{a:"end"})+T(36,94,"1500 Ω",{a:"end",c:"tt"})+Wr("M50 99V162H110")+Wr("M138 26V52")+Rv(138,76,46)+T(154,74,"R_C")+T(154,94,"200 Ω",{c:"tt"})+Wr("M138 99V122")+NPN(110,162)+Wr("M138 202V214")+Gnd(138,214)),
+  td2:()=>amp({bias:"RB",em:"none"}),
+  td2pol:()=>amp({bias:"RB",em:"none",full:false}),
+  td2ss:()=>ss({rg:true,rb:"R_B"}),
+  td3:()=>amp({bias:"pont",em:"REdec"}),
+  td3pol:()=>amp({bias:"pont",em:"RE",full:false,vc:"V_C = 6 V",ve:"V_E = 2 V"}),
+  td3ss:()=>ss({rg:true,rb:"R_1 // R_2"}),
+  td3b:()=>amp({bias:"pont",em:"RE12"}),
+  td3ss2:()=>ss({rg:true,rb:"R_1 // R_2",re:"R_{E1}",reAnn:"(β+1)R_{E1}·i_b"}),
+  an1:()=>amp({bias:"RB",em:"RE",rg:"R_g",eg:"v_g",rl:"R_u"}),
+  an1pol:()=>amp({bias:"RB",em:"RE",full:false,ann:true}),
+  an1ss:()=>ss({rg:true,eg:"v_G",rb:"R_B",re:"R_E",rho:true,rl:"R_u",reAnn:"R_E(β+1)i_b"}),
+  an2:()=>svg(300,280,Wr("M70 30H236")+Term(236,30)+T(236,18,"V_{cc}",{a:"middle"})+Wr("M70 30V56")+Rv(70,80,48)+T(56,86,"R_1",{a:"end"})+Wr("M70 104V176")+Dot(70,150)+Wr("M70 150H150")+NPN(150,150)+Wr("M178 110V30")+Dot(178,30)+Rv(70,200,48)+T(56,206,"R_2",{a:"end"})+Wr("M70 224V250")+Wr("M178 190V196")+Rv(178,220,48)+T(194,226,"R_E")+Wr("M178 244V250")+Wr("M70 250H178")+Gnd(124,250)),
+  an2pont:()=>svg(320,280,Wr("M80 30H246")+Term(246,30)+T(246,18,"V_{cc}",{a:"middle"})+Wr("M80 30V56")+Rv(80,80,48)+T(66,86,"R_1",{a:"end"})+Wr("M80 104V176")+Dot(80,150)+Wr("M80 150H160")+NPN(160,150)+Wr("M188 110V30")+Dot(188,30)+Rv(80,200,48)+T(98,206,"R_2")+Ua(48,224,176,"U_{R2}","l")+Wr("M80 224V250")+Wr("M188 190V196")+Rv(188,220,48)+T(204,212,"R_E")+Ia(200,192,200,200,"I_E",206,198)+Wr("M188 244V250")+Wr("M80 250H188")+Gnd(134,250)),
+  q9:()=>svg(260,250,Wr("M200 22V56")+Term(200,22)+T(212,27,"V_{cc}")+Rv(200,80,48)+T(216,86,"R_C")+Wr("M200 104V132")+Dot(200,116)+Wr("M200 116H50V172H84")+Rh(108,172,48)+T(108,154,"R_B",{a:"middle"})+Wr("M132 172H172")+NPN(172,172)+Wr("M200 212V222")+Gnd(200,222))
+};
+document.querySelectorAll("[data-schem]").forEach(d=>{ const f=SCH[d.dataset.schem]; if(f) d.innerHTML=f(); });
+
+/* =================== questions à réponse =================== */
+function parseNum(s){ s=String(s).trim().replace(/\s/g,"").replace(",",".").replace(/[^\d.eE+\-]/g,""); return s===""?NaN:parseFloat(s); }
+function exoProgress(){
+  document.querySelectorAll("[data-exo]").forEach(ex=>{
+    const ids=[...ex.querySelectorAll("[data-id]")].map(a=>a.dataset.id);
+    const n=ids.filter(id=>G.solved[id]||G.quiz[id]).length;
+    const p=ex.querySelector(".prog"); if(p){ p.textContent=`${n} / ${ids.length}`; p.classList.toggle("full",n===ids.length&&ids.length>0); }
+    const key=ex.dataset.exo;
+    if(ids.length&&n===ids.length&&["td1","td2","td3"].includes(key)) badge(key);
+  });
+  const an=["an1","an2","an3"].every(k=>{ const ex=document.querySelector(`[data-exo="${k}"]`); const ids=[...ex.querySelectorAll("[data-id]")].map(a=>a.dataset.id); return ids.length&&ids.every(id=>G.solved[id]||G.quiz[id]); });
+  if(an) badge("annale");
+  const bossIds=[...document.querySelectorAll("#qcmBoss [data-id]")].map(a=>a.dataset.id);
+  if(bossIds.length&&bossIds.every(id=>G.quiz[id]&&G.quiz[id].ok)) badge("boss");
+}
+function initAsk(a){
+  const id=a.dataset.id, msg=document.createElement("p"); msg.className="msg"; let tries=0;
+  if(a.dataset.choices){
+    const opts=a.dataset.choices.split("|"), ans=+a.dataset.ans, box=document.createElement("div"); box.className="choices";
+    opts.forEach((t,j)=>{ const b=document.createElement("button"); b.type="button"; b.innerHTML=t; b.addEventListener("click",()=>{
+      if(a.classList.contains("ok")) return;
+      if(j===ans){ b.classList.add("good"); a.classList.add("ok"); box.querySelectorAll("button").forEach(x=>x.disabled=true);
+        if(!G.solved[id]){ G.solved[id]=1; streak(tries===0); gain(tries===0?20:10, tries===0?"Bonne réponse !":"Trouvé !"); exoProgress(); }
+        msg.textContent = tries===0?"Exact.":"C'est ça.";
+      } else { tries++; b.classList.add("bad"); b.disabled=true; streak(false); msg.textContent="Non, essaie encore."; a.classList.remove("ko"); void a.offsetWidth; a.classList.add("ko"); }
+    }); box.appendChild(b); });
+    a.appendChild(box); a.appendChild(msg);
+    if(G.solved[id]){ a.classList.add("ok"); box.querySelectorAll("button").forEach((x,j)=>{ x.disabled=true; if(j===ans) x.classList.add("good"); }); }
+    return;
+  }
+  const ans=+a.dataset.ans, unit=a.dataset.unit||"", tol=a.dataset.tol?+a.dataset.tol:.03, abs=a.dataset.abs?+a.dataset.abs:0;
+  const inp=document.createElement("input"); inp.type="text"; inp.inputMode="decimal"; inp.id="in-"+id; inp.setAttribute("aria-label",a.querySelector(".al").textContent.replace(/\$/g,"")+" en "+unit); inp.autocomplete="off";
+  const u=document.createElement("span"); u.className="unit"; u.textContent=unit;
+  const go=document.createElement("button"); go.type="button"; go.className="go"; go.textContent="Vérifier";
+  a.append(inp,u,go,msg);
+  const check=()=>{
+    if(a.classList.contains("ok")) return;
+    const v=parseNum(inp.value);
+    if(isNaN(v)){ msg.textContent="Tape un nombre (la virgule marche)."; inp.focus(); return; }
+    const ok=Math.abs(v-ans)<=Math.max(abs,tol*Math.abs(ans));
+    if(ok){ a.classList.add("ok"); inp.disabled=true; go.textContent="Juste"; go.disabled=true;
+      if(!G.solved[id]){ G.solved[id]=1; streak(tries===0); gain(tries===0?30:15,tries===0?"Du premier coup !":"Bien rattrapé !"); exoProgress(); }
+      msg.textContent=""; return; }
+    tries++; streak(false); a.classList.remove("ko"); void a.offsetWidth; a.classList.add("ko");
+    const r=ans!==0?v/ans:0; let t="Pas encore.";
+    if(ans!==0&&Math.abs(Math.abs(r)-1000)<50||ans!==0&&Math.abs(Math.abs(r)-0.001)<0.00005) t=`Le chiffre a l'air bon, mais vérifie l'unité : on attend des ${unit}.`;
+    else if(ans!==0&&Math.abs(r+1)<tol) t="Presque : attention au signe.";
+    else if(a.dataset.hint&&tries>=1) t="Indice : "+a.dataset.hint;
+    if(tries>=3) t+=" Tu peux ouvrir la correction juste en dessous.";
+    msg.textContent=t;
+  };
+  go.addEventListener("click",check); inp.addEventListener("keydown",e=>{ if(e.key==="Enter") check(); });
+  inp.addEventListener("input",()=>{ if(msg.textContent&&!a.classList.contains("ok")) msg.textContent=""; });
+  if(G.solved[id]){ a.classList.add("ok"); inp.value=String(ans).replace(".",","); inp.disabled=true; go.textContent="Juste"; go.disabled=true; }
+}
+document.querySelectorAll(".ask").forEach(initAsk);
+
+/* =================== QCM =================== */
+const QA=[
+  {id:"a1",q:"En mode normal (linéaire), la jonction base-émetteur est :",o:["Bloquée","Passante"],a:1,e:"Elle conduit, avec $V_{BE} \\approx 0{,}7\\ \\text{V}$. C'est ce qui permet à $I_B$ de passer."},
+  {id:"a2",q:"Les modes bloqué et saturé servent surtout à concevoir :",o:["des portes logiques","des filtres","des amplificateurs","des ponts diviseurs"],a:0,e:"Bloqué = 0, saturé = 1 : le transistor devient un interrupteur commandé."},
+  {id:"a3",q:"Saturé, il est équivalent entre collecteur et émetteur à :",o:["une diode","une résistance","un interrupteur ouvert","un fil"],a:3,e:"$V_{CE} \\approx 0$ : comme un fil (interrupteur fermé)."},
+  {id:"a4",q:"Saturé, les jonctions B–E et B–C sont bloquées.",o:["VRAI","FAUX"],a:1,e:"En saturation, les deux jonctions sont passantes. Elles sont toutes les deux bloquées en mode bloqué."},
+  {id:"a5",q:"Bloqué, il est équivalent entre collecteur et émetteur à :",o:["une diode","une résistance","un interrupteur ouvert","un fil"],a:2,e:"$I_C = 0$ : plus rien ne passe."},
+  {id:"a6",q:"Le mode linéaire sert principalement à concevoir des portes logiques.",o:["VRAI","FAUX"],a:1,e:"Le linéaire sert à amplifier. Les portes logiques utilisent bloqué et saturé."},
+  {id:"a7",q:"Linéaire, $\\beta = 200$ et $I_C = 100\\ \\text{mA}$. Le courant de base vaut :",o:["0,5 mA","0,2 mA","2 A","20 A"],a:0,e:"$I_B = I_C / \\beta = 100 / 200 = 0{,}5\\ \\text{mA}$."},
+  {id:"a8",q:"Même transistor : le courant d'émetteur vaut :",o:["100,5 mA","100,2 mA","2,1 A","20,1 A"],a:0,e:"$I_E = I_C + I_B = 100 + 0{,}5 = 100{,}5\\ \\text{mA}$."},
+  {id:"a9",q:"Montage par réaction de collecteur (linéaire). La loi des mailles donne :",schem:"q9",o:["$V_{cc} = (\\beta+1) R_C I_B + R_B I_B + V_{BE}$","$V_{cc} = R_C I_C + R_B I_B + V_{BE}$","$V_{cc} = \\beta R_C I_C + R_B I_B - V_{BE}$","$V_{cc} = \\beta R_C I_B + R_B I_B$"],a:0,e:"$R_C$ est traversée par $I_C$ <b>et</b> par $I_B$ (qui repart vers $R_B$) : $I_C + I_B = (\\beta+1) I_B$. Puis $R_B I_B$ et $V_{BE}$."}
+];
+const QB=[
+  {id:"b1",q:"En supposant linéaire, tu trouves $V_{CE} = -12\\ \\text{V}$. Conclusion ?",o:["Erreur de calcul","Le transistor est saturé","Le transistor est bloqué"],a:1,e:"Un $V_{CE}$ négatif est impossible : $\\beta I_B$ dépasse ce que le tuyau peut donner."},
+  {id:"b2",q:"En petits signaux, un condensateur de liaison devient :",o:["un interrupteur ouvert","un fil","une résistance $r$"],a:1,e:"En variable son impédance est très faible : court-circuit."},
+  {id:"b3",q:"En petits signaux, $V_{cc}$ devient :",o:["la masse","une source $\\beta i_b$","il reste tel quel"],a:0,e:"Une tension constante n'a pas de partie variable : c'est la masse."},
+  {id:"b4",q:"TD 2 : $R_B = 10\\ \\text{k}\\Omega$, $\\beta = 100$, $V_{cc} = 10\\ \\text{V}$. $I_C$ vaut :",o:["0,93 mA","9,3 mA","93 mA"],a:2,e:"$I_B = 9{,}3 / 10\\,000 = 0{,}93\\ \\text{mA}$, puis $I_C = 100 \\times 0{,}93 = 93\\ \\text{mA}$."},
+  {id:"b5",q:"TD 1c : pour repasser en linéaire il faut :",o:["$R_B > \\beta R_C$","$R_B < \\beta R_C$","$R_B = R_C$"],a:0,e:"$\\beta \\dfrac{V_{cc}}{R_B} < \\dfrac{V_{cc}}{R_C} \\iff R_B > \\beta R_C$."},
+  {id:"b6",q:"Pourquoi $C_E$ augmente l'amplification ?",o:["Il augmente $\\beta$","Il court-circuite $R_E$ en variable","Il bloque le continu dans $R_C$"],a:1,e:"Sans $C_E$ : $-\\dfrac{\\beta R_C}{r + (\\beta+1)R_E}$. Avec : $-\\dfrac{\\beta R_C}{r}$."},
+  {id:"b7",q:"Annale ex. 1 : $V_{CE} = 0{,}7\\ \\text{V}$. Avec un gros signal :",o:["Sortie parfaite","Un côté de la sortie est écrêté (saturation)","Le transistor grille"],a:1,e:"Le point est collé à la saturation : il n'a presque pas de marge pour descendre. Teste « Annale 1 » dans le labo."},
+  {id:"b8",q:"Si $I_B$ est négligeable devant le courant du pont, $R_1$ et $R_2$ sont :",o:["en série","en parallèle","court-circuitées"],a:0,e:"Le même courant les traverse : pont diviseur $\\dfrac{R_{bas}}{R_1 + R_2} V_{cc}$."},
+  {id:"b9",q:"Le signe − dans $A_v = -\\dfrac{\\beta R_C}{r}$ veut dire :",o:["le gain est faible","la sortie est en opposition de phase","le transistor est bloqué"],a:1,e:"Quand $v$ monte, $u$ descend : la sortie est inversée."},
+  {id:"b10",q:"Annale ex. 2 (collecteur sur $V_{cc}$, $R_E$ à l'émetteur) : $I_{C,sat}$ vaut :",o:["$\\dfrac{V_{cc}}{R_E}$","$\\dfrac{V_{cc}}{R_1 + R_2}$","$\\dfrac{V_{cc} - V_{BE}}{R_E}$"],a:0,e:"$V_{CE} = 0$ dans $V_{cc} = V_{CE} + R_E I_E$, donc $I_{C,sat} = V_{cc} / R_E$."}
+];
+function buildQuiz(box,list){
+  list.forEach((it,i)=>{
+    const c=document.createElement("div"); c.className="card q"; c.dataset.id=it.id;
+    c.innerHTML=`<div class="qt" style="display:flex;gap:10px;align-items:baseline"><span class="qn" style="flex:none;font:800 13px var(--f-display);color:#fff;background:var(--mauve);border-radius:9px;padding:3px 8px">Q${i+1}</span><p>${it.q}</p></div>${it.schem?`<div class="schem">${SCH[it.schem]()}</div>`:""}<div class="opts">${it.o.map((o,j)=>`<button class="o" type="button" data-j="${j}"><span class="lt">${"abcd"[j]}</span><span>${o}</span></button>`).join("")}</div><p class="fb"></p>`;
+    box.appendChild(c);
+    const fb=c.querySelector(".fb");
+    const show=(j,fresh)=>{
+      const ok=j===it.a; c.querySelectorAll("button.o").forEach(b=>{ b.disabled=true; const k=+b.dataset.j; if(k===it.a) b.classList.add("good"); else if(k===j) b.classList.add("bad"); });
+      fb.innerHTML=`<b style="color:${ok?"var(--lin)":"var(--bad)"}">${ok?["Exact.","Bien vu.","Oui !","Parfait.","Juste."][i%5]:["Raté.","Pas celle-là.","Non.","Presque.","Pas tout à fait."][i%5]}</b> ${it.e}`;
+      if(fresh) typeset([fb]);
+    };
+    c.querySelectorAll("button.o").forEach(b=>b.addEventListener("click",()=>{
+      if(G.quiz[it.id]) return; const j=+b.dataset.j, ok=j===it.a;
+      G.quiz[it.id]={j,ok}; streak(ok); if(ok) gain(20,"QCM juste !"); save(); show(j,true); exoProgress(); quizScores();
+    }));
+    if(G.quiz[it.id]) show(G.quiz[it.id].j,false);
+  });
+}
+buildQuiz($("qcmAnnale"),QA); buildQuiz($("qcmBoss"),QB);
+function quizScores(){}
+
+/* remise à zéro */
+let armed=null;
+$("resetBtn").addEventListener("click",e=>{
+  const b=e.currentTarget;
+  if(!armed){ b.classList.add("arm"); b.textContent="Sûr ? Clique encore pour tout effacer"; armed=setTimeout(()=>{ armed=null; b.classList.remove("arm"); b.textContent="Remettre à zéro"; },4000); return; }
+  clearTimeout(armed); armed=null; try{ localStorage.removeItem(KEY); }catch(_){}
+  G={xp:0,solved:{},miss:{},badges:{},best:0,combo:0,right:0,quiz:{}}; b.textContent="Progression effacée"; b.classList.remove("arm");
+  setTimeout(()=>location.reload(),600);
+});
+
+/* =================== départ =================== */
+G.combo=0; hud(); renderBadges(); renderMissions(); exoProgress();
+loadPreset("td2");
+typeset([document.body]);
+})();
+</script>
+
+</body></html>

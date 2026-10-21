@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mes cours</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#12122b; --ink:#f6f3ff; --muted:#a9a6c9;
+  --c1:#ff5d8f; --c2:#ffb627; --c3:#2de2c5; --c4:#6c8bff; --c5:#c77dff;
+}
+@media (prefers-color-scheme: light){
+  :root{--bg:#f4f1ff; --ink:#1a1840; --muted:#5d5a85}
+}
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:'Space Grotesk',system-ui,sans-serif;
+  padding:clamp(1.5rem,5vw,4rem) 1.25rem;
+  display:flex; flex-direction:column; align-items:center;
+  background-image:
+    radial-gradient(circle at 15% 10%, color-mix(in srgb,var(--c1) 22%,transparent), transparent 40%),
+    radial-gradient(circle at 90% 85%, color-mix(in srgb,var(--c4) 25%,transparent), transparent 45%);
+  background-attachment:fixed;
+}
+h1{
+  font-family:'Bricolage Grotesque',sans-serif; font-weight:800;
+  font-size:clamp(3rem,10vw,6.5rem); line-height:.95; letter-spacing:-.04em;
+  text-align:center;
+  background:linear-gradient(90deg,var(--c1),var(--c2),var(--c3),var(--c4),var(--c5));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.sub{color:var(--muted); margin:1rem 0 3rem; text-align:center; font-size:1.1rem}
+.grid{
+  width:100%; max-width:960px;
+  display:grid; gap:1.1rem;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+}
+.btn{
+  --c:var(--c1);
+  position:relative; display:flex; align-items:center; justify-content:space-between;
+  gap:1rem; padding:1.6rem 1.8rem; min-height:110px;
+  text-decoration:none; color:#12122b; background:var(--c);
+  font-family:'Bricolage Grotesque',sans-serif; font-weight:800;
+  font-size:clamp(1.4rem,3vw,1.9rem); letter-spacing:-.02em;
+  border-radius:22px; border:3px solid var(--ink);
+  box-shadow:6px 6px 0 var(--ink);
+  transition:transform .15s, box-shadow .15s;
+}
+.btn:hover{transform:translate(-3px,-3px); box-shadow:9px 9px 0 var(--ink)}
+.btn:active{transform:translate(4px,4px); box-shadow:2px 2px 0 var(--ink)}
+.btn:focus-visible{outline:4px solid var(--ink); outline-offset:4px}
+.btn svg{flex:none; width:34px; height:34px; transition:transform .2s}
+.btn:hover svg{transform:translateX(5px)}
+.btn:nth-child(1){--c:var(--c1)}
+.btn:nth-child(2){--c:var(--c2)}
+.btn:nth-child(3){--c:var(--c3)}
+.btn:nth-child(4){--c:var(--c4)}
+.btn:nth-child(5){--c:var(--c5)}
+@media (prefers-reduced-motion:reduce){.btn,.btn svg{transition:none}}
+</style>
+</head>
+<body>
+<h1>Mes cours</h1>
+<p class="sub">Choisis une matière pour accéder au cours.</p>
+<nav class="grid">
+  <a class="btn" href="elec_raph">ELEC RAPH<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+  <a class="btn" href="elec_ryan">ELEC RYAN<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+  <a class="btn" href="gauss">PHYSIQUE<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+  <a class="btn" href="68k">ASSEMBLEUR<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+  <a class="btn" href="thlr">THLR<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+</nav>
+</body>
+</html>
