@@ -237,7 +237,10 @@ details.corr .body{padding:2px 16px 16px;display:flex;flex-direction:column;gap:
 .q{display:flex;flex-direction:column;gap:10px}
 .q .opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:8px}
 .q button.o{font:400 15.5px var(--f-body);text-align:left;padding:11px 14px;border-radius:13px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;display:flex;gap:10px;align-items:baseline}
-.q button.o .lt{font:700 13px var(--f-mono);color:var(--muted)}
+.q button.o .lt{font:700 13px var(--f-mono);color:var(--muted);flex:none}
+.q button.o{min-width:0}
+.q button.o>span:last-child{min-width:0;overflow-x:auto;overflow-y:hidden}
+.q .opts.long{grid-template-columns:repeat(auto-fit,minmax(min(100%,430px),1fr))}
 .q button.o:hover:not(:disabled){border-color:var(--mauve)}
 .q button.o.good{border-color:var(--lin);background:var(--lin-soft)}
 .q button.o.bad{border-color:var(--bad);background:var(--bad-soft)}
@@ -1611,7 +1614,7 @@ const QB=[
 function buildQuiz(box,list){
   list.forEach((it,i)=>{
     const c=document.createElement("div"); c.className="card q"; c.dataset.id=it.id;
-    c.innerHTML=`<div class="qt" style="display:flex;gap:10px;align-items:baseline"><span class="qn" style="flex:none;font:800 13px var(--f-display);color:#fff;background:var(--mauve);border-radius:9px;padding:3px 8px">Q${i+1}</span><p>${it.q}</p></div>${it.schem?`<div class="schem">${SCH[it.schem]()}</div>`:""}<div class="opts">${it.o.map((o,j)=>`<button class="o" type="button" data-j="${j}"><span class="lt">${"abcd"[j]}</span><span>${o}</span></button>`).join("")}</div><p class="fb"></p>`;
+    c.innerHTML=`<div class="qt" style="display:flex;gap:10px;align-items:baseline"><span class="qn" style="flex:none;font:800 13px var(--f-display);color:#fff;background:var(--mauve);border-radius:9px;padding:3px 8px">Q${i+1}</span><p>${it.q}</p></div>${it.schem?`<div class="schem">${SCH[it.schem]()}</div>`:""}<div class="opts${it.o.some(t=>t.length>34)?" long":""}">${it.o.map((o,j)=>`<button class="o" type="button" data-j="${j}"><span class="lt">${"abcd"[j]}</span><span>${o}</span></button>`).join("")}</div><p class="fb"></p>`;
     box.appendChild(c);
     const fb=c.querySelector(".fb");
     const show=(j,fresh)=>{
