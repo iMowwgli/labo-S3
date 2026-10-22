@@ -186,6 +186,8 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
 .pat p { margin: 0; font-size: 14px; color: var(--muted); }
 .pat pre { margin: 0; background: var(--code-bg); color: var(--code-fg); border-radius: 8px; padding: 10px 12px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.6; }
 .copy { font: inherit; font-size: 12px; cursor: pointer; border: 1px solid var(--line); background: var(--bg); color: var(--muted); border-radius: 6px; padding: 3px 8px; flex: none; }
+.pat-actions { display: flex; gap: 6px; flex: none; }
+.copy.run { color: var(--mauve); border-color: var(--mauve); }
 .copy:hover { color: var(--rose); border-color: var(--rose); }
 
 .refs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
@@ -227,14 +229,15 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
   <header>
     <a class="back" href="../">← Mes cours</a>
     <h1>Labo des Pointeurs</h1>
-    <p>Listes chaînées, fichiers et vecteurs en C, ligne par ligne. Choisis une fonction, puis avance avec <code>Suivant</code> ou les flèches du clavier.</p>
+    <p>Listes chaînées, fichiers, vecteurs et patterns en C, exécutés ligne par ligne. Choisis une fonction, puis avance avec <code>Suivant</code> ou les flèches du clavier.</p>
   </header>
 
   <div class="tabs" role="tablist" aria-label="Thèmes">
     <button class="tab" role="tab" id="tab-listes" data-tab="listes" aria-selected="true" type="button">Listes</button>
     <button class="tab" role="tab" id="tab-fichiers" data-tab="fichiers" aria-selected="false" type="button">Fichiers</button>
     <button class="tab" role="tab" id="tab-vecteur" data-tab="vecteur" aria-selected="false" type="button">Vecteur</button>
-    <button class="tab" role="tab" id="tab-patterns" data-tab="patterns" aria-selected="false" type="button">Patterns et mémo</button>
+    <button class="tab" role="tab" id="tab-patterns" data-tab="patterns" aria-selected="false" type="button">Patterns</button>
+    <button class="tab" role="tab" id="tab-memo" data-tab="memo" aria-selected="false" type="button">Fiche mémo</button>
   </div>
 
   <div id="lab" class="wrap" style="gap:22px">
@@ -269,8 +272,8 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     </div>
   </div>
 
-  <div id="patterns" class="wrap" style="gap:22px" hidden>
-    <p class="pat-intro">Les squelettes à savoir réécrire de tête. Le bouton Copier met le code dans le presse-papiers.</p>
+  <div id="memo" class="wrap" style="gap:22px" hidden>
+    <p class="pat-intro">Tous les squelettes sur une page. <b>Pas à pas</b> lance l'exécution ligne par ligne, <b>Copier</b> met le code dans le presse-papiers.</p>
     <div id="pat-root" class="wrap" style="gap:22px"></div>
 
     <section class="pat-sec">
@@ -367,7 +370,7 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     };
   }
 
-  /* ================= LISTES ================= */
+  /* ================= LISTES : état ================= */
   var IDS = ['A', 'B', 'C', 'D', 'E', 'F'];
   function base(vals) {
     var st = { kind: 'list', nodes: {}, order: [], head: null, ptrs: [], hl: [] };
@@ -380,18 +383,205 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
   }
   function relayout(st) {
     var seen = {}, p = 0, id = st.head;
-    while (id && !seen[id]) { seen[id] = 1; st.nodes[id].pos = p++; id = st.nodes[id].next; }
+    while (id && id !== '?' && !seen[id]) { seen[id] = 1; st.nodes[id].pos = p++; id = st.nodes[id].next; }
     st.order.forEach(function (k) { if (!seen[k]) st.nodes[k].pos = p++; });
     st.order.sort(function (a, b) { return st.nodes[a].pos - st.nodes[b].pos; });
   }
   function P(st, name) { for (var i = 0; i < st.ptrs.length; i++) if (st.ptrs[i].name === name) return st.ptrs[i]; return null; }
   function slotGet(st, slot) { return slot === 'head' ? st.head : st.nodes[slot.split('.')[0]].next; }
   function slotSet(st, slot, val) { if (slot === 'head') st.head = val; else st.nodes[slot.split('.')[0]].next = val; }
-  function fmtV(v) { return typeof v === 'number' ? String(v) : '"' + v + '"'; }
+  function fmtV(v) { return v === null ? '?' : typeof v === 'number' ? String(v) : '"' + v + '"'; }
   function V(st, id) { return fmtV(st.nodes[id].v); }
   function addNode(st, id, v) { st.nodes[id] = { id: id, v: v, next: null, st: 'new', pos: st.order.length }; st.order.push(id); }
   function dropPtr(st, name) { st.ptrs = st.ptrs.filter(function (q) { return q.name !== name; }); }
 
+  /* ================= LISTES : simulations réutilisables ================= */
+  function freeSim(L) {
+    var st = base(['Pazu', 'Sheeta', 'Laputa']), steps = [], S = rec(steps, st), first = true;
+    st.ptrs.push({ name: 'list', kind: 1, to: 'A' });
+    if (L.start !== null) { S(L.start, 'free reçoit une copie de la flèche : pas besoin de modifier la case du main.'); first = false; }
+    var p = P(st, 'list');
+    while (p.to) {
+      var c = p.to;
+      S(L.loop, (first ? 'On part de la tête. ' : '') + '<code>list</code> pointe sur ' + V(st, c) + ' : on continue.', [c]); first = false;
+      st.ptrs.push({ name: 'tmp', kind: 1, to: c });
+      S(L.tmp, '<code>tmp</code> garde le nœud courant.', [c]);
+      p.to = st.nodes[c].next;
+      S(L.adv, '<code>list</code> avance <b>avant</b> le free. Sinon on perdrait la suite.', [c]);
+      st.nodes[c].st = 'valfreed';
+      S(L.fv, '<code>free(tmp->value)</code> : la chaîne ' + V(st, c) + ' est libérée.');
+      st.nodes[c].st = 'freed';
+      S(L.fn, '<code>free(tmp)</code> : le nœud est libéré.');
+      dropPtr(st, 'tmp');
+    }
+    S(L.loop, '<code>list</code> vaut NULL : terminé, zéro fuite.');
+    if (L.end !== null) S(L.end, 'Le <code>list</code> du main pointe encore sur l\'ancien "Pazu" : pointeur pendouillant, ne plus l\'utiliser.');
+    return steps;
+  }
+
+  function reverseSim(L) {
+    var st = base(['Pazu', 'Sheeta', 'Laputa']), steps = [], S = rec(steps, st);
+    st.ptrs.push({ name: 'list', kind: 2, slot: 'head' });
+    if (L.start !== null) S(L.start, 'reverse reçoit <code>&amp;list</code> : à la fin, la tête du main devra changer.');
+    if (L.chk !== null) S(L.chk, '<code>list</code> n\'est pas NULL.');
+    st.ptrs.push({ name: 'prev', kind: 1, to: null });
+    if (L.prev !== L.cur) S(L.prev, '<code>prev = NULL</code> : le premier deviendra le dernier, donc son next vaudra NULL.');
+    st.ptrs.push({ name: 'cur', kind: 1, to: 'A' });
+    S(L.cur, L.prev === L.cur ? '<code>prev = NULL</code> et <code>cur</code> part de la tête.' : '<code>cur</code> part de la tête.');
+    var cur = P(st, 'cur'), prev = P(st, 'prev');
+    while (cur.to) {
+      var c = cur.to;
+      S(L.loop, '<code>cur</code> pointe sur ' + V(st, c) + '.', [c]);
+      st.ptrs.push({ name: 'next', kind: 1, to: st.nodes[c].next });
+      S(L.next, '<code>next</code> garde la suite <b>avant</b> qu\'on casse la flèche.', [c]);
+      st.nodes[c].next = prev.to;
+      S(L.flip, '<code>cur->next = prev</code> : la flèche de ' + V(st, c) + ' est retournée.', [c]);
+      prev.to = c;
+      S(L.pa, '<code>prev</code> avance sur ' + V(st, c) + '.');
+      cur.to = P(st, 'next').to;
+      dropPtr(st, 'next');
+      S(L.ca, '<code>cur</code> avance sur la suite gardée.', cur.to ? [cur.to] : []);
+    }
+    S(L.loop, '<code>cur</code> vaut NULL : fin de la boucle.');
+    st.head = prev.to;
+    S(L.end, '<code>*list = prev</code> : la tête du main devient "Laputa". La liste est inversée.', [prev.to]);
+    return steps;
+  }
+
+  function cycleSim(withCycle, L) {
+    var st = base(['Pazu', 'Sheeta', 'Laputa']), steps = [], S = rec(steps, st);
+    var intro = withCycle ? 'Ici, le next de "Laputa" revient sur "Pazu" : il y a un cycle. ' : 'Liste normale de 4 nœuds, sans cycle. ';
+    if (withCycle) st.nodes.C.next = 'A';
+    else { st.nodes.D = { id: 'D', v: 'Robot', next: null, st: 'ok', pos: 3 }; st.order.push('D'); st.nodes.C.next = 'D'; }
+    if (L.start !== null) { S(L.start, intro); intro = ''; }
+    st.ptrs.push({ name: 'slow', kind: 1, to: 'A' });
+    if (L.slow !== L.fast) { S(L.slow, intro + 'La tortue <code>slow</code> part de la tête.'); intro = ''; }
+    st.ptrs.push({ name: 'fast', kind: 1, to: 'A' });
+    S(L.fast, intro + (L.slow === L.fast ? 'La tortue et le lièvre partent de la tête.' : 'Le lièvre <code>fast</code> part aussi de la tête.'));
+    var s = P(st, 'slow'), f = P(st, 'fast');
+    for (var k = 0; k < 8; k++) {
+      if (!(f.to && st.nodes[f.to].next)) {
+        S(L.loop, '<code>fast</code> ou <code>fast->next</code> vaut NULL : le lièvre est sorti de la liste.');
+        S(L.r0, 'On retourne 0 : pas de cycle.');
+        break;
+      }
+      S(L.loop, '<code>fast</code> et <code>fast->next</code> existent : le lièvre peut faire 2 pas.');
+      s.to = st.nodes[s.to].next;
+      S(L.s, 'La tortue avance d\'<b>1</b> case.', [s.to]);
+      f.to = st.nodes[st.nodes[f.to].next].next;
+      S(L.f, 'Le lièvre avance de <b>2</b> cases.', f.to ? [f.to] : []);
+      var eq = s.to === f.to;
+      S(L.cmp, eq ? 'Ils sont sur le <b>même nœud</b> : le lièvre a rattrapé la tortue.' : 'Pas encore au même endroit.', eq ? [s.to] : []);
+      if (eq) { S(L.r1, 'On retourne 1 : il y a un cycle.', [s.to]); break; }
+    }
+    return steps;
+  }
+
+  function predSim(L) {
+    var st = base([4, 7, 8, 2, 3]), steps = [], S = rec(steps, st), intro = 'On supprime tous les nombres pairs : <code>predicate(x)</code> renvoie 1 si x est pair. ';
+    st.ptrs.push({ name: 'list', kind: 2, slot: 'head' });
+    if (L.start !== null) { S(L.start, intro); intro = ''; }
+    if (L.chk !== null) S(L.chk, 'Les paramètres ne sont pas NULL.');
+    var p = P(st, 'list'), removed = 0;
+    while (slotGet(st, p.slot)) {
+      var t = slotGet(st, p.slot), v = st.nodes[t].v;
+      S(L.loop, intro + '<code>*list</code> pointe sur ' + v + '.', [t]); intro = '';
+      if (v % 2 === 0) {
+        S(L.test, '<code>predicate(' + v + ')</code> vaut 1 : on le supprime.', [t]);
+        st.ptrs.push({ name: 'tmp', kind: 1, to: t });
+        S(L.tmp, '<code>tmp</code> garde le nœud ' + v + '.', [t]);
+        slotSet(st, p.slot, st.nodes[t].next); st.nodes[t].st = 'removing';
+        S(L.skip, '<code>*list = tmp->next</code> : la case saute le ' + v + '. On reste sur <b>la même case</b>.');
+        st.nodes[t].st = 'freed'; dropPtr(st, 'tmp'); removed = 1;
+        S(L.free, '<code>free(tmp)</code>. Au prochain tour, on teste le nouveau contenu de la même case.');
+      } else {
+        S(L.test, '<code>predicate(' + v + ')</code> vaut 0 : on le garde.', [t]);
+        p.slot = t + '.next';
+        S(L.adv, 'On avance sur la case <code>next</code> de ' + v + '.');
+      }
+    }
+    S(L.loop, '<code>*list</code> vaut NULL : fin. Il reste 7 et 3.');
+    if (L.ret !== null) S(L.ret, removed ? 'Au moins un supprimé : on retourne 0.' : 'Aucun supprimé : on retourne 1.');
+    return steps;
+  }
+
+  /* ================= FICHIERS : état et simulations ================= */
+  function fileSt(inp) { return { kind: 'file', inp: inp, pos: -1, vars: {}, out: null, outName: 'output', ret: null, buf: null, sel: null, skip: null, hl: [] }; }
+  function chl(c) { return c === '\n' ? "'\\n'" : c === '\t' ? "'\\t'" : c === ' ' ? "' '" : "'" + c + "'"; }
+  function shown(c) { return c === '\n' ? '\\n' : c === '\t' ? '\\t' : c === ' ' ? 'espace' : c; }
+
+  function copyLoop(st, S, I, L) {
+    var line = 0;
+    for (var p = 0; p < st.inp.length; p++) {
+      var c = st.inp[p]; st.pos = p; st.vars.c = chl(c);
+      if (line !== I) { st.out += c; S(L.write, '<code>line</code> = ' + line + ' ≠ ' + I + ' : on écrit ' + esc(shown(c)) + '.'); }
+      else S(L.skip, '<code>line</code> = ' + I + ' : ligne ignorée, on n\'écrit pas ' + esc(shown(c)) + '.');
+      if (c === '\n') { line++; st.vars.line = line; S(L.nl, 'On a lu <code>\\n</code> : <code>line</code> passe à ' + line + '.'); }
+    }
+    st.pos = st.inp.length; st.vars.c = 'EOF';
+    S(L.eof, '<code>fgetc</code> renvoie <code>EOF</code> : fin.');
+  }
+
+  function wordsLoop(st, S, L) {
+    var inw = 0, count = 0;
+    for (var p = 0; p < st.inp.length; p++) {
+      var c = st.inp[p], sp = /[ \t\n\v\f\r]/.test(c);
+      st.pos = p; st.vars.c = chl(c); st.vars.sp = sp ? 1 : 0;
+      if (!sp && !inw) { count++; st.vars.count = count; inw = 1; st.vars.in_word = 1; S(L.start, 'On lit ' + esc(shown(c)) + ' après un espace : <b>début d\'un mot</b>, <code>count</code> = ' + count + '.'); }
+      else { inw = sp ? 0 : 1; st.vars.in_word = inw; S(L.other, sp ? 'On lit un espace (' + esc(shown(c)) + ') : <code>in_word</code> = 0.' : 'On lit ' + esc(shown(c)) + ' : on est déjà dans le mot.'); }
+    }
+    st.pos = st.inp.length; st.vars.c = 'EOF';
+    S(L.loop, '<code>EOF</code> : fin. Il y a ' + count + ' mots.');
+    return count;
+  }
+
+  function isAl(c) { return /[A-Za-z0-9]/.test(c); }
+  function palCheck(st, S, s, L) {
+    var l = 0, r = s.length;
+    st.buf = { cells: s.split(''), marks: {}, hot: [], bad: [] };
+    st.vars.len = s.length; st.vars.l = l; st.vars.r = r;
+    S(L.init, '<code>l</code> = 0, <code>r</code> = len = ' + r + ' (r exclusif). On compare <code>s[l]</code> et <code>s[r - 1]</code>.');
+    while (l < r) {
+      var m = {}; m[l] = 'l'; if (r - 1 !== l) m[r - 1] = 'r-1'; else m[l] = 'l = r-1';
+      st.buf.marks = m; st.vars.l = l; st.vars.r = r;
+      if (!isAl(s[l])) { st.buf.hot = [l]; S(L.al, '<code>s[l]</code> = <code>' + esc(s[l]) + '</code> n\'est pas alphanumérique : on le saute.'); l++; continue; }
+      if (!isAl(s[r - 1])) { st.buf.hot = [r - 1]; S(L.ar, '<code>s[r - 1]</code> = <code>' + esc(s[r - 1]) + '</code> n\'est pas alphanumérique : on le saute.'); r--; continue; }
+      if (s[l] !== s[r - 1]) {
+        st.buf.hot = []; st.buf.bad = [l, r - 1];
+        S(L.ne, '<code>\'' + s[l] + '\'</code> ≠ <code>\'' + s[r - 1] + '\'</code> : pas un palindrome.');
+        if (L.ret0 !== null) S(L.ret0, 'On retourne 0.');
+        st.buf.marks = {}; return 0;
+      }
+      st.buf.hot = [l, r - 1]; st.buf.bad = [];
+      S(L.ne, '<code>\'' + s[l] + '\'</code> == <code>\'' + s[r - 1] + '\'</code> : pareil.');
+      l++; st.vars.l = l;
+      if (L.l !== L.r) S(L.l, '<code>l++</code>.');
+      r--; st.vars.r = r;
+      S(L.r, L.l !== L.r ? '<code>r--</code> : les indices se rapprochent.' : 'On rapproche les deux indices.');
+    }
+    st.buf.marks = {}; st.buf.hot = [];
+    S(L.ok, s.length ? 'Les indices se sont croisés sans différence : palindrome.' : 'Ligne vide : la boucle ne tourne pas, c\'est un palindrome.');
+    return 1;
+  }
+
+  /* ================= VECTEUR : état et simulations ================= */
+  function vecSt(arr, cap) { var d = arr.slice(); while (d.length < cap) d.push(null); return { kind: 'vec', data: d, size: arr.length, cap: cap, marks: {}, vars: {}, hl: [], title: null }; }
+  function shiftSim(st, S, I, E, L) {
+    for (var j = st.size; j > I; j--) {
+      st.marks = {}; st.marks[I] = 'i'; st.marks[j] = 'j'; st.vars.j = j;
+      S(L.loop, '<code>j</code> = ' + j + ' > i : on décale la case ' + (j - 1) + ' vers la droite.');
+      st.data[j] = st.data[j - 1];
+      S(L.mv, '<code>data[' + j + '] = data[' + (j - 1) + ']</code> : le ' + st.data[j] + ' glisse d\'une case.', [j]);
+    }
+    st.marks = {}; st.marks[I] = 'i = j'; st.vars.j = I;
+    S(L.loop, '<code>j</code> = i : on s\'arrête. On a décalé depuis la fin, rien n\'est écrasé.');
+    st.data[I] = E; st.marks = {}; st.marks[I] = 'i'; delete st.vars.j;
+    S(L.set, '<code>data[' + I + '] = ' + E + '</code>.', [I]);
+    st.size++; st.vars.size = st.size;
+    S(L.inc, '<code>size</code> passe à ' + st.size + '.');
+  }
+
+  /* ================= SCÉNARIOS : Listes ================= */
   var SC = {};
 
   SC.find = {
@@ -465,16 +655,12 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
   ];
   SC.append = {
     tab: 'listes', group: 'Ajouter', label: 'append', sig: 'int linked_list_append(struct node **list, char *data)', code: appendCode,
-    retain: ['On reçoit <code>&amp;list</code> (<code>**</code>) : l\'adresse d\'une case.',
-             'Créer le nœud <b>avant</b> de toucher la liste.',
-             'On cherche la <b>case vide</b>, pas le dernier nœud.'],
+    retain: ['On reçoit <code>&amp;list</code> (<code>**</code>) : l\'adresse d\'une case.', 'Créer le nœud <b>avant</b> de toucher la liste.', 'On cherche la <b>case vide</b>, pas le dernier nœud.'],
     build: function () { return appendBuild(['Pazu', 'Sheeta', 'Laputa']); }
   };
   SC.appendEmpty = {
     tab: 'listes', group: 'Ajouter', label: 'append (liste vide)', sig: 'int linked_list_append(struct node **list, char *data)', code: appendCode,
-    retain: ['Liste vide : <code>*list = new</code> change la tête du main.',
-             'C\'est pour ça qu\'il faut un <code>**</code>.',
-             'Même code que le cas normal : aucun <code>if</code> spécial.'],
+    retain: ['Liste vide : <code>*list = new</code> change la tête du main.', 'C\'est pour ça qu\'il faut un <code>**</code>.', 'Même code que le cas normal : aucun <code>if</code> spécial.'],
     build: function () { return appendBuild([]); }
   };
 
@@ -491,7 +677,7 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
       p.slot = t + '.next'; i--;
       S(7, 'On est sur la case <code>next</code> de ' + V(st, t) + ', et i passe à ' + i + '.');
     }
-    S(4, i === 0 ? 'i = 0 : on est sur la case où insérer.' : 'Fin de liste avant d\'atteindre i.');
+    S(4, 'i = 0 : on est sur la case où insérer.');
     S(9, 'i vaut 0 : l\'indice est valide. On vérifie <b>avant</b> le malloc, pour ne pas avoir à libérer.');
     addNode(st, 'D', 5);
     st.ptrs.push({ name: 'new', kind: 1, to: 'D' });
@@ -525,9 +711,7 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
   ];
   SC.insert = {
     tab: 'listes', group: 'Ajouter', label: 'insert à l\'indice i', exam: true, sig: 'prototype à vérifier dans ton sujet', code: insertCode,
-    retain: ['On avance <code>i</code> fois de case en case.',
-             'D\'abord <code>new->next = *list</code>, ensuite <code>*list = new</code>. Dans l\'autre ordre, on perd la suite.',
-             'Indice 0 : même code, la tête change toute seule.'],
+    retain: ['On avance <code>i</code> fois de case en case.', 'D\'abord <code>new->next = *list</code>, ensuite <code>*list = new</code>. Dans l\'autre ordre, on perd la suite.', 'Indice 0 : même code, la tête change toute seule.'],
     build: function () { return insertBuild(2); }
   };
   SC.insertHead = {
@@ -581,19 +765,14 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
   ];
   SC.remove = {
     tab: 'listes', group: 'Supprimer', label: 'remove', sig: 'int linked_list_remove(struct node **list, char *data)', code: removeCode,
-    retain: ['On avance de case en case jusqu\'à la cible.',
-             '<code>*list = tmp->next</code> saute le nœud.',
-             '<code>free(value)</code> puis <code>free(nœud)</code>.'],
+    retain: ['On avance de case en case jusqu\'à la cible.', '<code>*list = tmp->next</code> saute le nœud.', '<code>free(value)</code> puis <code>free(nœud)</code>.'],
     build: function () { return removeBuild('Sheeta'); }
   };
   SC.removeHead = {
     tab: 'listes', group: 'Supprimer', label: 'remove (la tête)', sig: 'int linked_list_remove(struct node **list, char *data)', code: removeCode,
-    retain: ['Si la cible est la tête, <code>list</code> est encore sur la case du main.',
-             '<code>*list = tmp->next</code> change donc la tête.',
-             'Aucun cas particulier à écrire.'],
+    retain: ['Si la cible est la tête, <code>list</code> est encore sur la case du main.', '<code>*list = tmp->next</code> change donc la tête.', 'Aucun cas particulier à écrire.'],
     build: function () { return removeBuild('Pazu'); }
   };
-
   SC.removePred = {
     tab: 'listes', group: 'Supprimer', label: 'remove_predicate', exam: true, sig: 'int linked_list_remove_predicate(struct node **list, int (*predicate)(int))',
     code: [
@@ -617,38 +796,9 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
       '    return removed ? 0 : 1;',
       '}'
     ],
-    retain: ['Après une suppression, on <b>n\'avance pas</b> : la case contient déjà le suivant.',
-             'On avance seulement quand on garde le nœud.',
-             '<code>predicate</code> est un pointeur de fonction : on l\'appelle comme une fonction.'],
-    build: function () {
-      var st = base([4, 7, 8, 2, 3]), steps = [], S = rec(steps, st);
-      st.ptrs.push({ name: 'list', kind: 2, slot: 'head' });
-      S(0, 'On supprime tous les nombres pairs. Ici <code>predicate(x)</code> renvoie 1 si x est pair.');
-      S(2, 'Les paramètres ne sont pas NULL.');
-      var p = P(st, 'list'), removed = 0;
-      while (slotGet(st, p.slot)) {
-        var t = slotGet(st, p.slot), v = st.nodes[t].v;
-        S(5, '<code>*list</code> pointe sur ' + v + '.', [t]);
-        if (v % 2 === 0) {
-          S(7, '<code>predicate(' + v + ')</code> vaut 1 : on le supprime.', [t]);
-          st.ptrs.push({ name: 'tmp', kind: 1, to: t });
-          S(9, '<code>tmp</code> garde le nœud ' + v + '.', [t]);
-          slotSet(st, p.slot, st.nodes[t].next); st.nodes[t].st = 'removing';
-          S(10, '<code>*list = tmp->next</code> : la case saute le ' + v + '. On reste sur <b>la même case</b>.');
-          st.nodes[t].st = 'freed'; dropPtr(st, 'tmp'); removed = 1;
-          S(11, '<code>free(tmp)</code>. Au prochain tour, on teste le nouveau contenu de la même case.');
-        } else {
-          S(7, '<code>predicate(' + v + ')</code> vaut 0 : on le garde.', [t]);
-          p.slot = t + '.next';
-          S(15, 'On avance sur la case <code>next</code> de ' + v + '.');
-        }
-      }
-      S(5, '<code>*list</code> vaut NULL : fin.');
-      S(17, removed ? 'Au moins un supprimé : on retourne 0.' : 'Aucun supprimé : on retourne 1.');
-      return steps;
-    }
+    retain: ['Après une suppression, on <b>n\'avance pas</b> : la case contient déjà le suivant.', 'On avance seulement quand on garde le nœud.', '<code>predicate</code> est un pointeur de fonction : on l\'appelle comme une fonction.'],
+    build: function () { return predSim({ start: 0, chk: 2, loop: 5, test: 7, tmp: 9, skip: 10, free: 11, adv: 15, ret: 17 }); }
   };
-
   SC.free = {
     tab: 'listes', group: 'Libérer', label: 'free', sig: 'void linked_list_free(struct node *list)',
     code: [
@@ -663,33 +813,9 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
       '    }',
       '}'
     ],
-    retain: ['Garder le suivant <b>avant</b> le <code>free</code>.',
-             '<code>free(value)</code> puis <code>free(nœud)</code>.',
-             'Après, le <code>list</code> du main pointe sur de la mémoire libérée : ne plus s\'en servir.'],
-    build: function () {
-      var st = base(['Pazu', 'Sheeta', 'Laputa']), steps = [], S = rec(steps, st);
-      st.ptrs.push({ name: 'list', kind: 1, to: 'A' });
-      S(0, 'free reçoit une copie de la flèche : pas besoin de modifier la case du main.');
-      var p = P(st, 'list');
-      while (p.to) {
-        var c = p.to;
-        S(2, '<code>list</code> pointe sur ' + V(st, c) + ' : on continue.', [c]);
-        st.ptrs.push({ name: 'tmp', kind: 1, to: c });
-        S(4, '<code>tmp</code> garde le nœud courant.', [c]);
-        p.to = st.nodes[c].next;
-        S(5, '<code>list</code> avance <b>avant</b> le free. Sinon on perdrait la suite.', [c]);
-        st.nodes[c].st = 'valfreed';
-        S(6, '<code>free(tmp->value)</code> : la chaîne ' + V(st, c) + ' est libérée.');
-        st.nodes[c].st = 'freed';
-        S(7, '<code>free(tmp)</code> : le nœud est libéré.');
-        dropPtr(st, 'tmp');
-      }
-      S(2, '<code>list</code> vaut NULL : terminé.');
-      S(9, 'Tout est libéré, zéro fuite. Le <code>list</code> du main pointe encore sur l\'ancien "Pazu" : pointeur pendouillant, ne plus l\'utiliser.');
-      return steps;
-    }
+    retain: ['Garder le suivant <b>avant</b> le <code>free</code>.', '<code>free(value)</code> puis <code>free(nœud)</code>.', 'Après, le <code>list</code> du main pointe sur de la mémoire libérée : ne plus s\'en servir.'],
+    build: function () { return freeSim({ start: 0, loop: 2, tmp: 4, adv: 5, fv: 6, fn: 7, end: 9 }); }
   };
-
   SC.reverse = {
     tab: 'listes', group: 'Classiques', label: 'reverse', sig: 'void linked_list_reverse(struct node **list)',
     code: [
@@ -708,66 +834,9 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
       '    *list = prev;',
       '}'
     ],
-    retain: ['3 pointeurs : <code>prev</code>, <code>cur</code>, <code>next</code>.',
-             'Ordre : garder la suite, retourner la flèche, avancer <code>prev</code>, avancer <code>cur</code>.',
-             'À la fin, <code>*list = prev</code> : nouvelle tête.'],
-    build: function () {
-      var st = base(['Pazu', 'Sheeta', 'Laputa']), steps = [], S = rec(steps, st);
-      st.ptrs.push({ name: 'list', kind: 2, slot: 'head' });
-      S(0, 'reverse reçoit <code>&amp;list</code> : à la fin, la tête du main devra changer.');
-      S(2, '<code>list</code> n\'est pas NULL.');
-      st.ptrs.push({ name: 'prev', kind: 1, to: null });
-      S(3, '<code>prev = NULL</code> : le premier deviendra le dernier, donc son next vaudra NULL.');
-      st.ptrs.push({ name: 'cur', kind: 1, to: 'A' });
-      S(4, '<code>cur</code> part de la tête.');
-      var cur = P(st, 'cur'), prev = P(st, 'prev');
-      while (cur.to) {
-        var c = cur.to;
-        S(5, '<code>cur</code> pointe sur ' + V(st, c) + '.', [c]);
-        st.ptrs.push({ name: 'next', kind: 1, to: st.nodes[c].next });
-        S(7, '<code>next</code> garde la suite <b>avant</b> qu\'on casse la flèche.', [c]);
-        st.nodes[c].next = prev.to;
-        S(8, '<code>cur->next = prev</code> : la flèche de ' + V(st, c) + ' est retournée.', [c]);
-        prev.to = c;
-        S(9, '<code>prev</code> avance sur ' + V(st, c) + '.');
-        cur.to = P(st, 'next').to;
-        dropPtr(st, 'next');
-        S(10, '<code>cur</code> avance sur la suite gardée.', cur.to ? [cur.to] : []);
-      }
-      S(5, '<code>cur</code> vaut NULL : fin de la boucle.');
-      st.head = prev.to;
-      S(12, '<code>*list = prev</code> : la tête du main devient "Laputa". La liste est inversée.', [prev.to]);
-      return steps;
-    }
+    retain: ['3 pointeurs : <code>prev</code>, <code>cur</code>, <code>next</code>.', 'Ordre : garder la suite, retourner la flèche, avancer <code>prev</code>, avancer <code>cur</code>.', 'À la fin, <code>*list = prev</code> : nouvelle tête.'],
+    build: function () { return reverseSim({ start: 0, chk: 2, prev: 3, cur: 4, loop: 5, next: 7, flip: 8, pa: 9, ca: 10, end: 12 }); }
   };
-
-  function cycleBuild(withCycle) {
-    var st = base(['Pazu', 'Sheeta', 'Laputa']), steps = [], S = rec(steps, st);
-    if (withCycle) st.nodes.C.next = 'A';
-    else { st.nodes.D = { id: 'D', v: 'Robot', next: null, st: 'ok', pos: 3 }; st.order.push('D'); st.nodes.C.next = 'D'; }
-    S(0, withCycle ? 'Ici, le next de "Laputa" revient sur "Pazu" : il y a un cycle.' : 'Liste normale de 4 nœuds, sans cycle.');
-    st.ptrs.push({ name: 'slow', kind: 1, to: 'A' });
-    S(2, 'La tortue <code>slow</code> part de la tête.');
-    st.ptrs.push({ name: 'fast', kind: 1, to: 'A' });
-    S(3, 'Le lièvre <code>fast</code> part aussi de la tête.');
-    var s = P(st, 'slow'), f = P(st, 'fast');
-    for (var k = 0; k < 8; k++) {
-      if (!(f.to && st.nodes[f.to].next)) {
-        S(4, '<code>fast</code> ou <code>fast->next</code> vaut NULL : le lièvre est sorti de la liste.');
-        S(11, 'On retourne 0 : pas de cycle.');
-        break;
-      }
-      S(4, '<code>fast</code> et <code>fast->next</code> existent : le lièvre peut faire 2 pas.');
-      s.to = st.nodes[s.to].next;
-      S(6, 'La tortue avance d\'<b>1</b> case.', [s.to]);
-      f.to = st.nodes[st.nodes[f.to].next].next;
-      S(7, 'Le lièvre avance de <b>2</b> cases.', f.to ? [f.to] : []);
-      var eq = s.to === f.to;
-      S(8, eq ? 'Ils sont sur le <b>même nœud</b> : le lièvre a rattrapé la tortue.' : 'Pas encore au même endroit.', eq ? [s.to] : []);
-      if (eq) { S(9, 'On retourne 1 : il y a un cycle.', [s.to]); break; }
-    }
-    return steps;
-  }
   var cycleCode = [
     'int linked_list_has_cycle(struct node *list)',
     '{',
@@ -783,25 +852,20 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     '    return 0;',
     '}'
   ];
+  var cycleL = { start: 0, slow: 2, fast: 3, loop: 4, s: 6, f: 7, cmp: 8, r1: 9, r0: 11 };
   SC.cycle = {
     tab: 'listes', group: 'Classiques', label: 'has_cycle (oui)', sig: 'int linked_list_has_cycle(struct node *list)', code: cycleCode,
     retain: ['Tortue : 1 pas. Lièvre : 2 pas.', 'S\'ils se retrouvent sur le même nœud : cycle.', 'Tester <code>fast</code> <b>et</b> <code>fast->next</code> avant <code>fast->next->next</code>.'],
-    build: function () { return cycleBuild(true); }
+    build: function () { return cycleSim(true, cycleL); }
   };
   SC.noCycle = {
     tab: 'listes', group: 'Classiques', label: 'has_cycle (non)', sig: 'int linked_list_has_cycle(struct node *list)', code: cycleCode,
     retain: ['Sans cycle, le lièvre finit par tomber sur NULL.', 'La condition du <code>while</code> évite le segfault.', 'On retourne 0.'],
-    build: function () { return cycleBuild(false); }
+    build: function () { return cycleSim(false, cycleL); }
   };
-
   SC.bugAppend = {
     tab: 'listes', group: 'Bugs', label: 'append bugué', bug: true, sig: 'à ne pas écrire',
-    code: [
-      '/* VERSION BUGUEE */',
-      'while ((*list)->next != NULL)',
-      '    *list = (*list)->next;',
-      '(*list)->next = new;'
-    ],
+    code: ['/* VERSION BUGUEE */', 'while ((*list)->next != NULL)', '    *list = (*list)->next;', '(*list)->next = new;'],
     retain: ['<code>*list = ...</code> réécrit la <b>tête du main</b>.', 'Pour avancer sans rien casser : <code>list = &amp;(*list)->next</code>.', 'Les nœuds perdus ne peuvent plus être libérés : fuite mémoire.'],
     build: function () {
       var st = base(['Pazu', 'Sheeta', 'Laputa']), steps = [], S = rec(steps, st);
@@ -821,17 +885,9 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
       return steps;
     }
   };
-
   SC.uaf = {
     tab: 'listes', group: 'Bugs', label: 'use-after-free', bug: true, sig: 'linked_list_pop_print (asan_list.c)',
-    code: [
-      'struct node *removed = *list;',
-      '*list = removed->next;',
-      'free(removed->value);',
-      'free(removed);',
-      'printf("Removed: %s\\n", removed->value);',
-      '/* Correction : mettre le printf avant les deux free */'
-    ],
+    code: ['struct node *removed = *list;', '*list = removed->next;', 'free(removed->value);', 'free(removed);', 'printf("Removed: %s\\n", removed->value);', '/* Correction : mettre le printf avant les deux free */'],
     retain: ['Après un <code>free</code>, on ne lit plus jamais ce pointeur.', 'Correction : le <code>printf</code> avant les <code>free</code>.', 'ASan l\'appelle <code>heap-use-after-free</code>.'],
     build: function () {
       var st = base(['Pazu', 'Sheeta']), steps = [], S = rec(steps, st);
@@ -840,21 +896,15 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
       S(0, '<code>removed</code> garde le premier nœud.', ['A']);
       st.head = 'B'; st.nodes.A.st = 'removing';
       S(1, 'La tête du main passe à "Sheeta".', ['B']);
-      st.nodes.A.st = 'valfreed';
-      S(2, 'La chaîne "Pazu" est libérée.');
-      st.nodes.A.st = 'freed';
-      S(3, 'Le nœud est libéré.');
+      st.nodes.A.st = 'valfreed'; S(2, 'La chaîne "Pazu" est libérée.');
+      st.nodes.A.st = 'freed'; S(3, 'Le nœud est libéré.');
       S(4, '<b>Bug</b> : on lit <code>removed->value</code> alors que tout est libéré. ASan affiche <code>heap-use-after-free</code>.');
       S(5, 'Il suffit d\'afficher <b>avant</b> de libérer.');
       return steps;
     }
   };
 
-  /* ================= FICHIERS ================= */
-  function fileSt(inp) { return { kind: 'file', inp: inp, pos: -1, vars: {}, out: null, outName: 'output', ret: null, buf: null, sel: null, skip: null, hl: [] }; }
-  function chl(c) { return c === '\n' ? "'\\n'" : c === '\t' ? "'\\t'" : c === ' ' ? "' '" : "'" + c + "'"; }
-  function shown(c) { return c === '\n' ? '\\n' : c === '\t' ? '\\t' : c === ' ' ? 'espace' : c; }
-
+  /* ================= SCÉNARIOS : Fichiers ================= */
   SC.occ = {
     tab: 'fichiers', group: 'Lire', label: 'file_occurrence', sig: 'int file_occurrence(const char *filename, const char c)', speed: 900,
     code: [
@@ -884,8 +934,7 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
       st.vars.f = 'ouvert';
       S(4, '<code>fopen(..., "r")</code> ouvre le fichier en lecture. Le curseur est au début.');
       S(5, '<code>f</code> n\'est pas NULL : ouverture réussie.');
-      st.vars.count = 0;
-      S(7, '<code>count</code> démarre à 0.');
+      st.vars.count = 0; S(7, '<code>count</code> démarre à 0.');
       for (var p = 0; p < st.inp.length; p++) {
         var c = st.inp[p]; st.pos = p; st.vars.ch = chl(c);
         if (c === 'a') { count++; st.vars.count = count; S(12, '<code>fgetc</code> lit <code>\'a\'</code> : <code>count</code> passe à ' + count + '.'); }
@@ -893,14 +942,11 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
       }
       st.pos = st.inp.length; st.vars.ch = 'EOF';
       S(9, '<code>fgetc</code> renvoie <code>EOF</code> : fin du fichier.');
-      st.vars.f = 'fermé';
-      S(14, '<code>fclose(f)</code> : on ferme toujours.');
-      st.ret = count;
-      S(15, 'On retourne ' + count + '.');
+      st.vars.f = 'fermé'; S(14, '<code>fclose(f)</code> : on ferme toujours.');
+      st.ret = count; S(15, 'On retourne ' + count + '.');
       return steps;
     }
   };
-
   SC.lines = {
     tab: 'fichiers', group: 'Lire', label: 'compter les lignes', sig: 'int file_count_lines(const char *filename)', speed: 900,
     code: [
@@ -946,7 +992,6 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
       return steps;
     }
   };
-
   SC.words = {
     tab: 'fichiers', group: 'Lire', label: 'file_count_words', exam: true, sig: 'int file_count_words(const char *filename)', speed: 800,
     code: [
@@ -970,23 +1015,15 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     ],
     retain: ['Un mot commence quand on passe d\'un espace à un non-espace.', '<code>in_word</code> retient si on est déjà dans un mot.', '<code>&lt;ctype.h&gt;</code> interdit : on liste les 6 espaces à la main.'],
     build: function () {
-      var st = fileSt('  Pazu  et\tSheeta\n Laputa'), steps = [], S = rec(steps, st), inw = 0, count = 0;
+      var st = fileSt('  Pazu  et\tSheeta\n Laputa'), steps = [], S = rec(steps, st);
       S(0, 'On compte les mots, séparés par n\'importe quels espaces.');
       st.vars.in_word = 0; st.vars.count = 0;
       S(5, '<code>in_word</code> = 0 : on n\'est pas dans un mot au départ.');
-      for (var p = 0; p < st.inp.length; p++) {
-        var c = st.inp[p], sp = /[ \t\n\v\f\r]/.test(c);
-        st.pos = p; st.vars.c = chl(c); st.vars.sp = sp ? 1 : 0;
-        if (!sp && !inw) { count++; st.vars.count = count; inw = 1; st.vars.in_word = 1; S(11, 'On lit ' + esc(shown(c)) + ' après un espace : <b>début d\'un mot</b>, <code>count</code> = ' + count + '.'); }
-        else { inw = sp ? 0 : 1; st.vars.in_word = inw; S(12, sp ? 'On lit un espace (' + esc(shown(c)) + ') : <code>in_word</code> = 0.' : 'On lit ' + esc(shown(c)) + ' : on est déjà dans le mot.'); }
-      }
-      st.pos = st.inp.length; st.vars.c = 'EOF';
-      S(6, '<code>EOF</code> : fin.');
+      var count = wordsLoop(st, S, { loop: 6, start: 11, other: 12 });
       st.ret = count; S(15, 'On ferme et on retourne ' + count + '.');
       return steps;
     }
   };
-
   SC.copyIgnore = {
     tab: 'fichiers', group: 'Copier', label: 'file_copy_ignore', sig: 'int file_copy_ignore(const char *input, const char *output, size_t i)', speed: 800,
     code: [
@@ -1019,28 +1056,20 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     ],
     retain: ['Deux fichiers : si le 2ᵉ <code>fopen</code> échoue, fermer le 1ᵉʳ.', '<code>"w"</code> crée le fichier ou le vide.', 'Le numéro de ligne augmente à chaque <code>\\n</code>.'],
     build: function () {
-      var st = fileSt('Pazu\nSheeta\nLaputa\nRobot\n'), steps = [], S = rec(steps, st), line = 0, I = 1;
-      st.out = ''; st.skip = I;
+      var st = fileSt('Pazu\nSheeta\nLaputa\nRobot\n'), steps = [], S = rec(steps, st);
+      st.out = ''; st.skip = 1;
       S(0, 'On recopie tout, sauf la ligne d\'indice i = 1 (en rouge).');
       st.vars['in'] = 'ouvert'; S(4, 'On ouvre <code>input</code> en lecture.');
       st.vars.out = 'ouvert'; S(7, 'On ouvre <code>output</code> en écriture. <code>"w"</code> le crée vide.');
       S(8, 'Les deux sont ouverts. Sinon, il aurait fallu fermer <code>in</code> avant de sortir.');
       st.vars.line = 0; S(13, '<code>line</code> = 0 : on est sur la première ligne.');
-      for (var p = 0; p < st.inp.length; p++) {
-        var c = st.inp[p]; st.pos = p; st.vars.c = chl(c);
-        if (line !== I) { st.out += c; S(18, '<code>line</code> = ' + line + ' ≠ ' + I + ' : on écrit ' + esc(shown(c)) + '.'); }
-        else S(17, '<code>line</code> = ' + I + ' : ligne ignorée, on n\'écrit pas ' + esc(shown(c)) + '.');
-        if (c === '\n') { line++; st.vars.line = line; S(20, 'On a lu <code>\\n</code> : <code>line</code> passe à ' + line + '.'); }
-      }
-      st.pos = st.inp.length; st.vars.c = 'EOF';
-      S(15, '<code>EOF</code> : fin.');
+      copyLoop(st, S, 1, { write: 18, skip: 17, nl: 20, eof: 15 });
       st.vars['in'] = 'fermé'; st.vars.out = 'fermé';
       S(23, 'On ferme les <b>deux</b> fichiers.');
       st.ret = 0; S(24, 'On retourne 0.');
       return steps;
     }
   };
-
   SC.reverseAt = {
     tab: 'fichiers', group: 'Copier', label: 'file_copy_reverse_at', exam: true, sig: 'int file_copy_reverse_at(const char *input, const char *output, size_t i)',
     code: [
@@ -1078,7 +1107,7 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
       '    return 0;',
       '}'
     ],
-    retain: ['<code>getline</code> alloue la ligne pour toi : un seul <code>free(line)</code> à la fin.', '<code>getline</code> garde le <code>\\n</code> : on l\'exclut de l\'inversion.', 'Inverser = échanger les deux bouts et se rapprocher du milieu. <code>r</code> exclusif évite <code>r - 1</code> sous 0.'],
+    retain: ['<code>getline</code> alloue la ligne pour toi : un seul <code>free(line)</code> à la fin.', '<code>getline</code> garde le <code>\\n</code> : on l\'exclut de l\'inversion.', 'Inverser = échanger les deux bouts et se rapprocher du milieu.'],
     build: function () {
       var st = fileSt('Pazu\nSheeta\nLaputa\n'), steps = [], S = rec(steps, st), I = 1;
       st.out = '';
@@ -1121,8 +1150,6 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
       return steps;
     }
   };
-
-  function isAl(c) { return /[A-Za-z0-9]/.test(c); }
   SC.pal = {
     tab: 'fichiers', group: 'Copier', label: 'palindromes', exam: true, sig: 'int file_lines_palindromes(const char *input, const char *output)',
     code: [
@@ -1161,38 +1188,42 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
       S(17, 'On lit chaque ligne avec <code>getline</code>, et on garde les palindromes.');
       st.vars.count = 0;
       for (var k = 0; k < lines.length; k++) {
-        var raw = lines[k], len = raw.length - (raw.endsWith('\n') ? 1 : 0), s = raw.slice(0, len);
+        var raw = lines[k], len = raw.length - (raw.charAt(raw.length - 1) === '\n' ? 1 : 0), s = raw.slice(0, len);
         st.sel = k; st.vars.len = len; delete st.vars.l; delete st.vars.r;
         st.buf = { cells: s.split(''), marks: {}, hot: [], bad: [] };
         S(19, 'Ligne ' + k + ' : <code>len</code> = ' + len + (len ? '' : ' (ligne vide)') + ', sans le <code>\\n</code>.');
-        var l = 0, r = len, ok = 1;
-        st.vars.l = l; st.vars.r = r;
-        S(6, '<code>l</code> = 0, <code>r</code> = len. On compare <code>s[l]</code> et <code>s[r - 1]</code>.');
-        while (l < r) {
-          var m = {}; m[l] = 'l'; if (r - 1 !== l) m[r - 1] = 'r-1'; else m[l] = 'l = r-1';
-          st.buf.marks = m; st.vars.l = l; st.vars.r = r;
-          if (!isAl(s[l])) { st.buf.hot = [l]; S(9, '<code>s[l]</code> = <code>' + esc(s[l]) + '</code> n\'est pas alphanumérique : on le saute.'); l++; continue; }
-          if (!isAl(s[r - 1])) { st.buf.hot = [r - 1]; S(10, '<code>s[r - 1]</code> = <code>' + esc(s[r - 1]) + '</code> n\'est pas alphanumérique : on le saute.'); r--; continue; }
-          if (s[l] !== s[r - 1]) { st.buf.hot = []; st.buf.bad = [l, r - 1]; S(11, '<code>\'' + s[l] + '\'</code> ≠ <code>\'' + s[r - 1] + '\'</code> : pas un palindrome.'); ok = 0; break; }
-          st.buf.hot = [l, r - 1]; st.buf.bad = [];
-          S(12, '<code>\'' + s[l] + '\'</code> == <code>\'' + s[r - 1] + '\'</code> : on rapproche les deux indices.');
-          l++; r--;
-        }
-        st.buf.marks = {}; st.buf.hot = [];
-        if (ok) {
-          S(15, len ? 'Les indices se sont croisés sans différence : palindrome.' : 'Ligne vide : la boucle ne tourne pas, c\'est un palindrome.');
-          st.out += s + '\n'; count++; st.vars.count = count;
-          S(22, 'On écrit la ligne avec un <code>\\n</code>, <code>count</code> = ' + count + '.');
-        } else S(20, 'Ligne non écrite.');
+        var ok = palCheck(st, S, s, { init: 6, al: 9, ar: 10, ne: 11, ret0: null, l: 13, r: 13, ok: 15 });
+        if (ok) { st.out += s + '\n'; count++; st.vars.count = count; S(22, 'On écrit la ligne avec un <code>\\n</code>, <code>count</code> = ' + count + '.'); }
+        else S(20, 'Ligne non écrite.');
         st.buf.bad = [];
       }
-      st.sel = null; st.buf = null;
+      st.sel = null; st.buf = null; delete st.vars.l; delete st.vars.r;
       S(25, 'Fin : <code>free(line)</code>, puis vérifier <code>fclose(out)</code>. Une erreur d\'écriture renvoie -2.');
       st.ret = count; S(25, 'On retourne ' + count + ' palindromes.');
       return steps;
     }
   };
-
+  function growSim(st, S, text, cap0, L) {
+    var len = 0, cap = cap0, msg = [];
+    function upd() { var cells = []; for (var i = 0; i < cap; i++) cells.push(i < len ? msg[i] : null); st.buf = { cells: cells, marks: {}, hot: [] }; st.buf.marks[len] = 'len'; st.vars.len = len; st.vars.cap = cap; }
+    upd();
+    return {
+      upd: upd,
+      push: function (c, why) {
+        if (len + 2 > cap) {
+          if (L.chk !== null) S(L.chk, '<code>len + 2 > cap</code> (' + (len + 2) + ' > ' + cap + ') : plus de place pour le caractère et le <code>\'\\0\'</code>.');
+          cap *= 2; upd();
+          S(L.grow, '<code>realloc</code> double la taille : <code>cap</code> = ' + cap + '. Les anciens caractères sont conservés.');
+        } else if (L.ok !== null) S(L.ok, '<code>len + 2 <= cap</code> : il reste de la place.');
+        msg[len++] = c; upd(); st.buf.hot = [len - 1];
+        S(L.add, why);
+      },
+      pop: function () { len--; upd(); },
+      last: function () { return msg[len - 1]; },
+      finish: function () { var cells = []; for (var i = 0; i < cap; i++) cells.push(i < len ? msg[i] : i === len ? '\\0' : null); st.buf = { cells: cells, marks: {}, hot: [len] }; return msg.slice(0, len).join(''); },
+      len: function () { return len; }
+    };
+  }
   SC.hidden = {
     tab: 'fichiers', group: 'Construire', label: 'hidden_message', sig: 'char *hidden_message(const char *filename)', speed: 800,
     code: [
@@ -1229,33 +1260,29 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     ],
     retain: ['Chaîne qui grandit : <code>len</code> (rempli) et <code>cap</code> (alloué). On double <code>cap</code> quand c\'est plein.', '<code>realloc</code> dans <code>tmp</code>, sinon on perd <code>msg</code> si ça échoue.', 'Toujours finir par <code>\'\\0\'</code>, et compter sa place.'],
     build: function () {
-      var st = fileSt('eLlAiPrUcTeA\npVoIlTe\n'), steps = [], S = rec(steps, st), len = 0, cap = 8, msg = [];
-      function upd() { var cells = []; for (var i = 0; i < cap; i++) cells.push(i < len ? msg[i] : null); st.buf = { cells: cells, marks: {}, hot: [] }; st.buf.marks[len] = 'len'; st.vars.len = len; st.vars.cap = cap; }
+      var st = fileSt('eLlAiPrUcTeA\npVoIlTe\n'), steps = [], S = rec(steps, st);
       S(0, 'Chaque ligne cache un mot en majuscules. On veut <code>"LAPUTA VIT"</code>.');
       st.vars.f = 'ouvert'; S(3, 'On ouvre le fichier.');
-      upd(); S(6, 'On alloue 8 octets pour commencer. <code>len</code> = 0.');
+      var g = growSim(st, S, '', 8, { chk: null, grow: 16, ok: null, add: 19 });
+      S(6, 'On alloue 8 octets pour commencer. <code>len</code> = 0.');
       for (var p = 0; p < st.inp.length; p++) {
         var c = st.inp[p]; st.pos = p; st.vars.c = chl(c);
-        if (len + 2 > cap) { cap *= 2; upd(); S(16, '<code>len + 2 > cap</code> : plus assez de place. <code>realloc</code> double la taille, <code>cap</code> = ' + cap + '.'); }
-        if (c >= 'A' && c <= 'Z') { msg[len++] = c; upd(); st.buf.hot = [len - 1]; S(19, '<code>' + c + '</code> est une majuscule : on l\'ajoute.'); }
-        else if (c === '\n' && len > 0 && msg[len - 1] !== ' ') { msg[len++] = ' '; upd(); st.buf.hot = [len - 1]; S(21, 'Fin de ligne : on ajoute un espace entre les mots.'); }
+        if (c >= 'A' && c <= 'Z') g.push(c, '<code>' + c + '</code> est une majuscule : on l\'ajoute.');
+        else if (c === '\n' && g.len() > 0 && g.last() !== ' ') g.push(' ', 'Fin de ligne : on ajoute un espace entre les mots.');
         else S(18, esc(shown(c)) + ' n\'est pas une majuscule : on l\'ignore.');
       }
       st.pos = st.inp.length; st.vars.c = 'EOF';
       st.vars.f = 'fermé'; S(23, '<code>EOF</code> : on ferme le fichier.');
-      if (msg[len - 1] === ' ') { len--; upd(); S(25, 'Le message finit par un espace : on le retire.'); }
-      msg[len] = '\\0'; var cells = []; for (var i = 0; i < cap; i++) cells.push(i <= len ? (i === len ? '\\0' : msg[i]) : null);
-      st.buf = { cells: cells, marks: {}, hot: [len] };
+      if (g.last() === ' ') { g.pop(); S(25, 'Le message finit par un espace : on le retire.'); }
+      var res = g.finish();
       S(27, 'On termine la chaîne par <code>\'\\0\'</code>.');
-      st.ret = '"' + msg.slice(0, len).join('') + '"';
+      st.ret = '"' + res + '"';
       S(28, 'On retourne la chaîne. C\'est l\'appelant qui fera le <code>free</code>.');
       return steps;
     }
   };
 
-  /* ================= VECTEUR ================= */
-  function vecSt(arr, cap) { var d = arr.slice(); while (d.length < cap) d.push(null); return { kind: 'vec', data: d, size: arr.length, cap: cap, marks: {}, vars: {}, hl: [], bad: [] }; }
-
+  /* ================= SCÉNARIOS : Vecteur ================= */
   SC.vinsert = {
     tab: 'vecteur', group: 'Vecteur', label: 'vector_insert', exam: true, sig: 'struct vector *vector_insert(struct vector *v, size_t i, int elt)',
     code: [
@@ -1280,7 +1307,7 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     ],
     retain: ['Plein ? <code>realloc</code> dans <code>tmp</code>, puis on double <code>capacity</code>.', 'Décaler <b>depuis la fin</b>, sinon on écrase les valeurs.', '<code>j > i</code>, jamais <code>j >= 0</code> avec un <code>size_t</code> : il ne devient jamais négatif.'],
     build: function () {
-      var st = vecSt([3, 1, 4, 1], 4), steps = [], S = rec(steps, st), I = 1, E = 9;
+      var st = vecSt([3, 1, 4, 1], 4), steps = [], S = rec(steps, st);
       st.vars.size = 4; st.vars.capacity = 4;
       S(0, 'On insère 9 à l\'indice i = 1.');
       st.marks = { 1: 'i' };
@@ -1292,24 +1319,11 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
       S(7, '<code>tmp</code> n\'est pas NULL. S\'il l\'était, <code>v->data</code> serait toujours valide.');
       delete st.vars.tmp; S(9, '<code>v->data = tmp</code>.');
       st.cap = 8; st.vars.capacity = 8; S(10, '<code>capacity</code> passe à 8.');
-      for (var j = st.size; j > I; j--) {
-        st.marks = {}; st.marks[I] = 'i'; st.marks[j] = 'j'; st.hl = [];
-        st.vars.j = j;
-        S(12, '<code>j</code> = ' + j + ' > i : on décale la case ' + (j - 1) + ' vers la droite.');
-        st.data[j] = st.data[j - 1];
-        S(13, '<code>data[' + j + '] = data[' + (j - 1) + ']</code> : le ' + st.data[j] + ' glisse d\'une case.', [j]);
-      }
-      st.marks = {}; st.marks[I] = 'i = j'; st.vars.j = I;
-      S(12, '<code>j</code> = i : on s\'arrête. La case i est libre.');
-      st.data[I] = E; st.marks = { 1: 'i' };
-      S(14, '<code>data[1] = 9</code>.', [I]);
-      st.size = 5; st.vars.size = 5; delete st.vars.j;
-      S(15, '<code>size</code> passe à 5.');
+      shiftSim(st, S, 1, 9, { loop: 12, mv: 13, set: 14, inc: 15 });
       S(16, 'On retourne <code>v</code>.');
       return steps;
     }
   };
-
   SC.vicemax = {
     tab: 'vecteur', group: 'Vecteur', label: 'vector_vice_max', exam: true, sig: 'int vector_vice_max(struct vector *v)',
     code: [
@@ -1353,6 +1367,325 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     }
   };
 
+  /* ================= PATTERNS (code = fiche mémo, exécutés pas à pas) ================= */
+  var PAT = [
+    { title: 'Listes', items: [
+      { k: 'lread', t: 'Lire une liste', n: 'On reçoit <code>*</code> : la liste de l\'appelant ne bouge pas.', c: 'while (list != NULL)\n{\n    /* utiliser list->value */\n    list = list->next;\n}' },
+      { k: 'lwalk', t: 'Modifier une liste', n: 'On reçoit <code>**</code> : on avance de case en case.', c: 'while (*list != NULL /* && condition */)\n    list = &(*list)->next;\n/* *list est la case a modifier */' },
+      { k: 'lnew', t: 'Créer un nœud', n: 'Ne pas libérer <code>value</code> si le malloc échoue.', c: 'struct node *n = malloc(sizeof(struct node));\nif (n == NULL)\n    return NULL;\nn->value = value;      /* le pointeur, pas une copie */\nn->next = NULL;\nreturn n;' },
+      { k: 'lins', t: 'Insérer dans la case', n: 'Toujours relier la suite avant d\'écrire dans la case.', c: 'new->next = *list;\n*list = new;' },
+      { k: 'ldel', t: 'Supprimer un nœud', n: 'Garder le nœud, sauter, libérer.', c: 'struct node *tmp = *list;\n*list = tmp->next;\nfree(tmp->value);\nfree(tmp);' },
+      { k: 'lpred', t: 'Supprimer tous ceux qui…', n: 'On n\'avance pas après une suppression.', c: 'while (*list != NULL)\n{\n    if (predicate((*list)->data))\n    {\n        struct node *tmp = *list;\n        *list = tmp->next;\n        free(tmp);\n    }\n    else\n        list = &(*list)->next;\n}' },
+      { k: 'lfree', t: 'Tout libérer', n: 'Le suivant d\'abord, le free ensuite.', c: 'while (list != NULL)\n{\n    struct node *tmp = list;\n    list = list->next;\n    free(tmp->value);\n    free(tmp);\n}' },
+      { k: 'lrev', t: 'Inverser', n: 'Garder, retourner, avancer, avancer.', c: 'struct node *prev = NULL, *cur = *list;\nwhile (cur != NULL)\n{\n    struct node *next = cur->next;\n    cur->next = prev;\n    prev = cur;\n    cur = next;\n}\n*list = prev;' },
+      { k: 'lcyc', t: 'Détecter un cycle', n: 'Tortue et lièvre de Floyd.', c: 'struct node *slow = list, *fast = list;\nwhile (fast != NULL && fast->next != NULL)\n{\n    slow = slow->next;\n    fast = fast->next->next;\n    if (slow == fast)\n        return 1;\n}\nreturn 0;' }
+    ]},
+    { title: 'Fichiers', items: [
+      { k: 'fopen2', t: 'Ouvrir deux fichiers', n: 'Si le 2ᵉ échoue, fermer le 1ᵉʳ.', c: 'FILE *in = fopen(input, "r");\nif (in == NULL)\n    return -1;\nFILE *out = fopen(output, "w");\nif (out == NULL)\n{\n    fclose(in);\n    return -1;\n}' },
+      { k: 'fgetc', t: 'Lire caractère par caractère', n: '<code>c</code> est un <code>int</code>.', c: 'int c;\nwhile ((c = fgetc(f)) != EOF)\n{\n    /* traiter c */\n}\nfclose(f);' },
+      { k: 'fline', t: 'Suivre le numéro de ligne', n: 'Une ligne de plus à chaque <code>\\n</code>.', c: 'size_t line = 0;\nint c;\nwhile ((c = fgetc(in)) != EOF)\n{\n    if (line != i)\n        fputc(c, out);\n    if (c == \'\\n\')\n        line++;\n}' },
+      { k: 'fgetline', t: 'Lire ligne par ligne (getline)', n: 'Garde le <code>\\n</code> ; un seul <code>free(line)</code> à la fin. Si gcc ne connaît pas <code>getline</code> en <code>-std=c99</code>, utilise <code>fgets</code>.', c: 'char *line = NULL;\nsize_t cap = 0;\nssize_t n;\nwhile ((n = getline(&line, &cap, f)) != -1)\n{\n    size_t len = n;\n    if (len > 0 && line[len - 1] == \'\\n\')\n        len--;\n    /* line[0 .. len - 1] */\n}\nfree(line);' },
+      { k: 'ffgets', t: 'Lire ligne par ligne (fgets)', n: 'Tampon de taille fixe, garde aussi le <code>\\n</code>.', c: 'char line[256];\nwhile (fgets(line, sizeof(line), f) != NULL)\n{\n    /* line contient la ligne */\n}' },
+      { k: 'fwrite', t: 'Écrire', n: '<code>%.*s</code> écrit seulement <code>len</code> caractères.', c: 'fputc(c, out);\nfputs(line, out);\nfprintf(out, "%s,%d\\n", name, n);\nfprintf(out, "%.*s\\n", (int)len, line);' },
+      { k: 'fclose', t: 'Fermer et vérifier', n: 'Le buffering retarde les erreurs d\'écriture.', c: 'if (fclose(out) != 0)\n    return -2;' },
+      { k: 'fwords', t: 'Compter les mots', n: 'Sans <code>&lt;ctype.h&gt;</code>.', c: 'int c, in_word = 0, count = 0;\nwhile ((c = fgetc(f)) != EOF)\n{\n    int sp = c == \' \' || c == \'\\t\' || c == \'\\n\'\n          || c == \'\\v\' || c == \'\\f\' || c == \'\\r\';\n    if (!sp && !in_word)\n        count++;\n    in_word = !sp;\n}' }
+    ]},
+    { title: 'Chaînes et mémoire', items: [
+      { k: 'srev', t: 'Inverser une chaîne en place', n: '<code>r</code> exclusif : jamais de <code>size_t</code> négatif.', c: 'for (size_t l = 0, r = len; l + 1 < r; l++, r--)\n{\n    char t = s[l];\n    s[l] = s[r - 1];\n    s[r - 1] = t;\n}' },
+      { k: 'spal', t: 'Palindrome', n: 'Deux indices qui se rapprochent.', c: 'size_t l = 0, r = len;\nwhile (l < r)\n{\n    if (!is_alnum(s[l])) { l++; continue; }\n    if (!is_alnum(s[r - 1])) { r--; continue; }\n    if (s[l] != s[r - 1])\n        return 0;\n    l++;\n    r--;\n}\nreturn 1;' },
+      { k: 'mreal', t: 'Agrandir avec realloc', n: 'Dans <code>tmp</code>, sinon on perd le bloc si ça échoue.', c: 'int *tmp = realloc(v->data, 2 * v->capacity * sizeof(int));\nif (tmp == NULL)\n    return NULL;          /* v intact */\nv->data = tmp;\nv->capacity *= 2;' },
+      { k: 'mshift', t: 'Décaler vers la droite', n: 'Depuis la fin, avec <code>j > i</code>.', c: 'for (size_t j = v->size; j > i; j--)\n    v->data[j] = v->data[j - 1];\nv->data[i] = elt;\nv->size++;' },
+      { k: 'mgrow', t: 'Chaîne qui grandit', n: 'Place pour le caractère et le <code>\'\\0\'</code>.', c: 'if (len + 2 > cap)\n{\n    char *tmp = realloc(msg, cap * 2);\n    if (tmp == NULL)\n    {\n        free(msg);\n        return NULL;\n    }\n    msg = tmp;\n    cap *= 2;\n}\nmsg[len++] = c;\n/* a la fin : */\nmsg[len] = \'\\0\';' },
+      { k: 'msnp', t: 'Chaîne de taille exacte', n: 'Un premier <code>snprintf</code> donne la longueur.', c: 'int len = snprintf(NULL, 0, "%s: %d", name, n);\nchar *s = malloc(len + 1);\nif (s == NULL)\n    return NULL;\nsnprintf(s, len + 1, "%s: %d", name, n);' },
+      { k: 'mmax', t: 'Max d\'un tableau de structs', n: 'Retourner une adresse, pas une copie.', c: 'struct robot *max = &robots[0];\nfor (size_t i = 1; i < count; i++)\n    if (robots[i].age > max->age)\n        max = &robots[i];\nreturn max;' },
+      { k: 'mfn', t: 'Pointeur de fonction', n: 'Se déclare entre parenthèses, s\'appelle normalement.', c: 'int is_even(int x)\n{\n    return x % 2 == 0;\n}\n\nint (*predicate)(int) = is_even;\nif (predicate(4))\n    /* ... */;' }
+    ]}
+  ];
+
+  var PB = {
+    lread: function () {
+      var st = base(['Pazu', 'Sheeta', 'Laputa']), steps = [], S = rec(steps, st);
+      st.ptrs.push({ name: 'list', kind: 1, to: 'A' });
+      var p = P(st, 'list');
+      while (p.to) {
+        S(0, '<code>list</code> pointe sur ' + V(st, p.to) + ' : pas NULL, on entre dans la boucle.', [p.to]);
+        S(2, 'On utilise <code>list->value</code>, ici ' + V(st, p.to) + '.', [p.to]);
+        p.to = st.nodes[p.to].next;
+        S(3, '<code>list = list->next</code> : on passe au suivant. La liste du main ne change pas.', p.to ? [p.to] : []);
+      }
+      S(0, '<code>list</code> vaut NULL : on sort de la boucle.');
+      return steps;
+    },
+    lwalk: function () {
+      var st = base(['Pazu', 'Sheeta', 'Laputa']), steps = [], S = rec(steps, st);
+      st.ptrs.push({ name: 'list', kind: 2, slot: 'head' });
+      var p = P(st, 'list');
+      while (slotGet(st, p.slot)) {
+        var t = slotGet(st, p.slot);
+        S(0, '<code>*list</code> pointe sur ' + V(st, t) + ' : la case n\'est pas vide.', [t]);
+        p.slot = t + '.next';
+        S(1, '<code>list = &amp;(*list)->next</code> : on se place sur la case <code>next</code> de ' + V(st, t) + '.');
+      }
+      S(0, '<code>*list</code> vaut NULL : on s\'arrête.');
+      S(2, '<code>list</code> est sur la case vide (le <code>next</code> de "Laputa"). <code>*list = ...</code> écrirait dedans, comme dans append.');
+      return steps;
+    },
+    lnew: function () {
+      var st = base([]), steps = [], S = rec(steps, st);
+      st.nodes.D = { id: 'D', v: null, next: '?', st: 'new', pos: 0 }; st.order.push('D');
+      st.ptrs.push({ name: 'n', kind: 1, to: 'D' });
+      S(0, '<code>malloc</code> réserve un nœud. Son contenu est n\'importe quoi : des <code>?</code> partout.', ['D']);
+      S(1, '<code>n</code> n\'est pas NULL : l\'allocation a réussi.');
+      st.nodes.D.v = 'Sheeta';
+      S(3, '<code>n->value = value</code> : on garde le pointeur reçu, sans copier la chaîne.', ['D']);
+      st.nodes.D.next = null;
+      S(4, '<code>n->next = NULL</code>. Sans ça, <code>next</code> pointerait n\'importe où, et le premier parcours planterait.', ['D']);
+      S(5, 'On retourne le nœud.');
+      return steps;
+    },
+    lins: function () {
+      var st = base(['Pazu', 'Sheeta', 'Laputa']), steps = [], S = rec(steps, st);
+      st.relayout = true;
+      addNode(st, 'D', 'Robot');
+      st.ptrs.push({ name: 'list', kind: 2, slot: 'B.next' });
+      st.ptrs.push({ name: 'new', kind: 1, to: 'D' });
+      S(0, 'Départ : <code>list</code> est sur la case <code>next</code> de "Sheeta", et <code>new</code> vient d\'être créé.', ['D']);
+      st.nodes.D.next = 'C';
+      S(0, '<code>new->next = *list</code> : le nouveau pointe sur "Laputa". Rien n\'est perdu.', ['D']);
+      st.nodes.B.next = 'D'; st.nodes.D.st = 'ok';
+      S(1, '<code>*list = new</code> : la case pointe sur le nouveau. Il est inséré entre "Sheeta" et "Laputa".', ['D']);
+      return steps;
+    },
+    ldel: function () {
+      var st = base(['Pazu', 'Sheeta', 'Laputa']), steps = [], S = rec(steps, st);
+      st.ptrs.push({ name: 'list', kind: 2, slot: 'A.next' });
+      st.ptrs.push({ name: 'tmp', kind: 1, to: 'B' });
+      S(0, '<code>list</code> est sur la case <code>next</code> de "Pazu". <code>tmp</code> garde le nœud "Sheeta".', ['B']);
+      st.nodes.A.next = 'C'; st.nodes.B.st = 'removing';
+      S(1, '<code>*list = tmp->next</code> : la case saute par-dessus "Sheeta".');
+      st.nodes.B.st = 'valfreed'; S(2, '<code>free(tmp->value)</code> : la chaîne d\'abord.');
+      st.nodes.B.st = 'freed'; S(3, '<code>free(tmp)</code> : puis le nœud.');
+      return steps;
+    },
+    lpred: function () { return predSim({ start: null, chk: null, loop: 0, test: 2, tmp: 4, skip: 5, free: 6, adv: 9, ret: null }); },
+    lfree: function () { return freeSim({ start: null, loop: 0, tmp: 2, adv: 3, fv: 4, fn: 5, end: null }); },
+    lrev: function () { return reverseSim({ start: null, chk: null, prev: 0, cur: 0, loop: 1, next: 3, flip: 4, pa: 5, ca: 6, end: 8 }); },
+    lcyc: function () { return cycleSim(true, { start: null, slow: 0, fast: 0, loop: 1, s: 3, f: 4, cmp: 5, r1: 6, r0: 8 }); },
+
+    fopen2: function () {
+      var st = fileSt('Pazu\n'), steps = [], S = rec(steps, st);
+      st.vars['in'] = 'ouvert'; S(0, '<code>fopen(input, "r")</code> réussit.');
+      S(1, '<code>in</code> n\'est pas NULL.');
+      st.vars.out = 'NULL'; S(3, '<code>fopen(output, "w")</code> échoue (dossier interdit, chemin faux…) et renvoie NULL.');
+      S(4, '<code>out == NULL</code> : on entre dans le bloc d\'erreur.');
+      st.vars['in'] = 'fermé'; S(6, 'On ferme <code>in</code>. Sans ça, il resterait ouvert : c\'est une fuite.');
+      st.ret = -1; S(7, 'On retourne -1.');
+      return steps;
+    },
+    fgetc: function () {
+      var st = fileSt('Pazu\n'), steps = [], S = rec(steps, st);
+      S(0, '<code>c</code> est un <code>int</code>, pour pouvoir recevoir <code>EOF</code> (-1).');
+      for (var p = 0; p < st.inp.length; p++) {
+        var c = st.inp[p]; st.pos = p; st.vars.c = chl(c);
+        S(1, '<code>fgetc</code> lit ' + esc(shown(c)) + ' et avance le curseur. Ce n\'est pas EOF : on entre.');
+        S(3, 'On traite ' + esc(shown(c)) + '.');
+      }
+      st.pos = st.inp.length; st.vars.c = 'EOF';
+      S(1, '<code>fgetc</code> renvoie <code>EOF</code> : on sort.');
+      S(5, '<code>fclose(f)</code>.');
+      return steps;
+    },
+    fline: function () {
+      var st = fileSt('Pazu\nSheeta\nLaputa\n'), steps = [], S = rec(steps, st);
+      st.out = ''; st.skip = 1;
+      st.vars.line = 0; S(0, '<code>line</code> = 0. On ignore la ligne i = 1 (en rouge).');
+      S(1, '<code>c</code> est un <code>int</code>.');
+      copyLoop(st, S, 1, { write: 5, skip: 4, nl: 7, eof: 2 });
+      return steps;
+    },
+    fgetline: function () {
+      var st = fileSt('Pazu\nSheeta\n'), steps = [], S = rec(steps, st), lines = splitLines(st.inp);
+      st.vars.line = 'NULL'; S(0, '<code>line = NULL</code> : <code>getline</code> allouera le tampon elle-même.');
+      st.vars.cap = 0; S(1, '<code>cap = 0</code> : taille du tampon, mise à jour par <code>getline</code>.');
+      S(2, '<code>n</code> recevra le nombre de caractères lus (<code>ssize_t</code> : il peut valoir -1).');
+      for (var k = 0; k < lines.length; k++) {
+        var L = lines[k], len = L.length;
+        st.sel = k; st.vars.line = 'alloué'; st.vars.cap = 120; st.vars.n = L.length; delete st.vars.len;
+        st.buf = { cells: L.split(''), marks: {}, hot: [] };
+        S(3, '<code>getline</code> lit toute la ligne ' + k + ' : <code>n</code> = ' + L.length + ', <code>\\n</code> compris.');
+        st.vars.len = len; S(5, '<code>len = n</code> = ' + len + '.');
+        len--; st.vars.len = len; st.buf.hot = [len];
+        S(7, 'Le dernier caractère est <code>\\n</code> : <code>len</code> = ' + len + '.');
+        st.buf.hot = []; var m = {}; m[0] = '0'; m[len - 1] = 'len-1'; st.buf.marks = m;
+        S(8, 'Les caractères utiles vont de <code>line[0]</code> à <code>line[len - 1]</code> : "' + esc(L.slice(0, len)) + '".');
+      }
+      st.sel = null; st.buf = null; st.vars.n = -1; delete st.vars.len;
+      st.pos = st.inp.length;
+      S(3, '<code>getline</code> renvoie -1 : fin du fichier.');
+      st.vars.line = 'libéré'; S(10, '<code>free(line)</code> : un seul free, à la fin.');
+      return steps;
+    },
+    ffgets: function () {
+      var st = fileSt('Pazu\nSheeta\n'), steps = [], S = rec(steps, st), lines = splitLines(st.inp);
+      st.vars.line = 'char[256]'; S(0, 'Tampon fixe de 256 caractères, sur la pile : pas de malloc, pas de free.');
+      for (var k = 0; k < lines.length; k++) {
+        var L = lines[k];
+        st.sel = k;
+        st.buf = { cells: L.split('').concat(['\\0']), marks: {}, hot: [L.length - 1, L.length] };
+        S(1, '<code>fgets</code> lit la ligne ' + k + ' avec son <code>\\n</code>, et ajoute <code>\'\\0\'</code>.');
+        st.buf.hot = [];
+        S(3, '<code>line</code> contient "' + esc(L.replace('\n', '\\n')) + '". Une ligne de plus de 255 caractères serait coupée en deux.');
+      }
+      st.sel = null; st.buf = null; st.pos = st.inp.length;
+      S(1, '<code>fgets</code> renvoie NULL : fin du fichier.');
+      return steps;
+    },
+    fwrite: function () {
+      var st = fileSt(null), steps = [], S = rec(steps, st);
+      st.out = '';
+      st.vars.c = "'P'"; st.out += 'P';
+      S(0, '<code>fputc</code> écrit un seul caractère.');
+      st.vars.line = '"azu\\n"'; st.out += 'azu\n';
+      S(1, '<code>fputs</code> écrit une chaîne telle quelle, sans ajouter de <code>\\n</code>.');
+      st.vars.name = '"Sheeta"'; st.vars.n = 42; st.out += 'Sheeta,42\n';
+      S(2, '<code>fprintf</code> écrit avec un format, comme <code>printf</code>. Le premier argument est le fichier.');
+      st.vars.line = '"Laputa!!"'; st.vars.len = 6; st.out += 'Laputa\n';
+      S(3, '<code>%.*s</code> n\'écrit que les <code>len</code> premiers caractères : "Laputa", sans les "!!".');
+      return steps;
+    },
+    fclose: function () {
+      var st = fileSt(null), steps = [], S = rec(steps, st);
+      st.out = ''; st.vars.out = 'ouvert';
+      st.buf = { cells: 'Pazu\n'.split(''), marks: {}, hot: [] };
+      S(0, '<code>fprintf</code> a écrit "Pazu\\n", mais c\'est encore dans un <b>tampon en mémoire</b> : le fichier est vide.');
+      st.buf = null; st.out = 'Pazu\n'; st.vars.out = 'fermé';
+      S(0, '<code>fclose</code> vide le tampon sur le disque, puis ferme. Si l\'écriture échoue (disque plein), c\'est ici qu\'on le voit.');
+      S(0, '<code>fclose</code> a renvoyé 0 : tout va bien. S\'il avait renvoyé <code>EOF</code>, on serait passé à la ligne suivante.');
+      return steps;
+    },
+    fwords: function () {
+      var st = fileSt('Pazu  et\tSheeta\n'), steps = [], S = rec(steps, st);
+      st.vars.in_word = 0; st.vars.count = 0;
+      S(0, '<code>in_word</code> = 0 et <code>count</code> = 0.');
+      wordsLoop(st, S, { loop: 1, start: 6, other: 7 });
+      return steps;
+    },
+
+    srev: function () {
+      var st = fileSt(null), steps = [], S = rec(steps, st), s = 'Sheeta'.split('');
+      st.vars.len = 6;
+      st.buf = { cells: s.slice(), marks: {}, hot: [] };
+      for (var l = 0, r = s.length; l + 1 < r; l++, r--) {
+        var m = {}; m[l] = 'l'; m[r - 1] = 'r-1';
+        st.buf.marks = m; st.buf.hot = [l, r - 1]; st.vars.l = l; st.vars.r = r;
+        S(0, '<code>l</code> = ' + l + ', <code>r</code> = ' + r + ' : <code>l + 1 < r</code>, on échange <code>s[l]</code> et <code>s[r - 1]</code>.');
+        var t = s[l]; st.vars.t = "'" + t + "'";
+        S(2, '<code>t</code> garde <code>\'' + t + '\'</code>.');
+        s[l] = s[r - 1]; st.buf.cells = s.slice();
+        S(3, '<code>s[l] = s[r - 1]</code>.');
+        s[r - 1] = t; st.buf.cells = s.slice();
+        S(4, '<code>s[r - 1] = t</code> : échangés.');
+        delete st.vars.t;
+      }
+      st.buf.marks = {}; st.buf.hot = []; st.vars.l = l; st.vars.r = r;
+      S(0, '<code>l + 1 >= r</code> : on est au milieu. La chaîne vaut "' + s.join('') + '".');
+      return steps;
+    },
+    spal: function () {
+      var st = fileSt(null), steps = [], S = rec(steps, st);
+      palCheck(st, S, 'ab-ba', { init: 0, al: 3, ar: 4, ne: 5, ret0: 6, l: 7, r: 8, ok: 10 });
+      return steps;
+    },
+    mreal: function () {
+      var st = vecSt([3, 1, 4, 1], 4), steps = [], S = rec(steps, st);
+      st.vars.size = 4; st.vars.capacity = 4;
+      while (st.data.length < 8) st.data.push(null);
+      st.vars.tmp = 'nouveau bloc';
+      st.title = 'Le tableau a été copié dans un bloc 2 fois plus grand';
+      S(0, '<code>realloc</code> demande 2 × 4 cases. Le résultat va dans <code>tmp</code>, pas directement dans <code>v->data</code>.');
+      S(1, '<code>tmp</code> n\'est pas NULL : réussi. S\'il l\'était, <code>v->data</code> serait toujours valide, rien de perdu.');
+      delete st.vars.tmp; st.title = null;
+      S(3, '<code>v->data = tmp</code>.');
+      st.cap = 8; st.vars.capacity = 8;
+      S(4, '<code>capacity</code> passe à 8.');
+      return steps;
+    },
+    mshift: function () {
+      var st = vecSt([3, 1, 4, 1], 8), steps = [], S = rec(steps, st);
+      st.vars.size = 4; st.vars.i = 1; st.vars.elt = 9;
+      shiftSim(st, S, 1, 9, { loop: 0, mv: 1, set: 2, inc: 3 });
+      return steps;
+    },
+    mgrow: function () {
+      var st = fileSt(null), steps = [], S = rec(steps, st);
+      var g = growSim(st, S, '', 4, { chk: 0, grow: 9, ok: 0, add: 11 });
+      'LAPUTA'.split('').forEach(function (c) { st.vars.c = "'" + c + "'"; g.push(c, '<code>msg[len++] = \'' + c + '\'</code>.'); });
+      g.finish(); delete st.vars.c;
+      S(13, '<code>msg[len] = \'\\0\'</code> : la chaîne est terminée. Il restait bien une place pour lui.');
+      return steps;
+    },
+    msnp: function () {
+      var st = fileSt(null), steps = [], S = rec(steps, st), txt = 'Pazu: 42';
+      st.vars.name = '"Pazu"'; st.vars.n = 42;
+      st.vars.len = 8;
+      S(0, '<code>snprintf(NULL, 0, ...)</code> n\'écrit rien, mais renvoie la longueur : <code>len</code> = 8.');
+      var cells = []; for (var i = 0; i <= txt.length; i++) cells.push(null);
+      st.buf = { cells: cells, marks: {}, hot: [] }; st.buf.marks[8] = '+1';
+      S(1, '<code>malloc(len + 1)</code> : 8 caractères, plus 1 pour <code>\'\\0\'</code>.');
+      S(2, '<code>s</code> n\'est pas NULL.');
+      st.buf = { cells: txt.split('').concat(['\\0']), marks: {}, hot: [8] };
+      S(4, 'Le second <code>snprintf</code> écrit "Pazu: 42", <code>\'\\0\'</code> compris.');
+      return steps;
+    },
+    mmax: function () {
+      var st = vecSt([500, 1200, 850], 3), steps = [], S = rec(steps, st), ages = [500, 1200, 850], names = ['Gardener-01', 'Guardian-07', 'Gardener-03'], mi = 0;
+      st.title = 'robots[i].age';
+      st.vars.count = 3; st.vars.max = '&robots[0]'; st.marks = { 0: 'max' };
+      S(0, '<code>max</code> pointe sur <code>robots[0]</code> (' + names[0] + ', 500 ans).', [0]);
+      for (var i = 1; i < 3; i++) {
+        st.marks = {}; st.marks[mi] = 'max'; st.marks[i] = 'i'; st.vars.i = i;
+        S(1, '<code>i</code> = ' + i + ' < count.');
+        if (ages[i] > ages[mi]) {
+          S(2, ages[i] + ' > ' + ages[mi] + ' : plus vieux.', [i]);
+          mi = i; st.vars.max = '&robots[' + i + ']'; st.marks = {}; st.marks[i] = 'max';
+          S(3, '<code>max = &amp;robots[' + i + ']</code> : on garde l\'<b>adresse</b>, pas une copie.', [i]);
+        } else S(2, ages[i] + ' > ' + ages[mi] + ' ? Non.', [i]);
+      }
+      st.marks = {}; st.marks[mi] = 'max'; delete st.vars.i;
+      S(1, '<code>i</code> = 3 = count : fin de la boucle.');
+      S(4, 'On retourne l\'adresse de <code>robots[' + mi + ']</code> : ' + names[mi] + '.', [mi]);
+      return steps;
+    },
+    mfn: function () {
+      var st = fileSt(null), steps = [], S = rec(steps, st);
+      st.vars.predicate = '&is_even';
+      S(5, '<code>predicate</code> contient l\'adresse de la fonction <code>is_even</code>.');
+      S(6, '<code>predicate(4)</code> appelle <code>is_even</code> à travers le pointeur.');
+      st.vars.x = 4;
+      S(0, 'On entre dans <code>is_even</code> avec <code>x</code> = 4.');
+      S(2, '<code>4 % 2 == 0</code> est vrai : on renvoie 1.');
+      delete st.vars.x;
+      S(6, 'La condition vaut 1 : elle est vraie.');
+      S(7, 'On exécute le corps du <code>if</code>. C\'est ainsi que <code>remove_predicate</code> utilise son paramètre.');
+      return steps;
+    }
+  };
+
+  var TABS = {
+    listes: ['find', 'append', 'appendEmpty', 'insert', 'insertHead', 'remove', 'removeHead', 'removePred', 'free', 'reverse', 'cycle', 'noCycle', 'bugAppend', 'uaf'],
+    fichiers: ['occ', 'lines', 'words', 'copyIgnore', 'reverseAt', 'pal', 'hidden'],
+    vecteur: ['vinsert', 'vicemax'],
+    patterns: [],
+    memo: []
+  };
+  PAT.forEach(function (sec) {
+    sec.items.forEach(function (it) {
+      var key = 'p_' + it.k;
+      SC[key] = { tab: 'patterns', group: sec.title, label: it.t, sig: 'pattern à connaître par cœur', code: it.c.split('\n'), retain: [it.n], build: PB[it.k], speed: 1100 };
+      TABS.patterns.push(key);
+    });
+  });
+
   /* ================= rendu LISTES ================= */
   var NX0 = 170, NSTEP = 150, NY = 100, NH = 40, VW = 92, NW = 128;
   function nodeX(st, id) { return NX0 + st.nodes[id].pos * NSTEP; }
@@ -1388,7 +1721,8 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
       var struck = n.st === 'valfreed' || n.st === 'freed';
       o.push('<text class="n-txt' + (struck ? ' struck' : '') + '" x="' + (x + VW / 2) + '" y="' + (NY + 25) + '" text-anchor="middle">' + esc(fmtV(n.v)) + '</text>');
       if (n.st !== 'freed') {
-        if (n.next) o.push('<circle class="n-dot" cx="' + (x + 110) + '" cy="' + (NY + 20) + '" r="4"/>');
+        if (n.next === '?') o.push('<text class="n-txt" x="' + (x + 110) + '" y="' + (NY + 25) + '" text-anchor="middle">?</text>');
+        else if (n.next) o.push('<circle class="n-dot" cx="' + (x + 110) + '" cy="' + (NY + 20) + '" r="4"/>');
         else o.push('<text class="n-null" x="' + (x + 110) + '" y="' + (NY + 24) + '" text-anchor="middle">NULL</text>');
       }
       var note = { valfreed: ['value libérée', 'bad'], freed: ['nœud libéré', ''], lost: ['perdu : fuite', 'bad'], removing: ['retiré de la liste', 'bad'], 'new': ['nouveau', ''] }[n.st];
@@ -1396,7 +1730,7 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     });
     st.order.forEach(function (id) {
       var n = st.nodes[id];
-      if (!n.next || n.st === 'freed') return;
+      if (!n.next || n.next === '?' || n.st === 'freed') return;
       var sx = nodeX(st, id) + 110, sy = NY + 20, t = st.nodes[n.next], tx = nodeX(st, n.next);
       var dead = t.st === 'freed', cls = dead ? 'e-dead' : 'e-next', mk = dead ? 'muted' : 'fg';
       if (t.pos === n.pos + 1) o.push('<path class="' + cls + '" marker-end="url(#m-' + mk + ')" d="M' + sx + ' ' + sy + ' L' + (tx - 3) + ' ' + sy + '"/>');
@@ -1426,7 +1760,7 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     return o.join('');
   }
 
-  /* ================= rendu FICHIERS ================= */
+  /* ================= rendu FICHIERS / CHAÎNES ================= */
   function cellChar(c) {
     if (c === '\n') return ['↵', ' ctl'];
     if (c === '\t') return ['⇥', ' ctl'];
@@ -1450,31 +1784,34 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     }).join('') + (b.marks[b.cells.length] ? '<div class="bufcell"><span class="cell empty" style="border:0"></span><span class="mk">' + esc(b.marks[b.cells.length]) + '</span></div>' : '') + '</div>';
   }
   function renderFile(st) {
-    var rows = [], idx = 0, lines = splitLines(st.inp);
-    lines.forEach(function (ln, k) {
-      var cls = 'trow' + (st.sel === k ? ' sel' : '') + (st.skip === k ? ' skip' : '');
-      var cells = ln.split('').map(function (c) {
-        var cc = cellChar(c), cl = 'cell' + cc[1];
-        if (st.pos >= 0 && idx < st.pos) cl += ' done';
-        if (idx === st.pos) cl += ' cur';
-        idx++;
-        return '<span class="' + cl + '">' + cc[0] + '</span>';
-      }).join('');
-      rows.push('<div class="' + cls + '"><span class="lno">' + k + '</span>' + cells + '</div>');
-    });
-    rows.push('<div class="trow"><span class="lno"></span><span class="cell eof' + (st.pos === st.inp.length ? ' cur' : '') + '">EOF</span></div>');
+    var inCol = '';
+    if (st.inp !== null) {
+      var rows = [], idx = 0;
+      splitLines(st.inp).forEach(function (ln, k) {
+        var cls = 'trow' + (st.sel === k ? ' sel' : '') + (st.skip === k ? ' skip' : '');
+        var cells = ln.split('').map(function (c) {
+          var cc = cellChar(c), cl = 'cell' + cc[1];
+          if (st.pos >= 0 && idx < st.pos) cl += ' done';
+          if (idx === st.pos) cl += ' cur';
+          idx++;
+          return '<span class="' + cl + '">' + cc[0] + '</span>';
+        }).join('');
+        rows.push('<div class="' + cls + '"><span class="lno">' + k + '</span>' + cells + '</div>');
+      });
+      rows.push('<div class="trow"><span class="lno"></span><span class="cell eof' + (st.pos === st.inp.length ? ' cur' : '') + '">EOF</span></div>');
+      inCol = '<div class="fs-col"><div class="fs-h">Fichier lu <code>input</code></div><div class="tape">' + rows.join('') + '</div></div>';
+    }
     var outHtml = '';
     if (st.out !== null) {
       var txt = st.out ? esc(st.out).replace(/\n/g, '<span class="nl">↵</span>\n') : '<span class="nl">(vide)</span>';
       outHtml = '<div class="fs-h">Fichier écrit <code>' + esc(st.outName) + '</code></div><pre class="out">' + txt + '</pre>';
     }
     var ret = st.ret !== null ? '<div class="ret">return ' + esc(st.ret) + ';</div>' : '';
-    return '<div class="fs">' +
-      '<div class="fs-col"><div class="fs-h">Fichier lu <code>input</code></div><div class="tape">' + rows.join('') + '</div></div>' +
-      '<div class="fs-col"><div class="fs-h">Variables</div><div class="vars">' + varsHtml(st.vars) + '</div>' +
-        (st.buf ? '<div class="fs-h">Tampon en mémoire</div>' + bufHtml(st.buf) : '') + '</div>' +
-      '<div class="fs-col">' + (outHtml || '<div class="fs-h">Résultat</div>') + ret + '</div>' +
-      '</div>';
+    var midCol = '<div class="fs-col"><div class="fs-h">Variables</div><div class="vars">' + varsHtml(st.vars) + '</div>' +
+      (st.buf ? '<div class="fs-h">' + (st.inp === null && st.out === null ? 'Chaîne en mémoire' : 'Tampon en mémoire') + '</div>' + bufHtml(st.buf) : '') + '</div>';
+    var outCol = '<div class="fs-col">' + (outHtml || '<div class="fs-h">Résultat</div>') + ret + '</div>';
+    var grid = st.inp === null ? ' style="grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)"' : '';
+    return '<div class="fs"' + grid + '>' + inCol + midCol + outCol + '</div>';
   }
 
   /* ================= rendu VECTEUR ================= */
@@ -1485,8 +1822,9 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
       if (st.hl.indexOf(i) >= 0) cls += ' hot';
       return '<div class="vcell"><span class="idx">' + i + '</span><span class="' + cls + '">' + (v === null ? '' : esc(v)) + '</span><span class="mk">' + esc(st.marks[i] || '') + '</span></div>';
     }).join('');
+    var head = st.title ? esc(st.title) : 'v-&gt;data : <code>size</code> = ' + st.size + ', <code>capacity</code> = ' + st.cap + ' (pointillés : cases allouées mais vides)';
     return '<div class="fs" style="grid-template-columns:minmax(0,2fr) minmax(0,1fr)">' +
-      '<div class="fs-col"><div class="fs-h">v-&gt;data : <code>size</code> = ' + st.size + ', <code>capacity</code> = ' + st.cap + ' (cases en pointillés : allouées mais vides)</div><div class="vec"><div class="vrow">' + cells + '</div></div></div>' +
+      '<div class="fs-col"><div class="fs-h">' + head + '</div><div class="vec"><div class="vrow">' + cells + '</div></div></div>' +
       '<div class="fs-col"><div class="fs-h">Variables</div><div class="vars">' + varsHtml(st.vars) + '</div></div>' +
       '</div>';
   }
@@ -1509,52 +1847,23 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     return out || ' ';
   }
 
-  /* ================= patterns ================= */
-  var PAT = [
-    { title: 'Listes', items: [
-      { t: 'Lire une liste', n: 'On reçoit <code>*</code> : la liste de l\'appelant ne bouge pas.', c: 'while (list != NULL)\n{\n    /* utiliser list->value */\n    list = list->next;\n}' },
-      { t: 'Modifier une liste', n: 'On reçoit <code>**</code> : on avance de case en case.', c: 'while (*list != NULL /* && condition */)\n    list = &(*list)->next;\n/* *list est la case a modifier */' },
-      { t: 'Créer un nœud', n: 'Ne pas libérer <code>value</code> si le malloc échoue.', c: 'struct node *n = malloc(sizeof(struct node));\nif (n == NULL)\n    return NULL;\nn->value = value;      /* le pointeur, pas une copie */\nn->next = NULL;\nreturn n;' },
-      { t: 'Insérer dans la case', n: 'Toujours relier la suite avant d\'écrire dans la case.', c: 'new->next = *list;\n*list = new;' },
-      { t: 'Supprimer un nœud', n: 'Garder le nœud, sauter, libérer.', c: 'struct node *tmp = *list;\n*list = tmp->next;\nfree(tmp->value);\nfree(tmp);' },
-      { t: 'Supprimer tous ceux qui…', n: 'On n\'avance pas après une suppression.', c: 'while (*list != NULL)\n{\n    if (predicate((*list)->data))\n    {\n        struct node *tmp = *list;\n        *list = tmp->next;\n        free(tmp);\n    }\n    else\n        list = &(*list)->next;\n}' },
-      { t: 'Tout libérer', n: 'Le suivant d\'abord, le free ensuite.', c: 'while (list != NULL)\n{\n    struct node *tmp = list;\n    list = list->next;\n    free(tmp->value);\n    free(tmp);\n}' },
-      { t: 'Inverser', n: 'Garder, retourner, avancer, avancer.', c: 'struct node *prev = NULL, *cur = *list;\nwhile (cur != NULL)\n{\n    struct node *next = cur->next;\n    cur->next = prev;\n    prev = cur;\n    cur = next;\n}\n*list = prev;' },
-      { t: 'Détecter un cycle', n: 'Tortue et lièvre de Floyd.', c: 'struct node *slow = list, *fast = list;\nwhile (fast != NULL && fast->next != NULL)\n{\n    slow = slow->next;\n    fast = fast->next->next;\n    if (slow == fast)\n        return 1;\n}\nreturn 0;' }
-    ]},
-    { title: 'Fichiers', items: [
-      { t: 'Ouvrir deux fichiers', n: 'Si le 2ᵉ échoue, fermer le 1ᵉʳ.', c: 'FILE *in = fopen(input, "r");\nif (in == NULL)\n    return -1;\nFILE *out = fopen(output, "w");\nif (out == NULL)\n{\n    fclose(in);\n    return -1;\n}' },
-      { t: 'Lire caractère par caractère', n: '<code>c</code> est un <code>int</code>.', c: 'int c;\nwhile ((c = fgetc(f)) != EOF)\n{\n    /* traiter c */\n}\nfclose(f);' },
-      { t: 'Suivre le numéro de ligne', n: 'Une ligne de plus à chaque <code>\\n</code>.', c: 'size_t line = 0;\nint c;\nwhile ((c = fgetc(in)) != EOF)\n{\n    if (line != i)\n        fputc(c, out);\n    if (c == \'\\n\')\n        line++;\n}' },
-      { t: 'Lire ligne par ligne (getline)', n: 'Garde le <code>\\n</code> ; un seul <code>free(line)</code> à la fin. Si gcc ne connaît pas <code>getline</code> en <code>-std=c99</code>, utilise <code>fgets</code>.', c: 'char *line = NULL;\nsize_t cap = 0;\nssize_t n;\nwhile ((n = getline(&line, &cap, f)) != -1)\n{\n    size_t len = n;\n    if (len > 0 && line[len - 1] == \'\\n\')\n        len--;\n    /* line[0 .. len - 1] */\n}\nfree(line);' },
-      { t: 'Lire ligne par ligne (fgets)', n: 'Tampon de taille fixe, garde aussi le <code>\\n</code>.', c: 'char line[256];\nwhile (fgets(line, sizeof(line), f) != NULL)\n{\n    /* line contient la ligne */\n}' },
-      { t: 'Écrire', n: '<code>%.*s</code> écrit seulement <code>len</code> caractères.', c: 'fputc(c, out);\nfputs(line, out);\nfprintf(out, "%s,%d\\n", name, n);\nfprintf(out, "%.*s\\n", (int)len, line);' },
-      { t: 'Fermer et vérifier', n: 'Le buffering retarde les erreurs d\'écriture.', c: 'if (fclose(out) != 0)\n    return -2;' },
-      { t: 'Compter les mots', n: 'Sans <code>&lt;ctype.h&gt;</code>.', c: 'int c, in_word = 0, count = 0;\nwhile ((c = fgetc(f)) != EOF)\n{\n    int sp = c == \' \' || c == \'\\t\' || c == \'\\n\'\n          || c == \'\\v\' || c == \'\\f\' || c == \'\\r\';\n    if (!sp && !in_word)\n        count++;\n    in_word = !sp;\n}' }
-    ]},
-    { title: 'Chaînes et mémoire', items: [
-      { t: 'Inverser une chaîne en place', n: '<code>r</code> exclusif : jamais de <code>size_t</code> négatif.', c: 'for (size_t l = 0, r = len; l + 1 < r; l++, r--)\n{\n    char t = s[l];\n    s[l] = s[r - 1];\n    s[r - 1] = t;\n}' },
-      { t: 'Palindrome', n: 'Deux indices qui se rapprochent.', c: 'size_t l = 0, r = len;\nwhile (l < r)\n{\n    if (!is_alnum(s[l])) { l++; continue; }\n    if (!is_alnum(s[r - 1])) { r--; continue; }\n    if (s[l] != s[r - 1])\n        return 0;\n    l++;\n    r--;\n}\nreturn 1;' },
-      { t: 'Agrandir avec realloc', n: 'Dans <code>tmp</code>, sinon on perd le bloc si ça échoue.', c: 'int *tmp = realloc(v->data, 2 * v->capacity * sizeof(int));\nif (tmp == NULL)\n    return NULL;          /* v intact */\nv->data = tmp;\nv->capacity *= 2;' },
-      { t: 'Décaler vers la droite', n: 'Depuis la fin, avec <code>j > i</code>.', c: 'for (size_t j = v->size; j > i; j--)\n    v->data[j] = v->data[j - 1];\nv->data[i] = elt;\nv->size++;' },
-      { t: 'Chaîne qui grandit', n: 'Place pour le caractère et le <code>\'\\0\'</code>.', c: 'if (len + 2 > cap)\n{\n    char *tmp = realloc(msg, cap * 2);\n    if (tmp == NULL)\n    {\n        free(msg);\n        return NULL;\n    }\n    msg = tmp;\n    cap *= 2;\n}\nmsg[len++] = c;\n/* a la fin : */\nmsg[len] = \'\\0\';' },
-      { t: 'Chaîne de taille exacte', n: 'Un premier <code>snprintf</code> donne la longueur.', c: 'int len = snprintf(NULL, 0, "%s: %d", name, n);\nchar *s = malloc(len + 1);\nif (s == NULL)\n    return NULL;\nsnprintf(s, len + 1, "%s: %d", name, n);' },
-      { t: 'Max d\'un tableau de structs', n: 'Retourner une adresse, pas une copie.', c: 'struct robot *max = &robots[0];\nfor (size_t i = 1; i < count; i++)\n    if (robots[i].age > max->age)\n        max = &robots[i];\nreturn max;' },
-      { t: 'Pointeur de fonction', n: 'Se déclare entre parenthèses, s\'appelle normalement.', c: 'int is_even(int x)\n{\n    return x % 2 == 0;\n}\n\nint (*predicate)(int) = is_even;\nif (predicate(4))\n    /* ... */;' }
-    ]}
-  ];
-  function buildPatterns() {
+  /* ================= fiche mémo ================= */
+  function buildMemo() {
     var root = document.getElementById('pat-root'), k = 0;
     root.innerHTML = PAT.map(function (sec) {
       return '<section class="pat-sec"><h2>' + sec.title + '</h2><div class="pat-grid">' + sec.items.map(function (it) {
         var id = 'pat-' + (k++);
-        return '<article class="pat"><div class="pat-head"><h3>' + it.t + '</h3><button class="copy" type="button" data-src="' + id + '">Copier</button></div><p>' + it.n + '</p><pre id="' + id + '">' + it.c.split('\n').map(hl).join('\n') + '</pre></article>';
+        return '<article class="pat"><div class="pat-head"><h3>' + it.t + '</h3><span class="pat-actions">' +
+          '<button class="copy run" type="button" data-run="p_' + it.k + '">Pas à pas</button>' +
+          '<button class="copy" type="button" data-src="' + id + '">Copier</button></span></div><p>' + it.n + '</p><pre id="' + id + '">' + it.c.split('\n').map(hl).join('\n') + '</pre></article>';
       }).join('') + '</div></section>';
     }).join('');
     root.addEventListener('click', function (e) {
-      var b = e.target.closest('.copy'); if (!b) return;
+      var r = e.target.closest('[data-run]');
+      if (r) { chosen.patterns = r.getAttribute('data-run'); setTab('patterns'); window.scrollTo(0, 0); return; }
+      var b = e.target.closest('[data-src]'); if (!b) return;
       var pre = document.getElementById(b.getAttribute('data-src')), txt = pre.textContent;
-      function sel() { var r = document.createRange(); r.selectNodeContents(pre); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); b.textContent = 'Sélectionné'; }
+      function sel() { var rg = document.createRange(); rg.selectNodeContents(pre); var s = window.getSelection(); s.removeAllRanges(); s.addRange(rg); b.textContent = 'Sélectionné'; }
       try {
         navigator.clipboard.writeText(txt).then(function () { b.textContent = 'Copié'; setTimeout(function () { b.textContent = 'Copier'; }, 1500); }, sel);
       } catch (err) { sel(); }
@@ -1562,21 +1871,14 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
   }
 
   /* ================= contrôleur ================= */
-  var TABS = {
-    listes: ['find', 'append', 'appendEmpty', 'insert', 'insertHead', 'remove', 'removeHead', 'removePred', 'free', 'reverse', 'cycle', 'noCycle', 'bugAppend', 'uaf'],
-    fichiers: ['occ', 'lines', 'words', 'copyIgnore', 'reverseAt', 'pal', 'hidden'],
-    vecteur: ['vinsert', 'vicemax'],
-    patterns: []
-  };
   var tab = 'listes', cur = null, steps = [], idx = 0, timer = null, chosen = {};
   var $ = function (id) { return document.getElementById(id); };
-
   function store(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function read(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 
   function buildPicker() {
-    var keys = TABS[tab], groups = [];
-    keys.forEach(function (k) {
+    var groups = [];
+    TABS[tab].forEach(function (k) {
       var g = SC[k].group, row = groups.filter(function (x) { return x.g === g; })[0];
       if (!row) { row = { g: g, keys: [] }; groups.push(row); }
       row.keys.push(k);
@@ -1591,11 +1893,11 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
   function setTab(t) {
     stop(); tab = t;
     Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (b) { b.setAttribute('aria-selected', b.getAttribute('data-tab') === t ? 'true' : 'false'); });
-    $('lab').hidden = t === 'patterns';
-    $('patterns').hidden = t !== 'patterns';
+    $('lab').hidden = t === 'memo';
+    $('memo').hidden = t !== 'memo';
     if (location.hash.slice(1) !== t) { try { history.replaceState(null, '', '#' + t); } catch (e) {} }
     store('labo-ptr-tab', t);
-    if (t === 'patterns') return;
+    if (t === 'memo') return;
     buildPicker();
     var want = chosen[t] || read('labo-ptr-sc-' + t);
     load(want && TABS[t].indexOf(want) >= 0 ? want : TABS[t][0]);
@@ -1603,7 +1905,7 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
 
   function load(k) {
     stop(); cur = k; chosen[tab] = k; steps = SC[k].build(); idx = 0;
-    TABS[tab].forEach(function (x) { $('chip-' + x).setAttribute('aria-pressed', x === k ? 'true' : 'false'); });
+    TABS[tab].forEach(function (x) { var c = $('chip-' + x); if (c) c.setAttribute('aria-pressed', x === k ? 'true' : 'false'); });
     $('sc-title').textContent = SC[k].label;
     $('sc-sig').textContent = SC[k].sig;
     $('legend').hidden = steps[0].st.kind !== 'list';
@@ -1617,11 +1919,6 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     var s = steps[idx];
     $('viz').innerHTML = RENDER[s.st.kind](s.st);
     Array.prototype.forEach.call($('code').children, function (li, i) { li.className = i === s.line ? 'cur' : ''; });
-    var curLi = $('code').children[s.line];
-    if (curLi) {
-      var box = $('code').parentNode, top = curLi.offsetTop - box.offsetTop;
-      if (top < box.scrollTop || top > box.scrollTop + box.clientHeight - 30) box.scrollTop = Math.max(0, top - 40);
-    }
     $('msg').innerHTML = '<span class="step-tag">Ligne ' + (s.line + 1) + '</span>' + s.msg;
     $('counter').textContent = (idx + 1) + ' / ' + steps.length;
     $('b-prev').disabled = idx === 0;
@@ -1643,16 +1940,16 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
   $('b-reset').addEventListener('click', function () { stop(); idx = 0; show(); });
   $('b-play').addEventListener('click', play);
   document.addEventListener('keydown', function (e) {
-    if (tab === 'patterns') return;
+    if (tab === 'memo') return;
     if (e.target.closest && e.target.closest('input, textarea')) return;
     if (e.key === 'ArrowRight') { stop(); go(1); e.preventDefault(); }
     if (e.key === 'ArrowLeft') { stop(); go(-1); e.preventDefault(); }
   });
   window.addEventListener('hashchange', function () { var h = location.hash.slice(1); if (TABS[h] && h !== tab) setTab(h); });
 
-  buildPatterns();
-  var h0 = location.hash.slice(1);
-  setTab(TABS[h0] ? h0 : (TABS[read('labo-ptr-tab')] ? read('labo-ptr-tab') : 'listes'));
+  buildMemo();
+  var h0 = location.hash.slice(1), saved = read('labo-ptr-tab');
+  setTab(TABS[h0] ? h0 : (TABS[saved] ? saved : 'listes'));
 })();
 </script>
 
