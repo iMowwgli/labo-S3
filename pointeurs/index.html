@@ -1764,7 +1764,14 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
 
   function renderList(st) {
     var W = Math.max(nullX(st) + 60, 700), H = 270, o = [];
-    o.push('<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Schéma mémoire de la liste">');
+    var fx = [];
+    st.hl.forEach(function (id) { if (st.nodes[id]) fx.push(nodeX(st, id) - 10, nodeX(st, id) + NW + 10); });
+    if (!fx.length) st.ptrs.forEach(function (p) {
+      var ax = p.kind === 2 ? (p.slot === 'head' ? 75 : nodeX(st, p.slot.split('.')[0]) + 110) : (p.to ? nodeX(st, p.to) + 46 : nullX(st));
+      fx.push(ax - 60, ax + 60);
+    });
+    if (!fx.length) fx.push(0, 300);
+    o.push('<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Schéma mémoire de la liste" data-fmin="' + Math.min.apply(null, fx) + '" data-fmax="' + Math.max.apply(null, fx) + '">');
     o.push('<defs>' + ['fg', 'mauve', 'rose', 'muted'].map(function (c) {
       return '<marker id="m-' + c + '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path class="mk-' + c + '" d="M0 0L10 5L0 10z"/></marker>';
     }).join('') + '</defs>');
@@ -2040,9 +2047,73 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     show();
   }
 
+  var smooth = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  function slideTo(box, a, b) {
+    var max = box.scrollWidth - box.clientWidth;
+    if (max <= 0) return;
+    var target = b - a > box.clientWidth - 24 ? a - 12 : (a + b) / 2 - box.clientWidth / 2;
+    target = Math.max(0, Math.min(max, target));
+    if (Math.abs(target - box.scrollLeft) < 4) return;
+    try { box.scrollTo({ left: target, behavior: smooth ? 'smooth' : 'auto' }); } catch (e) { box.scrollLeft = target; }
+  }
+  function centerEl(box, el) {
+    var br = box.getBoundingClientRect(), er = el.getBoundingClientRect();
+    var a = er.left - br.left + box.scrollLeft, b = a + er.width;
+    slideTo(box, a, b);
+  }
+  function ptrX(st, p) {
+    if (p.kind === 2) return p.slot === 'head' ? 75 : nodeX(st, p.slot.split('.')[0]) + 110;
+    return p.to ? nodeX(st, p.to) + 46 : nullX(st);
+  }
+  function listFocus(st, prev) {
+    var xs = [], hot = [];
+    st.hl.forEach(function (id) { if (st.nodes[id]) hot.push(nodeX(st, id) - 10, nodeX(st, id) + NW + 10); });
+    if (prev) {
+      st.ptrs.forEach(function (p) {
+        var q = null;
+        prev.ptrs.forEach(function (x) { if (x.name === p.name) q = x; });
+        if (!q || q.to !== p.to || q.slot !== p.slot) { var ax = ptrX(st, p); xs.push(ax - 50, ax + 50); }
+      });
+      st.order.forEach(function (id) {
+        var n = st.nodes[id], o = prev.nodes[id];
+        if (!o || o.next !== n.next || o.st !== n.st || o.v !== n.v || o.pos !== n.pos) xs.push(nodeX(st, id) - 10, nodeX(st, id) + NW + 10);
+      });
+      if (prev.head !== st.head) xs.push(20, 140);
+    } else {
+      st.ptrs.forEach(function (p) { var ax = ptrX(st, p); xs.push(ax - 50, ax + 50); });
+    }
+    var all = xs.concat(hot);
+    if (!all.length) return null;
+    var a = Math.min.apply(null, all), b = Math.max.apply(null, all);
+    var vw = $('viz').clientWidth / ($('viz').querySelector('svg').getBoundingClientRect().width / $('viz').querySelector('svg').viewBox.baseVal.width);
+    if (b - a > vw && xs.length) { a = Math.min.apply(null, xs); b = Math.max.apply(null, xs); }
+    if (b - a > vw && hot.length) { a = Math.min.apply(null, hot); b = Math.max.apply(null, hot); }
+    return [a, b];
+  }
+  function autoSlide(prevLeft) {
+    var viz = $('viz'), svg = viz.querySelector('svg[data-fmin]');
+    if (svg) {
+      viz.scrollLeft = prevLeft;
+      var r = listFocus(steps[idx].st, idx > 0 ? steps[idx - 1].st : null);
+      if (!r) { if (idx === 0) viz.scrollLeft = 0; return; }
+      var scale = svg.getBoundingClientRect().width / svg.viewBox.baseVal.width;
+      slideTo(viz, r[0] * scale, r[1] * scale);
+      return;
+    }
+    var tape = viz.querySelector('.tape'), cur = viz.querySelector('.tape .cell.cur') || viz.querySelector('.trow.sel .cell:last-child');
+    if (tape && cur) centerEl(tape, cur);
+    var vec = viz.querySelector('.vec'), hot = viz.querySelector('.vec .cell.hot');
+    if (vec) {
+      var marks = viz.querySelectorAll('.vec .mk'), focus = hot ? hot.parentNode : null;
+      if (!focus) for (var i = marks.length - 1; i >= 0; i--) if (marks[i].textContent) { focus = marks[i].parentNode; break; }
+      if (focus) centerEl(vec, focus);
+    }
+  }
+
   function show() {
-    var s = steps[idx];
+    var s = steps[idx], prevLeft = $('viz').scrollLeft;
     $('viz').innerHTML = RENDER[s.st.kind](s.st);
+    autoSlide(prevLeft);
     Array.prototype.forEach.call($('code').children, function (li, i) { li.className = i === s.line ? 'cur' : ''; });
     $('msg').innerHTML = '<span class="step-tag">Ligne ' + (s.line + 1) + '</span>' + s.msg;
     $('counter').textContent = (idx + 1) + ' / ' + steps.length;
