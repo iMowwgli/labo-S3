@@ -1199,22 +1199,29 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     code: [
       'int file_copy_reverse_at(const char *input, const char *output, size_t i)',
       '{',
-      '    if (input == NULL || output == NULL) return -1;',
+      '    if (input == NULL || output == NULL)',
+      '        return -1;',
       '    FILE *in = fopen(input, "r");',
-      '    if (in == NULL) return -1;',
-      '    FILE *out = fopen(output, "w");',
-      '    if (out == NULL) { fclose(in); return -1; }',
+      '    if (in == NULL)',
+      '        return -1;',
+      '    FILE *out = fopen(output, "w");      /* cree ou remplace */',
+      '    if (out == NULL)',
+      '    {',
+      '        fclose(in);',
+      '        return -1;',
+      '    }',
       '    char *line = NULL;',
       '    size_t cap = 0;',
       '    ssize_t n;',
       '    size_t k = 0;',
+      '    int err = 0;',
       '    while ((n = getline(&line, &cap, in)) != -1)',
       '    {',
       '        if (k == i)',
       '        {',
       '            size_t len = n;',
       '            if (len > 0 && line[len - 1] == \'\\n\')',
-      '                len--;               /* le \\n reste a la fin */',
+      '                len--;                   /* le \\n reste a la fin */',
       '            for (size_t l = 0, r = len; l + 1 < r; l++, r--)',
       '            {',
       '                char t = line[l];',
@@ -1222,55 +1229,77 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
       '                line[r - 1] = t;',
       '            }',
       '        }',
-      '        fputs(line, out);',
+      '        if (fwrite(line, 1, n, out) != (size_t)n)',
+      '        {',
+      '            err = 1;',
+      '            break;',
+      '        }',
       '        k++;',
       '    }',
-      '    free(line);                      /* getline a alloue */',
+      '    free(line);                          /* getline a alloue */',
+      '    if (ferror(in))',
+      '        err = 1;',
       '    fclose(in);',
-      '    fclose(out);',
-      '    return 0;',
+      '    if (fclose(out) != 0)                /* ecriture retardee */',
+      '        err = 1;',
+      '    return err ? -1 : 0;',
       '}'
     ],
-    retain: ['<code>getline</code> alloue la ligne pour toi : un seul <code>free(line)</code> à la fin.', '<code>getline</code> garde le <code>\\n</code> : on l\'exclut de l\'inversion.', 'Inverser = échanger les deux bouts et se rapprocher du milieu.'],
+    retain: ['<code>"w"</code> crée <code>output</code> ou remplace son contenu, comme le demande le sujet.',
+             '<code>getline</code> garde le <code>\\n</code> : on l\'exclut de l\'inversion. <code>i</code> hors limites : <code>k == i</code> n\'arrive jamais, rien n\'est inversé.',
+             'Toutes les erreurs mènent à -1 : <code>fopen</code>, <code>fwrite</code>, <code>ferror(in)</code>, <code>fclose(out)</code>. Un seul <code>free(line)</code>, après la boucle.'],
+    speed: 900,
     build: function () {
-      var st = fileSt('Pazu\nSheeta\nLaputa\n'), steps = [], S = rec(steps, st), I = 1;
-      st.out = '';
+      var st = fileSt('To the Cat Bureau,\n.modgniK taC eht morf egassem A\nFurther instructions will follow.\n'), steps = [], S = rec(steps, st), I = 1;
       var lines = splitLines(st.inp);
-      S(0, 'On recopie le fichier en inversant la ligne d\'indice i = 1.');
-      st.vars['in'] = 'ouvert'; st.vars.out = 'ouvert';
-      S(5, 'Les deux fichiers sont ouverts.');
-      st.vars.line = 'NULL'; st.vars.cap = 0; st.vars.k = 0;
-      S(7, '<code>line = NULL</code> et <code>cap = 0</code> : <code>getline</code> allouera elle-même.');
+      st.out = 'ancien contenu\n';
+      S(0, 'Exemple du sujet : la ligne 1 a été écrite à l\'envers. On copie le fichier en la remettant à l\'endroit, avec i = 1.');
+      S(2, '<code>input</code> et <code>output</code> ne sont pas NULL.');
+      st.vars['in'] = 'ouvert';
+      S(4, '<code>fopen(input, "r")</code> : lecture.');
+      S(5, '<code>in</code> n\'est pas NULL.');
+      st.vars.out = 'ouvert'; st.out = '';
+      S(7, '<code>fopen(output, "w")</code> : le fichier existait, son ancien contenu est <b>remplacé</b>. S\'il n\'existait pas, il serait créé.');
+      S(8, '<code>out</code> n\'est pas NULL. Sinon, on fermerait <code>in</code> avant de renvoyer -1.');
+      st.vars.line = 'NULL'; st.vars.cap = 0;
+      S(14, '<code>line = NULL</code>, <code>cap = 0</code> : <code>getline</code> allouera le tampon elle-même.');
+      st.vars.k = 0; st.vars.err = 0;
+      S(17, '<code>k</code> compte les lignes, <code>err</code> retient une erreur éventuelle.');
       for (var k = 0; k < lines.length; k++) {
         var L = lines[k].split('');
         st.sel = k; st.vars.n = L.length; st.vars.line = 'alloué'; st.vars.k = k;
-        st.buf = { cells: L.slice(), marks: {} };
-        S(11, '<code>getline</code> lit toute la ligne ' + k + ' : <code>n</code> = ' + L.length + ', <code>\\n</code> compris.');
+        st.buf = { cells: L.slice(), marks: {}, hot: [] };
+        S(18, '<code>getline</code> lit la ligne ' + k + ' : <code>n</code> = ' + L.length + ', <code>\\n</code> compris.');
         if (k === I) {
-          S(13, '<code>k == i</code> : c\'est la ligne à inverser.');
+          S(20, '<code>k == i</code> : c\'est la ligne à inverser.');
           var len = L.length - (L[L.length - 1] === '\n' ? 1 : 0);
-          st.vars.len = len;
-          S(17, '<code>len</code> = ' + len + ' : on laisse le <code>\\n</code> de côté.');
+          st.vars.len = len; st.buf.hot = [L.length - 1];
+          S(24, '<code>len</code> = ' + len + ' : on laisse le <code>\\n</code> de côté.');
           for (var l = 0, r = len; l + 1 < r; l++, r--) {
             var m = {}; m[l] = 'l'; m[r - 1] = 'r-1';
             st.buf.marks = m; st.buf.hot = [l, r - 1];
-            S(18, '<code>l</code> = ' + l + ', <code>r - 1</code> = ' + (r - 1) + ' : on échange <code>' + esc(L[l]) + '</code> et <code>' + esc(L[r - 1]) + '</code>.');
+            S(25, '<code>l</code> = ' + l + ', <code>r - 1</code> = ' + (r - 1) + ' : on échange <code>' + esc(L[l] === ' ' ? 'espace' : L[l]) + '</code> et <code>' + esc(L[r - 1] === ' ' ? 'espace' : L[r - 1]) + '</code>.');
             var t = L[l]; L[l] = L[r - 1]; L[r - 1] = t;
             st.buf.cells = L.slice();
-            S(22, 'Échangés.');
+            S(29, 'Échangés.');
           }
           st.buf.marks = {}; st.buf.hot = [];
-          S(18, 'Les deux indices se sont croisés : la ligne est inversée.');
+          S(25, 'Les deux indices se sont croisés : la ligne est remise à l\'endroit.');
           delete st.vars.len;
-        } else S(13, '<code>k ≠ i</code> : on ne touche pas cette ligne.');
+        } else S(20, '<code>k ≠ i</code> : on recopie la ligne telle quelle.');
         st.out += L.join('');
-        S(25, '<code>fputs</code> écrit la ligne dans <code>output</code>.');
+        S(32, '<code>fwrite</code> écrit les ' + L.length + ' octets d\'un coup. Il renvoie bien ' + L.length + ' : pas d\'erreur.');
+        st.vars.k = k + 1;
+        S(37, '<code>k</code> passe à ' + (k + 1) + '.');
       }
       st.sel = null; st.buf = null; st.vars.n = -1;
-      S(11, '<code>getline</code> renvoie -1 : fin du fichier.');
-      st.vars.line = 'libéré'; S(28, '<code>free(line)</code> : sinon fuite mémoire.');
-      st.vars['in'] = 'fermé'; st.vars.out = 'fermé'; S(30, 'On ferme les deux fichiers.');
-      st.ret = 0; S(31, 'On retourne 0.');
+      st.pos = st.inp.length;
+      S(18, '<code>getline</code> renvoie -1 : fin du fichier.');
+      st.vars.line = 'libéré'; S(39, '<code>free(line)</code> : un seul free pour tout le tampon.');
+      S(40, '<code>ferror(in)</code> vaut 0 : la lecture s\'est bien passée. (-1 aurait aussi pu venir d\'une erreur de lecture.)');
+      st.vars['in'] = 'fermé'; S(42, 'On ferme <code>in</code>.');
+      st.vars.out = 'fermé'; S(43, '<code>fclose(out)</code> vide le tampon sur le disque et renvoie 0 : tout est écrit.');
+      st.ret = 0; S(45, '<code>err</code> vaut 0 : on retourne 0.');
       return steps;
     }
   };
