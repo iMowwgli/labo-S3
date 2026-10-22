@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FBF6F9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#151217" media="(prefers-color-scheme: dark)">
 <title>Labo des Pointeurs</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -47,6 +49,7 @@
   --code-bg: #121212; --code-line: #2E2A3A;
   color-scheme: dark;
 }
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
 * { box-sizing: border-box; }
 body { margin: 0; }
 [hidden] { display: none !important; }
@@ -58,6 +61,8 @@ body {
   padding-block: 24px 48px;
 }
 .wrap { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 22px; }
+.wrap .wrap { width: 100%; max-width: none; }
+.stage > *, .fs-col > * { min-width: 0; }
 header { display: flex; flex-direction: column; gap: 6px; }
 header h1 { font-family: var(--display); font-weight: 700; font-size: clamp(30px, 5vw, 44px); line-height: 1.05; margin: 0; color: var(--rose); text-wrap: balance; }
 header p { margin: 0; color: var(--muted); max-width: 70ch; }
@@ -75,6 +80,25 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
 .tab[aria-selected="true"] { color: var(--rose); border-bottom-color: var(--rose); }
 .tab:focus-visible { outline: 2px solid var(--mauve); outline-offset: 2px; }
 
+.finder { display: flex; flex-direction: column; gap: 10px; }
+.search { position: relative; }
+.search svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--muted); pointer-events: none; }
+.search input {
+  width: 100%; font: inherit; font-size: 16px; color: var(--fg); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 12px; padding: 11px 14px 11px 40px; -webkit-appearance: none; appearance: none;
+}
+.search input::placeholder { color: var(--muted); }
+.search input:focus { outline: 2px solid var(--mauve); outline-offset: 1px; }
+.cats { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; -webkit-overflow-scrolling: touch; }
+.cats::-webkit-scrollbar { display: none; }
+.cat { font: inherit; font-size: 14px; white-space: nowrap; cursor: pointer; border: 0; background: var(--mauve-tint); color: var(--mauve); padding: 7px 13px; border-radius: 8px; flex: none; }
+.cat[aria-pressed="true"] { background: var(--mauve); color: var(--surface); }
+.cat .n { opacity: .7; margin-left: 5px; font-variant-numeric: tabular-nums; }
+.cat:focus-visible { outline: 2px solid var(--rose); outline-offset: 2px; }
+.empty { color: var(--muted); margin: 0; font-size: 15px; }
+.chip .where { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-right: 6px; }
+.chip[aria-pressed="true"] .where { color: var(--surface); }
+.btn .sm { display: none; }
 .picker { display: flex; flex-direction: column; gap: 10px; }
 .group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .group-label { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); width: 96px; flex: none; }
@@ -198,6 +222,40 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
 .ref tr:first-child td { border-top: 0; }
 .ref td:first-child { font-family: var(--mono); color: var(--mauve); padding-right: 10px; }
 
+/* iPhone et petits écrans */
+@media (max-width: 640px) {
+  body { padding-block: 16px calc(88px + env(safe-area-inset-bottom, 0px)); }
+  .wrap { gap: 16px; }
+  .tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { white-space: nowrap; font-size: 16px; padding: 10px 11px; flex: none; }
+  header p { display: none; }
+  .picker { gap: 8px; }
+  .picker .group { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+  .picker .group::-webkit-scrollbar { display: none; }
+  .group-label { width: auto; flex: none; font-size: 11px; }
+  .chip { padding: 8px 13px; white-space: nowrap; flex: none; }
+  .stage { padding: 12px 10px 8px; border-radius: 12px; }
+  .stage-head h2 { font-size: 19px; }
+  .viz svg { min-width: 600px; }
+  .controls {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; flex-wrap: nowrap; gap: 6px;
+    background: var(--surface); border-top: 1px solid var(--line);
+    padding: 10px max(12px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+  }
+  .controls .btn { padding: 12px 10px; font-size: 16px; min-width: 46px; }
+  .controls #b-next { flex: 1; }
+  .btn .lg { display: none; }
+  .btn .sm { display: inline; }
+  .counter { margin-left: 0; min-width: 44px; text-align: center; }
+  .side { order: -1; }
+  .msg { font-size: 16px; min-height: 0; }
+  .code ol { font-size: 12.5px; }
+  .code .ln { width: 30px; padding-right: 8px; }
+  .pat pre { font-size: 12.5px; }
+  .pat-head { flex-wrap: wrap; }
+}
+
 /* SVG listes */
 .n-box { fill: var(--surface); stroke: var(--rose); stroke-width: 1.4; }
 .n-box.hl { fill: var(--rose-tint); stroke-width: 2.6; }
@@ -240,10 +298,18 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     <button class="tab" role="tab" id="tab-memo" data-tab="memo" aria-selected="false" type="button">Fiche mémo</button>
   </div>
 
-  <div id="lab" class="wrap" style="gap:22px">
+  <div class="finder">
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input type="search" id="q" placeholder="Rechercher : getline, free, reverse, realloc…" aria-label="Rechercher une fonction ou un pattern" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search">
+    </div>
+    <div class="cats" id="cats" aria-label="Catégories"></div>
     <nav class="picker" id="picker" aria-label="Fonctions"></nav>
+  </div>
 
-    <section class="stage" aria-labelledby="sc-title">
+  <div id="lab" class="wrap" style="gap:22px">
+
+    <section class="stage" id="stage-anchor" aria-labelledby="sc-title">
       <div class="stage-head">
         <h2 id="sc-title">find</h2>
         <span class="sig" id="sc-sig"></span>
@@ -255,10 +321,10 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
         <span><i class="sw dd"></i>pointeur <code>**</code> : vise une case</span>
       </div>
       <div class="controls">
-        <button class="btn" id="b-reset" type="button">Recommencer</button>
-        <button class="btn" id="b-prev" type="button">Précédent</button>
-        <button class="btn primary" id="b-next" type="button">Suivant</button>
-        <button class="btn" id="b-play" type="button">Lecture auto</button>
+        <button class="btn" id="b-reset" type="button" aria-label="Recommencer"><span class="lg">Recommencer</span><span class="sm" aria-hidden="true">↺</span></button>
+        <button class="btn" id="b-prev" type="button" aria-label="Précédent"><span class="lg">Précédent</span><span class="sm" aria-hidden="true">‹</span></button>
+        <button class="btn primary" id="b-next" type="button" aria-label="Suivant"><span class="lg">Suivant</span><span class="sm" aria-hidden="true">Suivant ›</span></button>
+        <button class="btn" id="b-play" type="button" aria-label="Lecture auto"><span class="lg">Lecture auto</span><span class="sm" aria-hidden="true">Auto</span></button>
         <span class="counter" id="counter">1 / 1</span>
       </div>
     </section>
@@ -360,6 +426,8 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
 (function () {
   /* ================= helpers communs ================= */
   function splitLines(s) { return s.match(/[^\n]*\n|[^\n]+$/g) || []; }
+  function norm(s) { return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''); }
+  function strip(h) { return String(h).replace(/<[^>]+>/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&'); }
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
   function rec(steps, st) {
@@ -1853,14 +1921,14 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     root.innerHTML = PAT.map(function (sec) {
       return '<section class="pat-sec"><h2>' + sec.title + '</h2><div class="pat-grid">' + sec.items.map(function (it) {
         var id = 'pat-' + (k++);
-        return '<article class="pat"><div class="pat-head"><h3>' + it.t + '</h3><span class="pat-actions">' +
+        return '<article class="pat" data-sec="' + esc(sec.title) + '" data-text="' + esc(norm(it.t + ' ' + strip(it.n) + ' ' + it.c)) + '"><div class="pat-head"><h3>' + it.t + '</h3><span class="pat-actions">' +
           '<button class="copy run" type="button" data-run="p_' + it.k + '">Pas à pas</button>' +
           '<button class="copy" type="button" data-src="' + id + '">Copier</button></span></div><p>' + it.n + '</p><pre id="' + id + '">' + it.c.split('\n').map(hl).join('\n') + '</pre></article>';
       }).join('') + '</div></section>';
     }).join('');
     root.addEventListener('click', function (e) {
       var r = e.target.closest('[data-run]');
-      if (r) { chosen.patterns = r.getAttribute('data-run'); setTab('patterns'); window.scrollTo(0, 0); return; }
+      if (r) { chosen.patterns = r.getAttribute('data-run'); catSel.patterns = SC[r.getAttribute('data-run')].group; $('q').value = ''; setTab('patterns'); window.scrollTo(0, 0); return; }
       var b = e.target.closest('[data-src]'); if (!b) return;
       var pre = document.getElementById(b.getAttribute('data-src')), txt = pre.textContent;
       function sel() { var rg = document.createRange(); rg.selectNodeContents(pre); var s = window.getSelection(); s.removeAllRanges(); s.addRange(rg); b.textContent = 'Sélectionné'; }
@@ -1876,18 +1944,71 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
   function store(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
   function read(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 
-  function buildPicker() {
+  var TABNAME = { listes: 'Listes', fichiers: 'Fichiers', vecteur: 'Vecteur', patterns: 'Patterns', memo: 'Fiche mémo' };
+  var catSel = {}, INDEX = [];
+  Object.keys(TABS).forEach(function (t) {
+    TABS[t].forEach(function (k) {
+      var sc = SC[k];
+      INDEX.push({ k: k, tab: t, text: norm([sc.label, sc.group, sc.sig, TABNAME[t], sc.code.join(' '), strip(sc.retain.join(' '))].join(' ')) });
+    });
+  });
+  function words(q) { return norm(q).split(/\s+/).filter(Boolean); }
+  function matches(text, ws) { return ws.every(function (w) { return text.indexOf(w) >= 0; }); }
+
+  function chipHtml(k, withTab) {
+    var sc = SC[k];
+    return '<button type="button" class="chip' + (sc.bug ? ' bug' : '') + (sc.exam ? ' exam' : '') + '" data-k="' + k + '" data-tab="' + sc.tab + '" aria-pressed="' + (k === cur && sc.tab === tab ? 'true' : 'false') + '">' +
+      (withTab ? '<span class="where">' + TABNAME[sc.tab] + '</span>' : '') + sc.label + '</button>';
+  }
+
+  function renderFinder() {
+    var ws = words($('q').value);
+    var cats = $('cats'), picker = $('picker');
+    if (tab === 'memo') {
+      var secs = PAT.map(function (x) { return x.title; });
+      var sel = catSel.memo || 'Tout', shownCount = 0;
+      cats.hidden = false;
+      cats.innerHTML = ['Tout'].concat(secs).map(function (g) {
+        return '<button type="button" class="cat" data-cat="' + esc(g) + '" aria-pressed="' + (g === sel) + '">' + esc(g) + '</button>';
+      }).join('');
+      Array.prototype.forEach.call(document.querySelectorAll('#pat-root .pat'), function (a) {
+        var ok = (sel === 'Tout' || a.getAttribute('data-sec') === sel) && matches(a.getAttribute('data-text'), ws);
+        a.hidden = !ok; if (ok) shownCount++;
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('#pat-root .pat-sec'), function (sec) {
+        sec.hidden = !sec.querySelector('.pat:not([hidden])');
+      });
+      picker.innerHTML = shownCount ? '' : '<p class="empty">Aucune carte ne correspond.</p>';
+      return;
+    }
+    if (ws.length) {
+      cats.hidden = true;
+      var res = INDEX.filter(function (e) { return matches(e.text, ws); });
+      picker.innerHTML = res.length
+        ? '<div class="group">' + res.map(function (e) { return chipHtml(e.k, true); }).join('') + '</div>'
+        : '<p class="empty">Aucun résultat. Essaie un autre mot : fopen, insert, palindrome…</p>';
+      return;
+    }
+    cats.hidden = false;
     var groups = [];
     TABS[tab].forEach(function (k) {
       var g = SC[k].group, row = groups.filter(function (x) { return x.g === g; })[0];
       if (!row) { row = { g: g, keys: [] }; groups.push(row); }
       row.keys.push(k);
     });
-    $('picker').innerHTML = groups.map(function (row) {
-      return '<div class="group"><span class="group-label">' + row.g + '</span>' + row.keys.map(function (k) {
-        return '<button type="button" class="chip' + (SC[k].bug ? ' bug' : '') + (SC[k].exam ? ' exam' : '') + '" id="chip-' + k + '" data-k="' + k + '" aria-pressed="false">' + SC[k].label + '</button>';
-      }).join('') + '</div>';
+    var selG = catSel[tab] || 'Tout';
+    if (selG !== 'Tout' && !groups.some(function (r) { return r.g === selG; })) selG = 'Tout';
+    cats.innerHTML = ['Tout'].concat(groups.map(function (r) { return r.g; })).map(function (g) {
+      var n = g === 'Tout' ? TABS[tab].length : groups.filter(function (r) { return r.g === g; })[0].keys.length;
+      return '<button type="button" class="cat" data-cat="' + esc(g) + '" aria-pressed="' + (g === selG) + '">' + esc(g) + '<span class="n">' + n + '</span></button>';
     }).join('');
+    if (selG === 'Tout') {
+      picker.innerHTML = groups.map(function (row) {
+        return '<div class="group"><span class="group-label">' + row.g + '</span>' + row.keys.map(function (k) { return chipHtml(k, false); }).join('') + '</div>';
+      }).join('');
+    } else {
+      picker.innerHTML = '<div class="group">' + groups.filter(function (r) { return r.g === selG; })[0].keys.map(function (k) { return chipHtml(k, false); }).join('') + '</div>';
+    }
   }
 
   function setTab(t) {
@@ -1897,15 +2018,17 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     $('memo').hidden = t !== 'memo';
     if (location.hash.slice(1) !== t) { try { history.replaceState(null, '', '#' + t); } catch (e) {} }
     store('labo-ptr-tab', t);
+    renderFinder();
     if (t === 'memo') return;
-    buildPicker();
     var want = chosen[t] || read('labo-ptr-sc-' + t);
     load(want && TABS[t].indexOf(want) >= 0 ? want : TABS[t][0]);
   }
 
   function load(k) {
     stop(); cur = k; chosen[tab] = k; steps = SC[k].build(); idx = 0;
-    TABS[tab].forEach(function (x) { var c = $('chip-' + x); if (c) c.setAttribute('aria-pressed', x === k ? 'true' : 'false'); });
+    if (!catSel[tab] && tab !== 'listes' && tab !== 'patterns') catSel[tab] = 'Tout';
+    if (!catSel[tab]) catSel[tab] = SC[k].group;
+    renderFinder();
     $('sc-title').textContent = SC[k].label;
     $('sc-sig').textContent = SC[k].sig;
     $('legend').hidden = steps[0].st.kind !== 'list';
@@ -1925,15 +2048,31 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     $('b-next').disabled = idx === steps.length - 1;
   }
   function go(d) { var n = idx + d; if (n >= 0 && n < steps.length) { idx = n; show(); } }
-  function stop() { if (timer) { clearInterval(timer); timer = null; } $('b-play').textContent = 'Lecture auto'; }
+  function playLabel(on) { $('b-play').innerHTML = on ? '<span class="lg">Pause</span><span class="sm" aria-hidden="true">Pause</span>' : '<span class="lg">Lecture auto</span><span class="sm" aria-hidden="true">Auto</span>'; $('b-play').setAttribute('aria-label', on ? 'Pause' : 'Lecture auto'); }
+  function stop() { if (timer) { clearInterval(timer); timer = null; } playLabel(false); }
   function play() {
     if (timer) { stop(); return; }
     if (idx === steps.length - 1) { idx = 0; show(); }
-    $('b-play').textContent = 'Pause';
+    playLabel(true);
     timer = setInterval(function () { if (idx < steps.length - 1) go(1); else stop(); }, SC[cur].speed || 1500);
   }
 
-  $('picker').addEventListener('click', function (e) { var b = e.target.closest('.chip'); if (b) load(b.getAttribute('data-k')); });
+  $('picker').addEventListener('click', function (e) {
+    var b = e.target.closest('.chip'); if (!b) return;
+    var k = b.getAttribute('data-k'), t = b.getAttribute('data-tab'), searching = words($('q').value).length > 0;
+    if (searching) { $('q').value = ''; catSel[t] = SC[k].group; }
+    if (t !== tab) { chosen[t] = k; setTab(t); } else load(k);
+    if (searching) $('stage-anchor') && $('stage-anchor').scrollIntoView({ block: 'start' });
+  });
+  $('cats').addEventListener('click', function (e) {
+    var c = e.target.closest('.cat'); if (!c) return;
+    catSel[tab] = c.getAttribute('data-cat'); renderFinder();
+  });
+  $('q').addEventListener('input', renderFinder);
+  $('q').addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { $('q').value = ''; renderFinder(); }
+    if (e.key === 'Enter') { var first = $('picker').querySelector('.chip'); if (first) first.click(); $('q').blur(); }
+  });
   Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (b) { b.addEventListener('click', function () { setTab(b.getAttribute('data-tab')); }); });
   $('b-next').addEventListener('click', function () { stop(); go(1); });
   $('b-prev').addEventListener('click', function () { stop(); go(-1); });
