@@ -549,29 +549,43 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
   }
 
   function predSim(L) {
-    var st = base([4, 7, 8, 2, 3]), steps = [], S = rec(steps, st), intro = 'On supprime tous les nombres pairs : <code>predicate(x)</code> renvoie 1 si x est pair. ';
+    var st = base([4, 7, 8, 2, 3]), steps = [], S = rec(steps, st), intro = 'On supprime tous les nombres pairs : <code>predicate(x)</code> renvoie 1 si x est pair. ', removed = 0;
     st.ptrs.push({ name: 'list', kind: 2, slot: 'head' });
     if (L.start !== null) { S(L.start, intro); intro = ''; }
     if (L.chk !== null) S(L.chk, 'Les paramètres ne sont pas NULL.');
-    var p = P(st, 'list'), removed = 0;
-    while (slotGet(st, p.slot)) {
-      var t = slotGet(st, p.slot), v = st.nodes[t].v;
-      S(L.loop, intro + '<code>*list</code> pointe sur ' + v + '.', [t]); intro = '';
+    if (L.rem !== null) S(L.rem, '<code>removed</code> = 0 : rien de supprimé pour l\'instant.');
+    st.ptrs.push({ name: 'prev', kind: 1, to: null });
+    if (L.prev !== L.curr) S(L.prev, intro + '<code>prev = NULL</code> : il n\'y a rien avant la tête.'), intro = '';
+    st.ptrs.push({ name: 'curr', kind: 1, to: 'A' });
+    S(L.curr, intro + (L.prev === L.curr ? '<code>prev = NULL</code> et <code>curr</code> part de la tête.' : '<code>curr</code> part de la tête.'));
+    var cur = P(st, 'curr'), prev = P(st, 'prev');
+    while (cur.to) {
+      var c = cur.to, v = st.nodes[c].v, nx = st.nodes[c].next;
+      S(L.loop, '<code>curr</code> pointe sur ' + v + '.', [c]);
+      st.ptrs.push({ name: 'next', kind: 1, to: nx });
+      S(L.next, '<code>next</code> garde la suite <b>avant</b> un éventuel free.', [c]);
       if (v % 2 === 0) {
-        S(L.test, '<code>predicate(' + v + ')</code> vaut 1 : on le supprime.', [t]);
-        st.ptrs.push({ name: 'tmp', kind: 1, to: t });
-        S(L.tmp, '<code>tmp</code> garde le nœud ' + v + '.', [t]);
-        slotSet(st, p.slot, st.nodes[t].next); st.nodes[t].st = 'removing';
-        S(L.skip, '<code>*list = tmp->next</code> : la case saute le ' + v + '. On reste sur <b>la même case</b>.');
-        st.nodes[t].st = 'freed'; dropPtr(st, 'tmp'); removed = 1;
-        S(L.free, '<code>free(tmp)</code>. Au prochain tour, on teste le nouveau contenu de la même case.');
+        S(L.test, '<code>predicate(' + v + ')</code> vaut 1 : on le supprime.', [c]);
+        if (!prev.to) {
+          S(L.ifprev, '<code>prev</code> vaut NULL : ' + v + ' est la <b>tête</b>.');
+          st.head = nx; st.nodes[c].st = 'removing';
+          S(L.head, '<code>*list = next</code> : la tête du main passe au suivant.');
+        } else {
+          S(L.ifprev, '<code>prev</code> n\'est pas NULL : ' + v + ' est au milieu.');
+          st.nodes[prev.to].next = nx; st.nodes[c].st = 'removing';
+          S(L.mid, '<code>prev->next = next</code> : on saute le ' + v + '.');
+        }
+        st.nodes[c].st = 'freed'; removed = 1;
+        S(L.free, '<code>free(curr)</code>. <code>prev</code> ne bouge pas : il est toujours avant la suite.');
       } else {
-        S(L.test, '<code>predicate(' + v + ')</code> vaut 0 : on le garde.', [t]);
-        p.slot = t + '.next';
-        S(L.adv, 'On avance sur la case <code>next</code> de ' + v + '.');
+        S(L.test, '<code>predicate(' + v + ')</code> vaut 0 : on le garde.', [c]);
+        prev.to = c;
+        S(L.keep, '<code>prev = curr</code> : ' + v + ' devient le nœud d\'avant.');
       }
+      cur.to = nx; dropPtr(st, 'next');
+      S(L.adv, '<code>curr = next</code> : on passe à la suite.', nx ? [nx] : []);
     }
-    S(L.loop, '<code>*list</code> vaut NULL : fin. Il reste 7 et 3.');
+    S(L.loop, '<code>curr</code> vaut NULL : fin. Il reste 7 et 3.');
     if (L.ret !== null) S(L.ret, removed ? 'Au moins un supprimé : on retourne 0.' : 'Aucun supprimé : on retourne 1.');
     return steps;
   }
@@ -691,23 +705,33 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
   function appendBuild(vals) {
     var st = base(vals), steps = [], S = rec(steps, st), empty = !vals.length;
     st.ptrs.push({ name: 'list', kind: 2, slot: 'head' });
-    S(0, 'append reçoit <code>&amp;list</code> : l\'<b>adresse de la case</b> du main, pas une copie de sa flèche.');
+    S(0, 'append reçoit <code>&amp;list</code> : l\'adresse de la case du main. Elle servira seulement si la liste est vide.');
     S(2, 'Les paramètres ne sont pas NULL.');
     addNode(st, 'D', 'Robot');
     st.ptrs.push({ name: 'new', kind: 1, to: 'D' });
     S(4, 'On crée le nœud <b>avant</b> de toucher la liste. Il n\'est relié à rien pour l\'instant.', ['D']);
     S(5, '<code>malloc</code> a réussi, <code>new</code> n\'est pas NULL.');
-    var p = P(st, 'list');
-    while (slotGet(st, p.slot)) {
-      var t = slotGet(st, p.slot);
-      S(7, '<code>*list</code> pointe sur ' + V(st, t) + ' : cette case n\'est pas vide.', [t]);
-      p.slot = t + '.next';
-      S(8, '<code>list = &amp;(*list)->next</code> : on se place sur la case <code>next</code> de ' + V(st, t) + '.');
+    if (empty) {
+      S(7, '<code>*list</code> vaut NULL : la liste est vide. C\'est le <b>cas spécial</b>.');
+      st.head = 'D'; st.nodes.D.st = 'ok';
+      S(9, '<code>*list = new</code> écrit dans la case du main : sa tête devient "Robot". C\'est pour ça qu\'on reçoit un <code>**</code>.', ['D']);
+      S(10, 'On retourne 0.');
+      return steps;
     }
-    S(7, '<code>*list</code> vaut NULL : on a trouvé la case vide.');
-    slotSet(st, p.slot, 'D'); st.nodes.D.st = 'ok';
-    S(9, empty ? '<code>*list = new</code> écrit <b>dans la case du main</b> : sa tête change. Impossible avec un simple <code>*</code>.' : '<code>*list = new</code> : le <code>next</code> du dernier nœud pointe sur le nouveau.', ['D']);
-    S(10, 'On retourne 0 : succès.');
+    S(7, '<code>*list</code> n\'est pas NULL : cas normal, on cherche le dernier nœud.');
+    st.ptrs.push({ name: 'curr', kind: 1, to: st.head });
+    S(12, '<code>curr</code> part de la tête.', [st.head]);
+    var c = P(st, 'curr');
+    while (st.nodes[c.to].next) {
+      var nx = st.nodes[c.to].next;
+      S(13, '<code>curr->next</code> pointe sur ' + V(st, nx) + ' : ' + V(st, c.to) + ' n\'est pas le dernier.', [c.to]);
+      c.to = nx;
+      S(14, '<code>curr = curr->next</code> : on avance sur ' + V(st, nx) + '.', [nx]);
+    }
+    S(13, '<code>curr->next</code> vaut NULL : <code>curr</code> est <b>sur le dernier</b>. On s\'arrête.', [c.to]);
+    st.nodes[c.to].next = 'D'; st.nodes.D.st = 'ok';
+    S(15, '<code>curr->next = new</code> : le dernier pointe maintenant sur "Robot".', ['D']);
+    S(16, 'On retourne 0.');
     return steps;
   }
   var appendCode = [
@@ -718,20 +742,26 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     '    struct node *new = linked_list_init_node(data);',
     '    if (new == NULL)',
     '        return 1;',
-    '    while (*list != NULL)',
-    '        list = &(*list)->next;',
-    '    *list = new;',
+    '    if (*list == NULL)              /* cas special : liste vide */',
+    '    {',
+    '        *list = new;',
+    '        return 0;',
+    '    }',
+    '    struct node *curr = *list;',
+    '    while (curr->next != NULL)      /* s\'arrete SUR le dernier */',
+    '        curr = curr->next;',
+    '    curr->next = new;',
     '    return 0;',
     '}'
   ];
   SC.append = {
     tab: 'listes', group: 'Ajouter', label: 'append', sig: 'int linked_list_append(struct node **list, char *data)', code: appendCode,
-    retain: ['On reçoit <code>&amp;list</code> (<code>**</code>) : l\'adresse d\'une case.', 'Créer le nœud <b>avant</b> de toucher la liste.', 'On cherche la <b>case vide</b>, pas le dernier nœud.'],
+    retain: ['Créer le nœud <b>avant</b> de toucher la liste.', 'Tester <code>curr->next</code> (pas <code>curr</code>) pour s\'arrêter <b>sur</b> le dernier.', 'Ne pas oublier le cas de la liste vide.'],
     build: function () { return appendBuild(['Pazu', 'Sheeta', 'Laputa']); }
   };
   SC.appendEmpty = {
     tab: 'listes', group: 'Ajouter', label: 'append (liste vide)', sig: 'int linked_list_append(struct node **list, char *data)', code: appendCode,
-    retain: ['Liste vide : <code>*list = new</code> change la tête du main.', 'C\'est pour ça qu\'il faut un <code>**</code>.', 'Même code que le cas normal : aucun <code>if</code> spécial.'],
+    retain: ['Liste vide : il n\'y a pas de dernier nœud, <code>curr->next</code> planterait.', 'On écrit directement dans la case du main : <code>*list = new</code>.', 'C\'est pour ce cas qu\'on reçoit <code>&amp;list</code> (<code>**</code>).'],
     build: function () { return appendBuild([]); }
   };
 
@@ -739,25 +769,40 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     var st = base([4, 7, 8]), steps = [], S = rec(steps, st);
     st.relayout = true;
     st.ptrs.push({ name: 'list', kind: 2, slot: 'head' });
-    S(0, 'On veut insérer 5 à l\'indice i = ' + at + '. <code>list</code> part de la case du main.');
+    S(0, 'On veut insérer 5 à l\'indice i = ' + at + '.');
     S(2, '<code>list</code> n\'est pas NULL.');
-    var p = P(st, 'list'), i = at;
-    while (i > 0 && slotGet(st, p.slot)) {
-      var t = slotGet(st, p.slot);
-      S(4, 'i = ' + i + ' et la case n\'est pas vide : on avance.', [t]);
-      p.slot = t + '.next'; i--;
-      S(7, 'On est sur la case <code>next</code> de ' + V(st, t) + ', et i passe à ' + i + '.');
+    if (at === 0) {
+      S(4, 'i vaut 0 : <b>cas spécial</b>, insertion en tête.');
+      addNode(st, 'D', 5); st.ptrs.push({ name: 'new', kind: 1, to: 'D' });
+      S(6, 'On crée le nœud 5.', ['D']);
+      S(7, '<code>new</code> n\'est pas NULL.');
+      st.nodes.D.next = st.head;
+      S(9, '<code>new->next = *list</code> : le nouveau pointe d\'abord sur l\'ancienne tête.', ['D']);
+      st.head = 'D'; st.nodes.D.st = 'ok';
+      S(10, '<code>*list = new</code> : la tête du main devient 5.', ['D']);
+      S(11, 'On retourne 0.');
+      return steps;
     }
-    S(4, 'i = 0 : on est sur la case où insérer.');
-    S(9, 'i vaut 0 : l\'indice est valide. On vérifie <b>avant</b> le malloc, pour ne pas avoir à libérer.');
-    addNode(st, 'D', 5);
-    st.ptrs.push({ name: 'new', kind: 1, to: 'D' });
-    S(11, 'On crée le nœud 5. Il n\'est relié à rien.', ['D']);
-    st.nodes.D.next = slotGet(st, p.slot);
-    S(14, '<code>new->next = *list</code> : le nouveau pointe d\'abord sur la suite. Rien n\'est encore perdu.', ['D']);
-    slotSet(st, p.slot, 'D'); st.nodes.D.st = 'ok';
-    S(15, at === 0 ? '<code>*list = new</code> : la <b>tête du main</b> devient 5.' : '<code>*list = new</code> : la case pointe sur le nouveau. Il est inséré.', ['D']);
-    S(16, 'On retourne 0.');
+    S(4, 'i ≠ 0 : on va chercher le nœud <b>juste avant</b> l\'indice i.');
+    st.ptrs.push({ name: 'curr', kind: 1, to: st.head });
+    S(13, '<code>curr</code> part de la tête (indice 0).', [st.head]);
+    var c = P(st, 'curr'), k = 1;
+    while (k < at && c.to) {
+      S(14, '<code>k</code> = ' + k + ' < i : on avance.', [c.to]);
+      c.to = st.nodes[c.to].next;
+      S(15, '<code>curr</code> passe sur ' + (c.to ? V(st, c.to) + ' (indice ' + k + ')' : 'NULL') + '.', c.to ? [c.to] : []);
+      k++;
+    }
+    S(14, '<code>k</code> = i : on s\'arrête. <code>curr</code> est sur l\'indice i - 1, ' + V(st, c.to) + '.', [c.to]);
+    S(16, '<code>curr</code> n\'est pas NULL : l\'indice est valide. On vérifie <b>avant</b> le malloc.');
+    addNode(st, 'D', 5); st.ptrs.push({ name: 'new', kind: 1, to: 'D' });
+    S(18, 'On crée le nœud 5.', ['D']);
+    S(19, '<code>new</code> n\'est pas NULL.');
+    st.nodes.D.next = st.nodes[c.to].next;
+    S(21, '<code>new->next = curr->next</code> : le nouveau pointe d\'abord sur la suite. Rien n\'est perdu.', ['D']);
+    st.nodes[c.to].next = 'D'; st.nodes.D.st = 'ok';
+    S(22, '<code>curr->next = new</code> : on l\'accroche après ' + V(st, c.to) + '.', ['D']);
+    S(23, 'On retourne 0.');
     return steps;
   }
   var insertCode = [
@@ -765,83 +810,106 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     '{',
     '    if (list == NULL)',
     '        return -1;',
-    '    while (i > 0 && *list != NULL)',
+    '    if (i == 0)                        /* cas special : en tete */',
     '    {',
-    '        list = &(*list)->next;',
-    '        i--;',
+    '        struct node *new = linked_list_init_node(data);',
+    '        if (new == NULL)',
+    '            return -1;',
+    '        new->next = *list;',
+    '        *list = new;',
+    '        return 0;',
     '    }',
-    '    if (i > 0)',
-    '        return -1;                /* hors limites */',
+    '    struct node *curr = *list;',
+    '    for (size_t k = 1; k < i && curr != NULL; k++)',
+    '        curr = curr->next;              /* indice i - 1 */',
+    '    if (curr == NULL)',
+    '        return -1;                      /* hors limites */',
     '    struct node *new = linked_list_init_node(data);',
     '    if (new == NULL)',
     '        return -1;',
-    '    new->next = *list;            /* 1. relier la suite */',
-    '    *list = new;                  /* 2. ecrire dans la case */',
+    '    new->next = curr->next;             /* 1. relier la suite */',
+    '    curr->next = new;                   /* 2. accrocher */',
     '    return 0;',
     '}'
   ];
   SC.insert = {
     tab: 'listes', group: 'Ajouter', label: 'insert à l\'indice i', exam: true, sig: 'prototype à vérifier dans ton sujet', code: insertCode,
-    retain: ['On avance <code>i</code> fois de case en case.', 'D\'abord <code>new->next = *list</code>, ensuite <code>*list = new</code>. Dans l\'autre ordre, on perd la suite.', 'Indice 0 : même code, la tête change toute seule.'],
+    retain: ['On s\'arrête sur le nœud <b>juste avant</b> l\'indice i (i - 1).', 'D\'abord <code>new->next = curr->next</code>, ensuite <code>curr->next = new</code>. Dans l\'autre ordre, on perd la suite.', 'Vérifier l\'indice <b>avant</b> le malloc. <code>i</code> égal à la taille ajoute à la fin.'],
     build: function () { return insertBuild(2); }
   };
   SC.insertHead = {
     tab: 'listes', group: 'Ajouter', label: 'insert en tête (i = 0)', exam: true, sig: 'prototype à vérifier dans ton sujet', code: insertCode,
-    retain: ['Avec i = 0, la boucle ne tourne pas.', '<code>list</code> est encore sur la case du main.', '<code>*list = new</code> change la tête.'],
+    retain: ['i = 0 : il n\'y a pas de nœud avant, donc cas spécial.', 'On écrit dans la case du main : <code>*list = new</code>.', 'Même ordre : relier la suite, puis accrocher.'],
     build: function () { return insertBuild(0); }
   };
 
   function removeBuild(target) {
     var st = base(['Pazu', 'Sheeta', 'Laputa']), steps = [], S = rec(steps, st);
     st.ptrs.push({ name: 'list', kind: 2, slot: 'head' });
-    S(0, 'remove reçoit <code>&amp;list</code> : on part de la case du main. On veut supprimer "' + target + '".');
+    S(0, 'On veut supprimer "' + target + '". Il faudra garder le nœud d\'avant pour le recoller.');
     S(2, 'Les paramètres ne sont pas NULL.');
-    var p = P(st, 'list'), t;
-    while (true) {
-      t = slotGet(st, p.slot);
-      if (!t) { S(3, '<code>*list</code> vaut NULL : fin de liste.'); break; }
-      var eq = st.nodes[t].v === target;
-      S(3, '<code>(*list)->value</code> vaut ' + V(st, t) + (eq ? ' : c\'est la cible.' : ' : pas la cible.'), [t]);
+    st.ptrs.push({ name: 'prev', kind: 1, to: null });
+    S(3, '<code>prev = NULL</code> : il n\'y a rien avant la tête.');
+    st.ptrs.push({ name: 'curr', kind: 1, to: 'A' });
+    S(4, '<code>curr</code> part de la tête.', ['A']);
+    var c = P(st, 'curr'), pv = P(st, 'prev');
+    while (c.to) {
+      var eq = st.nodes[c.to].v === target;
+      S(5, '<code>curr->value</code> vaut ' + V(st, c.to) + (eq ? ' : c\'est la cible, on sort.' : ' : pas la cible.'), [c.to]);
       if (eq) break;
-      p.slot = t + '.next';
-      S(4, 'On avance sur la case <code>next</code> de ' + V(st, t) + '.');
+      pv.to = c.to;
+      S(7, '<code>prev = curr</code> : ' + V(st, c.to) + ' devient le nœud d\'avant.');
+      c.to = st.nodes[c.to].next;
+      S(8, '<code>curr</code> avance.', c.to ? [c.to] : []);
     }
-    if (!t) { S(5, 'Rien trouvé.'); S(6, 'On retourne 1.'); return steps; }
-    S(5, '<code>*list</code> n\'est pas NULL : on a trouvé.', [t]);
-    st.ptrs.push({ name: 'tmp', kind: 1, to: t });
-    S(7, '<code>tmp</code> garde l\'adresse du nœud à supprimer.', [t]);
-    slotSet(st, p.slot, st.nodes[t].next); st.nodes[t].st = 'removing';
-    S(8, p.slot === 'head' ? '<code>*list = tmp->next</code> : la <b>tête du main</b> saute directement au suivant.' : '<code>*list = tmp->next</code> : la case saute par-dessus ' + V(st, t) + '.');
+    S(10, '<code>curr</code> n\'est pas NULL : on a trouvé. (NULL voudrait dire pas trouvé, on retournerait 1.)', [c.to]);
+    var t = c.to;
+    if (!pv.to) {
+      S(12, '<code>prev</code> vaut NULL : la cible est la <b>tête</b>. Cas spécial.');
+      st.head = st.nodes[t].next; st.nodes[t].st = 'removing';
+      S(13, '<code>*list = curr->next</code> : la tête du main passe au suivant.');
+    } else {
+      S(12, '<code>prev</code> n\'est pas NULL : la cible est au milieu.');
+      st.nodes[pv.to].next = st.nodes[t].next; st.nodes[t].st = 'removing';
+      S(15, '<code>prev->next = curr->next</code> : ' + V(st, pv.to) + ' saute par-dessus ' + V(st, t) + '.');
+    }
     st.nodes[t].st = 'valfreed';
-    S(9, '<code>free(tmp->value)</code> : la chaîne est libérée.');
+    S(16, '<code>free(curr->value)</code> : la chaîne d\'abord.');
     st.nodes[t].st = 'freed';
-    S(10, '<code>free(tmp)</code> : le nœud est libéré. Aucune fuite.');
-    S(11, 'On retourne 0.');
+    S(17, '<code>free(curr)</code> : puis le nœud. Aucune fuite.');
+    S(18, 'On retourne 0.');
     return steps;
   }
   var removeCode = [
     'int linked_list_remove(struct node **list, char *data)',
     '{',
     '    if (list == NULL || data == NULL) return -1;',
-    '    while (*list != NULL && strcmp((*list)->value, data) != 0)',
-    '        list = &(*list)->next;',
-    '    if (*list == NULL)',
-    '        return 1;',
-    '    struct node *tmp = *list;',
-    '    *list = tmp->next;',
-    '    free(tmp->value);',
-    '    free(tmp);',
+    '    struct node *prev = NULL;',
+    '    struct node *curr = *list;',
+    '    while (curr != NULL && strcmp(curr->value, data) != 0)',
+    '    {',
+    '        prev = curr;',
+    '        curr = curr->next;',
+    '    }',
+    '    if (curr == NULL)',
+    '        return 1;                     /* pas trouve */',
+    '    if (prev == NULL)',
+    '        *list = curr->next;           /* cas special : la tete */',
+    '    else',
+    '        prev->next = curr->next;      /* on saute curr */',
+    '    free(curr->value);',
+    '    free(curr);',
     '    return 0;',
     '}'
   ];
   SC.remove = {
     tab: 'listes', group: 'Supprimer', label: 'remove', sig: 'int linked_list_remove(struct node **list, char *data)', code: removeCode,
-    retain: ['On avance de case en case jusqu\'à la cible.', '<code>*list = tmp->next</code> saute le nœud.', '<code>free(value)</code> puis <code>free(nœud)</code>.'],
+    retain: ['Deux pointeurs : <code>prev</code> (celui d\'avant) et <code>curr</code>.', '<code>prev->next = curr->next</code> saute le nœud.', '<code>free(value)</code> puis <code>free(nœud)</code>.'],
     build: function () { return removeBuild('Sheeta'); }
   };
   SC.removeHead = {
     tab: 'listes', group: 'Supprimer', label: 'remove (la tête)', sig: 'int linked_list_remove(struct node **list, char *data)', code: removeCode,
-    retain: ['Si la cible est la tête, <code>list</code> est encore sur la case du main.', '<code>*list = tmp->next</code> change donc la tête.', 'Aucun cas particulier à écrire.'],
+    retain: ['Si la cible est la tête, <code>prev</code> vaut NULL.', 'Cas spécial : <code>*list = curr->next</code> change la tête du main.', 'C\'est pour ce cas qu\'on reçoit un <code>**</code>.'],
     build: function () { return removeBuild('Pazu'); }
   };
   SC.removePred = {
@@ -852,23 +920,29 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
       '    if (list == NULL || predicate == NULL)',
       '        return -1;',
       '    int removed = 0;',
-      '    while (*list != NULL)',
+      '    struct node *prev = NULL;',
+      '    struct node *curr = *list;',
+      '    while (curr != NULL)',
       '    {',
-      '        if (predicate((*list)->data))',
+      '        struct node *next = curr->next;   /* garder la suite */',
+      '        if (predicate(curr->data))',
       '        {',
-      '            struct node *tmp = *list;',
-      '            *list = tmp->next;    /* on n\'avance PAS */',
-      '            free(tmp);',
+      '            if (prev == NULL)',
+      '                *list = next;             /* c\'etait la tete */',
+      '            else',
+      '                prev->next = next;',
+      '            free(curr);',
       '            removed = 1;',
       '        }',
       '        else',
-      '            list = &(*list)->next;',
+      '            prev = curr;                  /* seulement si on garde */',
+      '        curr = next;',
       '    }',
       '    return removed ? 0 : 1;',
       '}'
     ],
-    retain: ['Après une suppression, on <b>n\'avance pas</b> : la case contient déjà le suivant.', 'On avance seulement quand on garde le nœud.', '<code>predicate</code> est un pointeur de fonction : on l\'appelle comme une fonction.'],
-    build: function () { return predSim({ start: 0, chk: 2, loop: 5, test: 7, tmp: 9, skip: 10, free: 11, adv: 15, ret: 17 }); }
+    retain: ['Garder <code>next</code> <b>avant</b> le <code>free(curr)</code>.', '<code>prev</code> n\'avance que si on <b>garde</b> le nœud.', 'Tête supprimée : <code>*list = next</code>. <code>predicate</code> s\'appelle comme une fonction.'],
+    build: function () { return predSim({ start: 0, chk: 2, rem: 4, prev: 5, curr: 6, loop: 7, next: 9, test: 10, ifprev: 12, head: 13, mid: 15, free: 16, keep: 20, adv: 21, ret: 23 }); }
   };
   SC.free = {
     tab: 'listes', group: 'Libérer', label: 'free', sig: 'void linked_list_free(struct node *list)',
@@ -1525,11 +1599,12 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
   var PAT = [
     { title: 'Listes', items: [
       { k: 'lread', t: 'Lire une liste', n: 'On reçoit <code>*</code> : la liste de l\'appelant ne bouge pas.', c: 'while (list != NULL)\n{\n    /* utiliser list->value */\n    list = list->next;\n}' },
-      { k: 'lwalk', t: 'Modifier une liste', n: 'On reçoit <code>**</code> : on avance de case en case.', c: 'while (*list != NULL /* && condition */)\n    list = &(*list)->next;\n/* *list est la case a modifier */' },
+      { k: 'lwalk', t: 'Aller au dernier nœud', n: 'Tester <code>curr->next</code> pour s\'arrêter <b>sur</b> le dernier. Liste vide : à traiter avant.', c: 'struct node *curr = *list;\nwhile (curr->next != NULL)\n    curr = curr->next;\n/* curr est le dernier noeud */' },
+      { k: 'lprev', t: 'Avancer avec prev et curr', n: '<code>prev</code> reste toujours un cran derrière <code>curr</code>.', c: 'struct node *prev = NULL;\nstruct node *curr = *list;\nwhile (curr != NULL && /* pas la cible */)\n{\n    prev = curr;\n    curr = curr->next;\n}' },
       { k: 'lnew', t: 'Créer un nœud', n: 'Ne pas libérer <code>value</code> si le malloc échoue.', c: 'struct node *n = malloc(sizeof(struct node));\nif (n == NULL)\n    return NULL;\nn->value = value;      /* le pointeur, pas une copie */\nn->next = NULL;\nreturn n;' },
-      { k: 'lins', t: 'Insérer dans la case', n: 'Toujours relier la suite avant d\'écrire dans la case.', c: 'new->next = *list;\n*list = new;' },
-      { k: 'ldel', t: 'Supprimer un nœud', n: 'Garder le nœud, sauter, libérer.', c: 'struct node *tmp = *list;\n*list = tmp->next;\nfree(tmp->value);\nfree(tmp);' },
-      { k: 'lpred', t: 'Supprimer tous ceux qui…', n: 'On n\'avance pas après une suppression.', c: 'while (*list != NULL)\n{\n    if (predicate((*list)->data))\n    {\n        struct node *tmp = *list;\n        *list = tmp->next;\n        free(tmp);\n    }\n    else\n        list = &(*list)->next;\n}' },
+      { k: 'lins', t: 'Insérer après curr', n: 'Relier la suite, puis accrocher. En tête : <code>new->next = *list; *list = new;</code>', c: 'new->next = curr->next;\ncurr->next = new;' },
+      { k: 'ldel', t: 'Supprimer curr', n: 'Le cas de la tête, puis le cas normal.', c: 'if (prev == NULL)\n    *list = curr->next;\nelse\n    prev->next = curr->next;\nfree(curr->value);\nfree(curr);' },
+      { k: 'lpred', t: 'Supprimer tous ceux qui…', n: 'Garder <code>next</code> avant le free ; <code>prev</code> n\'avance que si on garde.', c: 'struct node *prev = NULL, *curr = *list;\nwhile (curr != NULL)\n{\n    struct node *next = curr->next;\n    if (predicate(curr->data))\n    {\n        if (prev == NULL)\n            *list = next;\n        else\n            prev->next = next;\n        free(curr);\n    }\n    else\n        prev = curr;\n    curr = next;\n}' },
       { k: 'lfree', t: 'Tout libérer', n: 'Le suivant d\'abord, le free ensuite.', c: 'while (list != NULL)\n{\n    struct node *tmp = list;\n    list = list->next;\n    free(tmp->value);\n    free(tmp);\n}' },
       { k: 'lrev', t: 'Inverser', n: 'Garder, retourner, avancer, avancer.', c: 'struct node *prev = NULL, *cur = *list;\nwhile (cur != NULL)\n{\n    struct node *next = cur->next;\n    cur->next = prev;\n    prev = cur;\n    cur = next;\n}\n*list = prev;' },
       { k: 'lcyc', t: 'Détecter un cycle', n: 'Tortue et lièvre de Floyd.', c: 'struct node *slow = list, *fast = list;\nwhile (fast != NULL && fast->next != NULL)\n{\n    slow = slow->next;\n    fast = fast->next->next;\n    if (slow == fast)\n        return 1;\n}\nreturn 0;' }
@@ -1573,16 +1648,34 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
     },
     lwalk: function () {
       var st = base(['Pazu', 'Sheeta', 'Laputa']), steps = [], S = rec(steps, st);
-      st.ptrs.push({ name: 'list', kind: 2, slot: 'head' });
-      var p = P(st, 'list');
-      while (slotGet(st, p.slot)) {
-        var t = slotGet(st, p.slot);
-        S(0, '<code>*list</code> pointe sur ' + V(st, t) + ' : la case n\'est pas vide.', [t]);
-        p.slot = t + '.next';
-        S(1, '<code>list = &amp;(*list)->next</code> : on se place sur la case <code>next</code> de ' + V(st, t) + '.');
+      st.ptrs.push({ name: 'curr', kind: 1, to: 'A' });
+      S(0, '<code>curr</code> part de la tête.', ['A']);
+      var c = P(st, 'curr');
+      while (st.nodes[c.to].next) {
+        var nx = st.nodes[c.to].next;
+        S(1, '<code>curr->next</code> n\'est pas NULL : ' + V(st, c.to) + ' n\'est pas le dernier.', [c.to]);
+        c.to = nx;
+        S(2, '<code>curr = curr->next</code> : on avance sur ' + V(st, nx) + '.', [nx]);
       }
-      S(0, '<code>*list</code> vaut NULL : on s\'arrête.');
-      S(2, '<code>list</code> est sur la case vide (le <code>next</code> de "Laputa"). <code>*list = ...</code> écrirait dedans, comme dans append.');
+      S(1, '<code>curr->next</code> vaut NULL : on s\'arrête.', [c.to]);
+      S(3, '<code>curr</code> est <b>sur</b> le dernier nœud. Avec <code>while (curr != NULL)</code>, on serait allé trop loin.', [c.to]);
+      return steps;
+    },
+    lprev: function () {
+      var st = base(['Pazu', 'Sheeta', 'Laputa']), steps = [], S = rec(steps, st);
+      st.ptrs.push({ name: 'prev', kind: 1, to: null });
+      S(0, '<code>prev = NULL</code> : rien avant la tête.');
+      st.ptrs.push({ name: 'curr', kind: 1, to: 'A' });
+      S(1, '<code>curr</code> part de la tête. On cherche "Laputa".', ['A']);
+      var c = P(st, 'curr'), pv = P(st, 'prev');
+      while (st.nodes[c.to].v !== 'Laputa') {
+        S(2, V(st, c.to) + ' n\'est pas la cible : on continue.', [c.to]);
+        pv.to = c.to;
+        S(4, '<code>prev = curr</code> : prev rattrape curr.');
+        c.to = st.nodes[c.to].next;
+        S(5, '<code>curr</code> avance d\'un cran. <code>prev</code> est juste derrière.', [c.to]);
+      }
+      S(2, 'Cible trouvée. <code>prev</code> est le nœud d\'avant : c\'est lui qu\'on modifiera pour supprimer ou insérer.', [c.to]);
       return steps;
     },
     lnew: function () {
@@ -1602,27 +1695,27 @@ header code { font-family: var(--mono); color: var(--mauve); font-size: .92em; }
       var st = base(['Pazu', 'Sheeta', 'Laputa']), steps = [], S = rec(steps, st);
       st.relayout = true;
       addNode(st, 'D', 'Robot');
-      st.ptrs.push({ name: 'list', kind: 2, slot: 'B.next' });
+      st.ptrs.push({ name: 'curr', kind: 1, to: 'B' });
       st.ptrs.push({ name: 'new', kind: 1, to: 'D' });
-      S(0, 'Départ : <code>list</code> est sur la case <code>next</code> de "Sheeta", et <code>new</code> vient d\'être créé.', ['D']);
+      S(0, 'Départ : <code>curr</code> est sur "Sheeta", et <code>new</code> vient d\'être créé.', ['D']);
       st.nodes.D.next = 'C';
-      S(0, '<code>new->next = *list</code> : le nouveau pointe sur "Laputa". Rien n\'est perdu.', ['D']);
+      S(0, '<code>new->next = curr->next</code> : le nouveau pointe sur "Laputa". Rien n\'est perdu.', ['D']);
       st.nodes.B.next = 'D'; st.nodes.D.st = 'ok';
-      S(1, '<code>*list = new</code> : la case pointe sur le nouveau. Il est inséré entre "Sheeta" et "Laputa".', ['D']);
+      S(1, '<code>curr->next = new</code> : "Sheeta" pointe sur le nouveau. Il est inséré.', ['D']);
       return steps;
     },
     ldel: function () {
       var st = base(['Pazu', 'Sheeta', 'Laputa']), steps = [], S = rec(steps, st);
-      st.ptrs.push({ name: 'list', kind: 2, slot: 'A.next' });
-      st.ptrs.push({ name: 'tmp', kind: 1, to: 'B' });
-      S(0, '<code>list</code> est sur la case <code>next</code> de "Pazu". <code>tmp</code> garde le nœud "Sheeta".', ['B']);
+      st.ptrs.push({ name: 'prev', kind: 1, to: 'A' });
+      st.ptrs.push({ name: 'curr', kind: 1, to: 'B' });
+      S(0, '<code>prev</code> est sur "Pazu", <code>curr</code> sur "Sheeta". <code>prev</code> n\'est pas NULL : ce n\'est pas la tête.', ['B']);
       st.nodes.A.next = 'C'; st.nodes.B.st = 'removing';
-      S(1, '<code>*list = tmp->next</code> : la case saute par-dessus "Sheeta".');
-      st.nodes.B.st = 'valfreed'; S(2, '<code>free(tmp->value)</code> : la chaîne d\'abord.');
-      st.nodes.B.st = 'freed'; S(3, '<code>free(tmp)</code> : puis le nœud.');
+      S(3, '<code>prev->next = curr->next</code> : "Pazu" saute par-dessus "Sheeta".');
+      st.nodes.B.st = 'valfreed'; S(4, '<code>free(curr->value)</code> : la chaîne d\'abord.');
+      st.nodes.B.st = 'freed'; S(5, '<code>free(curr)</code> : puis le nœud.');
       return steps;
     },
-    lpred: function () { return predSim({ start: null, chk: null, loop: 0, test: 2, tmp: 4, skip: 5, free: 6, adv: 9, ret: null }); },
+    lpred: function () { return predSim({ start: null, chk: null, rem: null, prev: 0, curr: 0, loop: 1, next: 3, test: 4, ifprev: 6, head: 7, mid: 9, free: 10, keep: 13, adv: 14, ret: null }); },
     lfree: function () { return freeSim({ start: null, loop: 0, tmp: 2, adv: 3, fv: 4, fn: 5, end: null }); },
     lrev: function () { return reverseSim({ start: null, chk: null, prev: 0, cur: 0, loop: 1, next: 3, flip: 4, pa: 5, ca: 6, end: 8 }); },
     lcyc: function () { return cycleSim(true, { start: null, slow: 0, fast: 0, loop: 1, s: 3, f: 4, cmp: 5, r1: 6, r0: 8 }); },
