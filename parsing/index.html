@@ -715,7 +715,7 @@ const QUIZ = [
   ['strtok_r(",") sur "a,,b" donne…', ['3 champs dont un vide', '2 champs : a et b', '1 champ', 'un segfault'], 1, 'strtok fusionne les séparateurs consécutifs. Si les champs vides comptent, boucle sur strchr.'],
   ['if (s == "INFO") …', ['Compare le contenu', 'Compare des adresses : presque toujours faux', 'Erreur de compilation', 'Équivalent à strncmp'], 1, 'Utilise strcmp(s, "INFO") == 0.'],
   ['atoi("abc") vaut…', ['-1', '0, sans aucune erreur signalée', 'une erreur', 'NULL'], 1, 'Impossible de distinguer "0" de "abc" : strtol + endptr.'],
-  ['strtol("42km", &end, 10) : *end vaut…', ["'4'", "'k'", "'\\0'", "'m'"], 1, 'end pointe sur le 1er caractère non converti : on détecte les déchets.'], 1, 'strlen est O(n) et recalculé à chaque tour.'],
+  ['strtol("42km", &end, 10) : *end vaut…', ["'4'", "'k'", "'\\0'", "'m'"], 1, 'end pointe sur le 1er caractère non converti : on détecte les déchets.'],
   ['Pourquoi caster isspace((unsigned char)c) ?', ['Pour la lisibilité', 'Un char négatif (accent) est un comportement indéfini', 'C\'est plus rapide', 'Inutile'], 1, 'Les fonctions de ctype.h prennent un int dans [0, 255] ou EOF.'],
   ['Après fgets, comment enlever "\\r\\n" en une ligne ?', ['buf[strlen(buf)] = 0', 'buf[strcspn(buf, "\\r\\n")] = 0', 'strtok(buf, "\\n")', 'buf[0] = 0'], 1, 'strcspn donne la longueur jusqu\'au 1er \\r ou \\n.'],
   ['section = line + 1; puis fgets(line, …) : section…', ['reste correcte', 'pointe maintenant sur la nouvelle ligne', 'devient NULL', 'est libérée'], 1, 'Elle pointe dans le buffer, que fgets écrase : il faut copier (snprintf).'],
