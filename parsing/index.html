@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kepler-7 · Parsing de données structurées</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0b14; --bg2:#151221; --card:#1c1830; --card2:#241f3d; --line:#352e57;
+  --txt:#ece8f7; --mute:#a59cc4; --pink:#ff79c6; --mauve:#bd93f9; --green:#50fa7b;
+  --red:#ff5c7a; --yellow:#f1fa8c; --cyan:#8be9fd;
+  --mono:'JetBrains Mono',ui-monospace,monospace; --sans:'Space Grotesk',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font-family:var(--sans);line-height:1.55}
+body{background:
+  radial-gradient(1200px 600px at 85% -10%,#3a1f4f55,transparent),
+  radial-gradient(900px 500px at -10% 110%,#1f2a4f55,transparent),var(--bg);min-height:100vh}
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0}
+a{color:var(--pink)}
+code,pre,.mono{font-family:var(--mono)}
+code{background:#2a2445;padding:.1em .35em;border-radius:5px;font-size:.88em;color:var(--pink)}
+pre{background:#110e1c;border:1px solid var(--line);border-radius:12px;padding:14px 16px;overflow:auto;font-size:13px;line-height:1.5;margin:10px 0;position:relative}
+pre code{background:none;padding:0;color:var(--txt);font-size:inherit}
+.k{color:var(--pink)}.t{color:var(--cyan)}.s{color:var(--yellow)}.c{color:#6f679a;font-style:italic}.n{color:var(--mauve)}.f{color:var(--green)}
+header{position:sticky;top:0;z-index:20;background:#0d0b14e6;backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.bar{max-width:1100px;margin:auto;display:flex;align-items:center;gap:14px;padding:10px 16px;flex-wrap:wrap}
+.logo{font-weight:700;letter-spacing:.04em;display:flex;align-items:center;gap:8px;cursor:pointer}
+.logo b{color:var(--pink)}
+nav{display:flex;gap:4px;flex-wrap:wrap;flex:1}
+nav a{color:var(--mute);text-decoration:none;padding:6px 10px;border-radius:8px;font-size:14px}
+nav a:hover{color:var(--txt);background:var(--card)}
+nav a.on{color:var(--bg);background:var(--mauve);font-weight:600}
+.power{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--mute)}
+.power .gauge{width:110px;height:8px;border-radius:9px;background:var(--card2);overflow:hidden}
+.power .gauge i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--pink),var(--mauve));transition:width .6s}
+#timerChip{display:none;font-family:var(--mono);background:var(--red);color:#fff;padding:4px 10px;border-radius:8px;font-size:13px;cursor:pointer}
+main{position:relative;z-index:1;max-width:1100px;margin:auto;padding:24px 16px 80px}
+section.view{display:none;animation:fade .35s}
+section.view.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1}}
+h1{font-size:clamp(28px,5vw,46px);line-height:1.1;margin:.2em 0 .3em}
+h2{font-size:26px;margin:1.6em 0 .4em;color:var(--txt)}
+h2 small{color:var(--mauve);font-size:13px;font-family:var(--mono);display:block;letter-spacing:.08em}
+h3{font-size:18px;margin:1.2em 0 .3em;color:var(--pink)}
+.grad{background:linear-gradient(90deg,var(--pink),var(--mauve));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:var(--mute);font-size:17px;max-width:720px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:14px 0}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+ul.idea{list-style:none;padding:0;margin:8px 0}
+ul.idea li{padding:4px 0 4px 22px;position:relative}
+ul.idea li:before{content:"›";position:absolute;left:4px;color:var(--mauve);font-weight:700}
+.btn{font-family:var(--sans);font-size:14px;border:1px solid var(--line);background:var(--card2);color:var(--txt);padding:8px 14px;border-radius:10px;cursor:pointer;transition:.15s}
+.btn:hover{border-color:var(--mauve)}
+.btn.p{background:linear-gradient(90deg,var(--pink),var(--mauve));color:#1a1028;border:none;font-weight:700}
+.btn.sm{padding:4px 10px;font-size:12px}
+.tag{display:inline-block;font-size:11px;font-family:var(--mono);padding:2px 8px;border-radius:20px;background:var(--card2);color:var(--mauve);border:1px solid var(--line)}
+.callout{border-left:3px solid var(--pink);background:#ff79c612;padding:10px 14px;border-radius:0 10px 10px 0;margin:12px 0}
+.callout.opt{border-color:var(--green);background:#50fa7b10}
+.callout.opt b:first-child{color:var(--green)}
+.callout.warn{border-color:var(--yellow);background:#f1fa8c0e}
+table{border-collapse:collapse;width:100%;font-size:14px;margin:10px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--mauve);font-weight:600}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.tabs button{font-family:var(--mono);font-size:13px;background:var(--card2);border:1px solid var(--line);color:var(--mute);padding:5px 12px;border-radius:8px;cursor:pointer}
+.tabs button.on{color:var(--bg);background:var(--pink);border-color:var(--pink)}
+textarea,input[type=text],select{width:100%;background:#110e1c;color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-family:var(--mono);font-size:13px}
+textarea{min-height:150px;resize:vertical;line-height:1.5}
+textarea:focus,input:focus{outline:none;border-color:var(--mauve)}
+.ok{color:var(--green)}.ko{color:var(--red)}.mute{color:var(--mute)}
+.res{margin-top:10px;font-family:var(--mono);font-size:13px;white-space:pre-wrap}
+/* Chapitres cours */
+.toc{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 20px}
+.toc a{font-size:13px;text-decoration:none;color:var(--mute);border:1px solid var(--line);padding:4px 10px;border-radius:20px}
+.toc a:hover{color:var(--pink);border-color:var(--pink)}
+/* Carte station */
+.station{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:18px 0}
+.sys{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;position:relative;overflow:hidden;transition:.2s}
+.sys:hover{transform:translateY(-2px);border-color:var(--mauve)}
+.sys .st{font-family:var(--mono);font-size:11px;letter-spacing:.1em}
+.sys.off .st{color:var(--red)} .sys.on .st{color:var(--green)}
+.sys.on{border-color:#50fa7b66;box-shadow:0 0 22px #50fa7b22 inset}
+.sys h4{margin:6px 0 2px;font-size:16px}
+.sys p{margin:0;color:var(--mute);font-size:13px}
+.sys .ico{font-size:26px}
+.blink{animation:bl 1.2s infinite}@keyframes bl{50%{opacity:.35}}
+/* Quiz */
+.q{margin:16px 0}
+.q .opts{display:grid;gap:8px;margin-top:8px}
+.q .opts button{text-align:left;font-family:var(--sans);font-size:14px;background:var(--card2);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer}
+.q .opts button:hover:not(:disabled){border-color:var(--mauve)}
+.q .opts button.good{border-color:var(--green);background:#50fa7b1c}
+.q .opts button.bad{border-color:var(--red);background:#ff5c7a1c}
+.q .exp{display:none;margin-top:8px;font-size:14px;color:var(--mute)}
+.q.done .exp{display:block}
+/* Missions */
+.mtabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px}
+.mtabs button{flex:1;min-width:150px;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;color:var(--txt);cursor:pointer;font-family:var(--sans)}
+.mtabs button small{display:block;color:var(--mute);font-size:11px;font-family:var(--mono)}
+.mtabs button.on{border-color:var(--pink);box-shadow:0 0 0 1px var(--pink) inset}
+.mtabs button.done small{color:var(--green)}
+.diff{font-family:var(--mono);font-size:13px;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.diff div{padding:2px 10px;white-space:pre-wrap}
+.diff .eq{color:var(--mute)}.diff .rm{background:#ff5c7a22;color:#ffb3c1}.diff .ad{background:#50fa7b1a;color:#b6ffc9}
+.an li{margin:4px 0;list-style:none}
+.an{padding:0}
+.hide{display:none!important}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+nav a{white-space:nowrap}
+@media(max-width:760px){.two{grid-template-columns:1fr}.power .gauge{width:60px}.bar{gap:8px}nav{order:3;flex-basis:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.power{margin-left:auto}.big{font-size:40px}}
+.big{font-size:56px;font-family:var(--mono);font-weight:600;letter-spacing:.04em}
+.typer{font-family:var(--mono);color:var(--green);font-size:14px;min-height:110px;white-space:pre-wrap}
+.copyb{position:absolute;top:8px;right:8px}
+footer{color:var(--mute);font-size:12px;text-align:center;padding:30px}
+.tree{font-family:var(--mono);font-size:13px}
+.tree span.key{color:var(--cyan)}
+.chk label{display:block;padding:5px 0;cursor:pointer}
+.chk input{accent-color:var(--pink);margin-right:8px}
+.pill-ok{color:var(--green);font-weight:600}.pill-ko{color:var(--red);font-weight:600}
+.entry{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:8px 0;border-bottom:1px dashed var(--line)}
+.entry pre{flex:1;margin:0;min-width:260px;padding:8px 10px}
+.entry select{width:auto}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<header><div class="bar">
+  <a href="../" style="color:var(--mute);text-decoration:none;font-size:13px">← Mes cours</a>
+  <div class="logo" onclick="go('accueil')">🛰️ KEPLER<b>-7</b></div>
+  <nav id="nav">
+    <a href="#accueil" data-v="accueil">Briefing</a>
+    <a href="#cours" data-v="cours">Cours</a>
+    <a href="#labo" data-v="labo">Labo</a>
+    <a href="#quiz" data-v="quiz">QCM</a>
+    <a href="#missions" data-v="missions">Missions C</a>
+    <a href="#moulinette" data-v="moulinette">Moulinette</a>
+    <a href="#examen" data-v="examen">Examen blanc</a>
+  </nav>
+  <span id="timerChip" onclick="go('examen')"></span>
+  <div class="power" title="Énergie de la station">⚡<div class="gauge"><i id="gauge"></i></div><span id="pct">0%</span></div>
+</div></header>
+
+<main>
+<!-- ================= ACCUEIL ================= -->
+<section class="view" id="v-accueil">
+  <span class="tag">PROG-206 · STRUCTURED DATA PARSING · TP NOTÉ 20 %</span>
+  <h1>La station <span class="grad">Kepler-7</span><br>s'est tue.</h1>
+  <div class="card"><div class="typer" id="typer"></div></div>
+  <p class="lead">Toutes les données de bord existent encore : des fichiers CSV et JSON.<br>
+  Ton job : <b>les lire avec une bibliothèque</b>, pas à la main comme dans Minimake.<br>
+  Chaque système réparé remonte la jauge d'énergie ⚡.</p>
+
+  <h2><small>ÉTAT DES SYSTÈMES</small>Carte de la station</h2>
+  <div class="station" id="station"></div>
+
+  <h2><small>MODE D'EMPLOI</small>Comment réviser</h2>
+  <div class="grid">
+    <div class="card"><h3>1 · Cours</h3><ul class="idea"><li>Les notions du CM, une idée par ligne.</li><li>+ l'API cJSON dont tu auras besoin.</li></ul></div>
+    <div class="card"><h3>2 · Labo &amp; QCM</h3><ul class="idea"><li>Petits exos dans le navigateur.</li><li>Corrigés instantanément.</li></ul></div>
+    <div class="card"><h3>3 · Missions C</h3><ul class="idea"><li>5 programmes à coder sur ton Ubuntu.</li><li>Vraie moulinette : tests, valgrind, opti.</li></ul></div>
+    <div class="card"><h3>4 · Examen blanc</h3><ul class="idea"><li>Chrono, sans indice ni correction.</li><li>Comme le jour J.</li></ul></div>
+  </div>
+  <div class="callout warn"><b>Hypothèse :</b> TP en <b>C</b> avec <b>cJSON</b> (la lib n'est pas visible sur les slides).<br>
+  Si le sujet impose jansson ou json-c : voir la table de correspondance dans le cours, les réflexes sont les mêmes.</div>
+</section>
+
+<!-- ================= COURS ================= -->
+<section class="view" id="v-cours">
+  <span class="tag">ARCHIVES D'ORBIT</span>
+  <h1>Le <span class="grad">cours</span></h1>
+  <div class="toc">
+    <a href="#c1" onclick="return jump('c1')">Lexing / parsing</a><a href="#c2" onclick="return jump('c2')">Données structurées</a>
+    <a href="#c3" onclick="return jump('c3')">Les formats</a><a href="#c4" onclick="return jump('c4')">JSON</a>
+    <a href="#c5" onclick="return jump('c5')">cJSON : l'arbre</a><a href="#c6" onclick="return jump('c6')">Lire du JSON</a>
+    <a href="#c7" onclick="return jump('c7')">Écrire du JSON</a><a href="#c8" onclick="return jump('c8')">CSV en C</a>
+    <a href="#c9" onclick="return jump('c9')">Erreurs &amp; mémoire</a><a href="#c10" onclick="return jump('c10')">Optimisation</a>
+    <a href="#c11" onclick="return jump('c11')">Autres libs</a><a href="#c12" onclick="return jump('c12')">Checklist jour J</a>
+  </div>
+
+  <h2 id="c1"><small>01</small>Lexing et parsing (rappel)</h2>
+  <ul class="idea">
+    <li><b>Lexing</b> : texte → liste de <b>tokens</b>.</li>
+    <li><b>Parsing</b> : faire <i>comprendre</i> le texte au programme.</li>
+    <li>Le lexing mâche, le parsing digère.</li>
+    <li>Résultat du parsing : une structure de données, souvent un <b>arbre syntaxique</b>.</li>
+    <li>Dans Minimake, tu as écrit ce parseur toi-même.</li>
+    <li>Ici, <b>une bibliothèque le fait pour toi</b> : tu exploites l'arbre qu'elle te rend.</li>
+  </ul>
+<pre><code><span class="s">"energie": 12.5</span>   <span class="c">─ lexer ─▶</span>   STRING(energie)  COLON  NUMBER(12.5)   <span class="c">─ parser ─▶</span>   🌳 nœud {clé:"energie", nombre:12.5}</code></pre>
+
+  <h2 id="c2"><small>02</small>Données structurées &amp; schéma</h2>
+  <ul class="idea">
+    <li><b>Donnée structurée</b> : organisée selon un modèle explicite.</li>
+    <li><b>Schéma / data model</b> : le document qui décrit ce modèle.</li>
+    <li>Il dit, pour chaque champ : nom, type, signification (et contraintes).</li>
+    <li>Écrit formellement (ex. <b>JSON Schema</b>), il permet la <b>validation automatique</b>.</li>
+    <li>On valide <b>avant</b> d'exploiter : on ne fait jamais confiance à l'entrée.</li>
+  </ul>
+  <table><tr><th>Champ</th><th>Type</th><th>Description</th></tr>
+  <tr><td>title</td><td>string</td><td>Titre du cours</td></tr>
+  <tr><td>identification</td><td>string</td><td>Identifiant unique formaté</td></tr>
+  <tr><td>revision</td><td>string</td><td>Version major.minor.patch</td></tr>
+  <tr><td>language</td><td>string</td><td>Langage traité (Python, C…)</td></tr></table>
+  <p>Le même schéma, en JSON Schema :</p>
+<pre><code>{
+  <span class="t">"type"</span>: <span class="s">"object"</span>,
+  <span class="t">"required"</span>: [<span class="s">"title"</span>, <span class="s">"identification"</span>, <span class="s">"revision"</span>, <span class="s">"language"</span>],
+  <span class="t">"properties"</span>: {
+    <span class="t">"title"</span>:          { <span class="t">"type"</span>: <span class="s">"string"</span> },
+    <span class="t">"identification"</span>: { <span class="t">"type"</span>: <span class="s">"string"</span>, <span class="t">"pattern"</span>: <span class="s">"^prog-[0-9]{3}-l-[0-9]{2}$"</span> },
+    <span class="t">"revision"</span>:       { <span class="t">"type"</span>: <span class="s">"string"</span>, <span class="t">"pattern"</span>: <span class="s">"^[0-9]+\\.[0-9]+\\.[0-9]+$"</span> },
+    <span class="t">"language"</span>:       { <span class="t">"type"</span>: <span class="s">"string"</span> }
+  }
+}</code></pre>
+
+  <h2 id="c3"><small>03</small>Mêmes données, formats différents</h2>
+  <ul class="idea">
+    <li>Même structure, plusieurs syntaxes.</li>
+    <li>CM : CSV, JSON, YAML, XML, TOML, INI, SQL.</li>
+    <li>Règle d'or du CM : <b>utilise une bibliothèque existante si tu peux</b>.</li>
+  </ul>
+  <div class="tabs" id="fmtTabs"></div>
+  <pre><code id="fmtCode"></code></pre>
+  <p class="mute" id="fmtNote"></p>
+
+  <h2 id="c4"><small>04</small>JSON en 30 secondes</h2>
+  <ul class="idea">
+    <li>6 types : <b>objet</b> <code>{}</code>, <b>tableau</b> <code>[]</code>, <b>string</b>, <b>nombre</b>, <b>booléen</b>, <b>null</b>.</li>
+    <li>Clés <b>toujours</b> entre guillemets doubles.</li>
+    <li>Pas de virgule finale, pas de commentaires, pas de <code>'</code>.</li>
+    <li>Un seul type nombre (pas de int/float séparés).</li>
+    <li>Un objet = clés → valeurs, un tableau = liste ordonnée.</li>
+  </ul>
+
+  <h2 id="c5"><small>05</small>cJSON : ce que le parseur te rend</h2>
+  <ul class="idea">
+    <li><code>cJSON_Parse</code> lit tout le texte et rend <b>la racine d'un arbre</b>.</li>
+    <li>Chaque nœud est un <code>cJSON *</code>.</li>
+    <li>Les enfants d'un objet/tableau = <b>liste chaînée</b> (<code>child</code>, puis <code>next</code>).</li>
+    <li>Conséquence : accéder au i-ème élément coûte <b>O(i)</b>.</li>
+  </ul>
+<pre><code><span class="k">typedef struct</span> <span class="t">cJSON</span> {
+    <span class="k">struct</span> <span class="t">cJSON</span> *next, *prev;  <span class="c">// frères (liste chaînée)</span>
+    <span class="k">struct</span> <span class="t">cJSON</span> *child;        <span class="c">// 1er enfant (objet / tableau)</span>
+    <span class="t">int</span> type;                  <span class="c">// cJSON_String, cJSON_Number, ...</span>
+    <span class="t">char</span> *valuestring;         <span class="c">// si string</span>
+    <span class="t">int</span> valueint;              <span class="c">// si nombre (TRONQUÉ, à éviter)</span>
+    <span class="t">double</span> valuedouble;        <span class="c">// si nombre ✔</span>
+    <span class="t">char</span> *string;              <span class="c">// la CLÉ si le nœud est dans un objet</span>
+} <span class="t">cJSON</span>;</code></pre>
+  <div class="card tree" id="treeDemo"></div>
+  <div class="callout">Compile avec <code>-lcjson</code> et inclus <code>&lt;cjson/cJSON.h&gt;</code>.<br>Installation : <code>sudo apt install libcjson-dev</code></div>
+
+  <h2 id="c6"><small>06</small>Lire du JSON : les 6 étapes</h2>
+  <ul class="idea">
+    <li><b>1.</b> Lire le fichier dans un buffer.</li>
+    <li><b>2.</b> <code>cJSON_Parse(buf)</code> → racine, ou <code>NULL</code> si JSON invalide.</li>
+    <li><b>3.</b> Naviguer : <code>cJSON_GetObjectItemCaseSensitive</code>, <code>cJSON_ArrayForEach</code>.</li>
+    <li><b>4.</b> <b>Vérifier le type</b> : <code>cJSON_IsString</code>, <code>IsNumber</code>, <code>IsArray</code>…</li>
+    <li><b>5.</b> Lire la valeur : <code>-&gt;valuestring</code>, <code>-&gt;valuedouble</code>.</li>
+    <li><b>6.</b> <code>cJSON_Delete(racine)</code> : libère tout l'arbre.</li>
+  </ul>
+  <h3>Étape 1 · lire un fichier entier</h3>
+<pre><code><span class="k">static</span> <span class="t">char</span> *<span class="f">read_file</span>(<span class="k">const</span> <span class="t">char</span> *path)
+{
+    <span class="t">FILE</span> *f = <span class="f">fopen</span>(path, <span class="s">"rb"</span>);
+    <span class="k">if</span> (!f)
+        <span class="k">return</span> NULL;
+    <span class="f">fseek</span>(f, <span class="n">0</span>, SEEK_END);
+    <span class="t">long</span> size = <span class="f">ftell</span>(f);         <span class="c">// taille du fichier</span>
+    <span class="f">rewind</span>(f);
+    <span class="t">char</span> *buf = <span class="f">malloc</span>(size + <span class="n">1</span>);  <span class="c">// +1 pour le '\0'</span>
+    <span class="k">if</span> (!buf) { <span class="f">fclose</span>(f); <span class="k">return</span> NULL; }
+    <span class="t">size_t</span> n = <span class="f">fread</span>(buf, <span class="n">1</span>, size, f);
+    <span class="f">fclose</span>(f);
+    buf[n] = <span class="s">'\0'</span>;                 <span class="c">// cJSON_Parse veut une chaîne C</span>
+    <span class="k">return</span> buf;
+}</code></pre>
+  <h3>Étapes 2 → 6 · exemple complet</h3>
+<pre><code><span class="t">char</span> *text = <span class="f">read_file</span>(argv[<span class="n">1</span>]);
+<span class="k">if</span> (!text) { <span class="f">fprintf</span>(stderr, <span class="s">"Erreur : lecture\n"</span>); <span class="k">return</span> <span class="n">1</span>; }
+
+<span class="t">cJSON</span> *root = <span class="f">cJSON_Parse</span>(text);
+<span class="f">free</span>(text);                           <span class="c">// l'arbre est indépendant du texte</span>
+<span class="k">if</span> (!<span class="f">cJSON_IsArray</span>(root)) {             <span class="c">// IsArray(NULL) == false : couvre aussi l'échec</span>
+    <span class="f">fprintf</span>(stderr, <span class="s">"Erreur : JSON invalide\n"</span>);
+    <span class="f">cJSON_Delete</span>(root);                <span class="c">// Delete(NULL) ne fait rien : OK</span>
+    <span class="k">return</span> <span class="n">2</span>;
+}
+
+<span class="k">const</span> <span class="t">cJSON</span> *m;
+<span class="f">cJSON_ArrayForEach</span>(m, root) {
+    <span class="k">const</span> <span class="t">cJSON</span> *nom = <span class="f">cJSON_GetObjectItemCaseSensitive</span>(m, <span class="s">"nom"</span>);
+    <span class="k">const</span> <span class="t">cJSON</span> *en  = <span class="f">cJSON_GetObjectItemCaseSensitive</span>(m, <span class="s">"energie"</span>);
+    <span class="k">if</span> (!<span class="f">cJSON_IsString</span>(nom) || !<span class="f">cJSON_IsNumber</span>(en))
+        <span class="k">continue</span>;                         <span class="c">// champ absent ou mauvais type</span>
+    <span class="f">printf</span>(<span class="s">"%s : %.2f\n"</span>, nom-&gt;valuestring, en-&gt;valuedouble);
+}
+<span class="f">cJSON_Delete</span>(root);</code></pre>
+  <table>
+    <tr><th>Fonction</th><th>Rôle</th></tr>
+    <tr><td><code>cJSON_Parse(str)</code></td><td>Texte → arbre (NULL si erreur)</td></tr>
+    <tr><td><code>cJSON_GetErrorPtr()</code></td><td>Position de l'erreur de syntaxe</td></tr>
+    <tr><td><code>cJSON_GetObjectItemCaseSensitive(obj, "k")</code></td><td>Valeur de la clé, ou NULL</td></tr>
+    <tr><td><code>cJSON_ArrayForEach(it, arr)</code></td><td>Parcours O(n) d'un tableau / objet</td></tr>
+    <tr><td><code>cJSON_GetArraySize(arr)</code></td><td>Taille (O(n) !)</td></tr>
+    <tr><td><code>cJSON_IsString / IsNumber / IsBool / IsTrue / IsNull / IsArray / IsObject</code></td><td>Test de type (renvoie faux si NULL)</td></tr>
+    <tr><td><code>cJSON_GetStringValue(n)</code> / <code>cJSON_GetNumberValue(n)</code></td><td>Lecture sûre (NULL / NaN si mauvais type)</td></tr>
+    <tr><td><code>cJSON_Delete(root)</code></td><td>Libère l'arbre entier</td></tr>
+  </table>
+  <div class="callout warn"><b>Piège :</b> <code>cJSON_GetObjectItem</code> (sans CaseSensitive) ignore la casse : <code>"Nom"</code> == <code>"nom"</code>.</div>
+
+  <h2 id="c7"><small>07</small>Écrire du JSON</h2>
+  <ul class="idea">
+    <li><code>cJSON_CreateObject()</code> / <code>cJSON_CreateArray()</code> créent un nœud.</li>
+    <li><code>cJSON_AddStringToObject</code>, <code>AddNumberToObject</code>, <code>AddBoolToObject</code>… ajoutent un champ.</li>
+    <li><code>cJSON_AddArrayToObject(obj, "k")</code> crée et ajoute un tableau, et te le rend.</li>
+    <li><code>cJSON_AddItemToArray(arr, item)</code> : l'arbre <b>devient propriétaire</b> de <code>item</code>.</li>
+    <li>Donc <b>un seul</b> <code>cJSON_Delete</code> sur la racine suffit.</li>
+    <li><code>cJSON_Print</code> (indenté) / <code>cJSON_PrintUnformatted</code> (une ligne) <b>allouent</b> → <code>free</code>.</li>
+  </ul>
+<pre><code><span class="t">cJSON</span> *root = <span class="f">cJSON_CreateObject</span>();
+<span class="f">cJSON_AddStringToObject</span>(root, <span class="s">"station"</span>, <span class="s">"Kepler-7"</span>);
+<span class="t">cJSON</span> *crew = <span class="f">cJSON_AddArrayToObject</span>(root, <span class="s">"equipage"</span>);
+
+<span class="t">cJSON</span> *p = <span class="f">cJSON_CreateObject</span>();
+<span class="f">cJSON_AddStringToObject</span>(p, <span class="s">"nom"</span>, <span class="s">"Ada"</span>);
+<span class="f">cJSON_AddNumberToObject</span>(p, <span class="s">"age"</span>, <span class="n">41</span>);
+<span class="f">cJSON_AddItemToArray</span>(crew, p);      <span class="c">// p appartient maintenant à crew</span>
+
+<span class="t">char</span> *s = <span class="f">cJSON_PrintUnformatted</span>(root);
+<span class="f">puts</span>(s);                            <span class="c">// {"station":"Kepler-7","equipage":[{"nom":"Ada","age":41}]}</span>
+<span class="f">free</span>(s);
+<span class="f">cJSON_Delete</span>(root);</code></pre>
+
+  <h2 id="c8"><small>08</small>CSV en C</h2>
+  <ul class="idea">
+    <li>Pas besoin de lib exotique : <code>fgets</code> + <code>strtok_r</code> suffisent pour un CSV simple.</li>
+    <li>1re ligne = <b>en-tête</b> (noms des colonnes) → à sauter.</li>
+    <li>Le CM met des espaces après les virgules : <code>CMake, prog-206-l-01</code> → il faut <b>trim</b>.</li>
+    <li>Windows : lignes en <code>\r\n</code> → le trim enlève aussi le <code>\r</code>.</li>
+    <li><code>strtok</code> fusionne les séparateurs : <code>a,,b</code> donne 2 champs, pas 3 !</li>
+    <li>Champs entre guillemets avec virgules dedans → là, une vraie lib (libcsv) est justifiée.</li>
+  </ul>
+<pre><code><span class="k">static</span> <span class="t">char</span> *<span class="f">trim</span>(<span class="t">char</span> *s)
+{
+    <span class="k">while</span> (<span class="f">isspace</span>((<span class="t">unsigned char</span>)*s))
+        s++;
+    <span class="t">char</span> *end = s + <span class="f">strlen</span>(s);
+    <span class="k">while</span> (end &gt; s &amp;&amp; <span class="f">isspace</span>((<span class="t">unsigned char</span>)end[-<span class="n">1</span>]))
+        end--;
+    *end = <span class="s">'\0'</span>;
+    <span class="k">return</span> s;
+}
+
+<span class="t">char</span> line[<span class="n">1024</span>];
+<span class="t">int</span> header = <span class="n">1</span>;
+<span class="k">while</span> (<span class="f">fgets</span>(line, <span class="k">sizeof</span>(line), f)) {
+    <span class="t">char</span> *l = <span class="f">trim</span>(line);
+    <span class="k">if</span> (*l == <span class="s">'\0'</span>) <span class="k">continue</span>;              <span class="c">// ligne vide</span>
+    <span class="k">if</span> (header) { header = <span class="n">0</span>; <span class="k">continue</span>; }   <span class="c">// en-tête</span>
+    <span class="t">char</span> *save = NULL, *fields[<span class="n">4</span>];
+    <span class="t">int</span> n = <span class="n">0</span>;
+    <span class="k">for</span> (<span class="t">char</span> *t = <span class="f">strtok_r</span>(l, <span class="s">","</span>, &amp;save); t &amp;&amp; n &lt; <span class="n">4</span>; t = <span class="f">strtok_r</span>(NULL, <span class="s">","</span>, &amp;save))
+        fields[n++] = <span class="f">trim</span>(t);
+    <span class="k">if</span> (n != <span class="n">4</span>) <span class="k">continue</span>;                  <span class="c">// ligne malformée</span>
+    <span class="c">/* fields[0] = nom, fields[3] = oxygene ... */</span>
+}</code></pre>
+  <div class="callout warn"><code>strtok_r</code> n'est pas C99 pur : mets <code>#define _POSIX_C_SOURCE 200809L</code> <b>avant</b> les includes.</div>
+
+  <h2 id="c9"><small>09</small>Erreurs et mémoire</h2>
+  <ul class="idea">
+    <li>Messages d'erreur → <code>stderr</code>. Résultats → <code>stdout</code>.</li>
+    <li>Code de retour : 0 = succès, autre = erreur (respecte la consigne à la lettre).</li>
+    <li>Tout retour de <code>fopen</code>, <code>malloc</code>, <code>cJSON_Parse</code> se compare à NULL.</li>
+    <li>Un champ peut <b>manquer</b> → <code>GetObjectItem</code> rend NULL.</li>
+    <li>Un champ peut avoir le <b>mauvais type</b> → toujours <code>cJSON_Is*</code> avant <code>-&gt;value…</code>.</li>
+  </ul>
+  <table><tr><th>Qui alloue ?</th><th>Qui libère ?</th></tr>
+  <tr><td><code>read_file</code> (malloc)</td><td><code>free(text)</code> — dès après le parse</td></tr>
+  <tr><td><code>cJSON_Parse</code> / <code>cJSON_Create*</code></td><td><code>cJSON_Delete(root)</code> une seule fois</td></tr>
+  <tr><td>Nœud ajouté via <code>AddItemTo…</code></td><td>Personne : l'arbre parent s'en charge</td></tr>
+  <tr><td>Nœud obtenu via <code>GetObjectItem</code></td><td><b>Jamais</b> (il appartient à l'arbre)</td></tr>
+  <tr><td><code>cJSON_Print*</code></td><td><code>free(str)</code></td></tr>
+  <tr><td><code>fopen</code></td><td><code>fclose</code> (aussi dans les chemins d'erreur !)</td></tr></table>
+
+  <h2 id="c10"><small>10</small>Optimisation (là où on perd des points)</h2>
+  <div class="callout opt"><b>✖ O(n²)</b> — chaque <code>GetArrayItem(i)</code> reparcourt la liste depuis le début :
+<pre><code><span class="k">for</span> (<span class="t">int</span> i = <span class="n">0</span>; i &lt; <span class="f">cJSON_GetArraySize</span>(arr); i++) {   <span class="c">// GetArraySize : O(n) À CHAQUE TOUR</span>
+    <span class="t">cJSON</span> *e = <span class="f">cJSON_GetArrayItem</span>(arr, i);           <span class="c">// O(i)</span>
+}</code></pre>
+  <b>✔ O(n)</b> — on suit les <code>next</code> :
+<pre><code><span class="t">cJSON</span> *e;
+<span class="f">cJSON_ArrayForEach</span>(e, arr) { ... }</code></pre></div>
+  <ul class="idea">
+    <li>Max / min / somme : <b>un seul passage</b>, pas de tri.</li>
+    <li>Init du max avec la <b>1re valeur</b>, pas 0 (valeurs négatives !).</li>
+    <li>Récupère chaque champ <b>une fois</b> dans une variable, pas de <code>GetObjectItem</code> répétés.</li>
+    <li>Pas de <code>strlen</code> dans une condition de boucle.</li>
+    <li>Libère le texte JSON dès que l'arbre est construit.</li>
+  </ul>
+
+  <h2 id="c11"><small>11</small>Si le TP impose une autre lib</h2>
+  <table><tr><th>Action</th><th>cJSON</th><th>jansson</th><th>json-c</th><th>Python</th></tr>
+  <tr><td>Parser</td><td><code>cJSON_Parse</code></td><td><code>json_loads</code> / <code>json_load_file</code></td><td><code>json_tokener_parse</code></td><td><code>json.load(f)</code></td></tr>
+  <tr><td>Clé d'un objet</td><td><code>GetObjectItemCaseSensitive</code></td><td><code>json_object_get</code></td><td><code>json_object_object_get_ex</code></td><td><code>d["k"]</code> / <code>d.get("k")</code></td></tr>
+  <tr><td>Parcours tableau</td><td><code>cJSON_ArrayForEach</code></td><td><code>json_array_foreach</code></td><td><code>json_object_array_get_idx</code> (O(1))</td><td><code>for x in l</code></td></tr>
+  <tr><td>Type</td><td><code>cJSON_IsString</code></td><td><code>json_is_string</code></td><td><code>json_object_is_type</code></td><td><code>isinstance</code></td></tr>
+  <tr><td>Valeur</td><td><code>-&gt;valuestring</code></td><td><code>json_string_value</code></td><td><code>json_object_get_string</code></td><td>direct</td></tr>
+  <tr><td>Libérer</td><td><code>cJSON_Delete</code></td><td><code>json_decref</code></td><td><code>json_object_put</code></td><td>GC</td></tr>
+  <tr><td>Sérialiser</td><td><code>cJSON_Print</code></td><td><code>json_dumps</code></td><td><code>json_object_to_json_string</code></td><td><code>json.dumps</code></td></tr>
+  <tr><td>CSV</td><td colspan="3">fgets + strtok_r (ou libcsv)</td><td><code>csv.DictReader</code></td></tr></table>
+
+  <h2 id="c12"><small>12</small>Checklist jour J</h2>
+  <div class="card chk" id="checklist"></div>
+</section>
+
+<!-- ================= LABO ================= -->
+<section class="view" id="v-labo">
+  <span class="tag">SIMULATEUR DE BORD</span>
+  <h1>Le <span class="grad">labo</span></h1>
+  <p class="lead">Quatre petits exos, corrigés en direct dans le navigateur.</p>
+
+  <h2><small>LABO 1</small>Répare la transmission</h2>
+  <ul class="idea"><li>Le JSON reçu est corrompu.</li><li>Corrige-le jusqu'à ce que le parseur l'accepte.</li></ul>
+  <div class="tabs" id="fixTabs"></div>
+  <textarea id="fixIn" spellcheck="false"></textarea>
+  <div class="res" id="fixRes"></div>
+
+  <h2><small>LABO 2</small>Chemin d'accès</h2>
+  <ul class="idea"><li>Écris le chemin vers la valeur demandée.</li><li>Syntaxe : <code>releves[2].valeurs[1]</code></li></ul>
+  <div class="two">
+    <pre><code id="pathJson"></code></pre>
+    <div>
+      <div class="card" style="margin-top:10px"><div id="pathQ"></div>
+      <input type="text" id="pathIn" placeholder="ex : station" spellcheck="false" style="margin-top:10px">
+      <div class="res" id="pathRes"></div>
+      <div class="res mute" id="pathC"></div></div>
+    </div>
+  </div>
+
+  <h2><small>LABO 3</small>Valide à la main</h2>
+  <ul class="idea"><li>Schéma de la mission 4.</li><li>Pour chaque entrée : OK, ou le <b>1er</b> champ fautif.</li></ul>
+  <table><tr><th>Champ</th><th>Contrainte (dans cet ordre)</th></tr>
+  <tr><td>nom</td><td>string non vide</td></tr><tr><td>role</td><td>commandant | ingenieur | medecin | pilote | biologiste</td></tr>
+  <tr><td>age</td><td>nombre entier, 18 ≤ age ≤ 70</td></tr><tr><td>oxygene</td><td>nombre, 0 ≤ oxygene ≤ 100</td></tr></table>
+  <div id="valList"></div>
+  <button class="btn p" onclick="checkVal()">Vérifier</button> <span id="valRes"></span>
+
+  <h2><small>LABO 4</small>CSV → JSON</h2>
+  <ul class="idea"><li>Écris le JSON (tableau d'objets) équivalent à ce CSV.</li><li>Nombres en nombres, pas en strings.</li></ul>
+<pre><code>nom, role, age, oxygene
+Mina Sato, medecin, 35, 64
+Teo Brandt, pilote, 26, 12</code></pre>
+  <textarea id="convIn" spellcheck="false">[
+
+]</textarea>
+  <div class="res" id="convRes"></div>
+</section>
+
+<!-- ================= QUIZ ================= -->
+<section class="view" id="v-quiz">
+  <span class="tag">CERTIFICATION ORBIT</span>
+  <h1><span class="grad">QCM</span></h1>
+  <div class="row"><span id="qScore" class="mono"></span><button class="btn sm" onclick="buildQuiz(true)">Mélanger &amp; recommencer</button></div>
+  <div id="quizBox"></div>
+</section>
+
+<!-- ================= MISSIONS ================= -->
+<section class="view" id="v-missions">
+  <span class="tag">TP · C · cJSON</span>
+  <h1>Les <span class="grad">missions</span></h1>
+  <div class="card">
+    <b>Installer le kit sur ton Ubuntu</b>
+    <ul class="idea"><li>Copie la commande ci-dessous et colle-la dans un terminal.</li>
+    <li>Elle crée le dossier <code>kepler7/</code> (5 missions + données + tests + moulinette).</li></ul>
+    <pre><code>sudo apt install libcjson-dev valgrind</code></pre>
+    <pre id="installPre"><code id="installCode" style="word-break:break-all;white-space:pre-wrap;display:block;max-height:90px;overflow:hidden"></code><button class="btn sm p copyb" onclick="copyTxt(INSTALL,this)">Copier</button></pre>
+    <pre><code>cd kepler7 &amp;&amp; ./moulinette.sh</code></pre>
+    <p>Ou : <a href="kepler7.zip" download>télécharger le kit en .zip</a></p>
+  </div>
+  <div class="mtabs" id="mTabs"></div>
+  <div id="mBody"></div>
+</section>
+
+<!-- ================= MOULINETTE ================= -->
+<section class="view" id="v-moulinette">
+  <span class="tag">MOULINETTE WEB</span>
+  <h1>La <span class="grad">moulinette</span></h1>
+  <ul class="idea">
+    <li>La vraie moulinette est <code>./moulinette.sh</code> dans le kit (compile, teste, valgrind).</li>
+    <li>Ici : l'<b>analyse de code</b> + la <b>comparaison de sortie</b>, sans terminal.</li>
+  </ul>
+  <div class="row" style="margin:10px 0"><label>Mission :</label><select id="mlSel" style="width:auto"></select></div>
+  <div class="two">
+    <div><h3>1 · Colle ton main.c</h3>
+      <textarea id="mlCode" spellcheck="false" style="min-height:300px" placeholder="#include <cjson/cJSON.h> ..."></textarea>
+      <button class="btn p" style="margin-top:8px" onclick="runAnalysis()">Analyser le code</button>
+      <ul class="an res" id="mlAn"></ul></div>
+    <div><h3>2 · Compare ta sortie</h3>
+      <div class="row"><select id="mlTest" style="width:auto"></select></div>
+      <pre style="font-size:12px"><code id="mlCmd"></code></pre>
+      <details><summary class="mute" style="cursor:pointer">Voir le fichier d'entrée</summary><pre style="font-size:12px;max-height:220px"><code id="mlInput"></code></pre></details>
+      <textarea id="mlOut" spellcheck="false" placeholder="Colle ici la sortie de ton programme (stdout)"></textarea>
+      <div class="row" style="margin-top:8px"><label>Code de retour (<code>echo $?</code>) :</label><input type="text" id="mlCode2" style="width:70px" value="0"></div>
+      <button class="btn p" style="margin-top:8px" onclick="compareOut()">Comparer</button>
+      <div id="mlDiff" style="margin-top:10px"></div></div>
+  </div>
+</section>
+
+<!-- ================= EXAMEN ================= -->
+<section class="view" id="v-examen">
+  <span class="tag">CONDITIONS RÉELLES</span>
+  <h1>Examen <span class="grad">blanc</span></h1>
+  <ul class="idea">
+    <li>Les 5 missions, en temps limité.</li>
+    <li>Indices et corrections <b>masqués</b> pendant l'épreuve.</li>
+    <li>Autorisé : <code>man</code>, <code>/usr/include/cjson/cJSON.h</code>, ce cours.</li>
+    <li>À la fin : <code>./moulinette.sh</code> et note ton score.</li>
+  </ul>
+  <div class="card" style="text-align:center">
+    <div class="big" id="bigTimer">--:--:--</div>
+    <div class="row" style="justify-content:center;margin-top:10px" id="examCtl"></div>
+  </div>
+  <h3>Historique</h3>
+  <div class="row" style="margin-bottom:8px"><input type="text" id="scoreIn" placeholder="Score moulinette /20" style="width:200px"><button class="btn" onclick="saveScore()">Enregistrer</button></div>
+  <div id="history" class="mute"></div>
+</section>
+</main>
+<footer>Kepler-7 · révision PROG-206 · EPITA prépa S3</footer>
+
+<script>
+const DATA = {"missions": [{"dir": "ex1_appel", "title": "Mission 1 · L'appel de l'équipage", "short": "Appel équipage", "ico": "👩‍🚀", "story": "Le registre de l'équipage est un CSV. ORBIT veut savoir qui est à court d'oxygène, <b>maintenant<\/b>.", "hints": ["Boucle <code>while (fgets(line, sizeof line, f))<\/code>, saute la 1re ligne non vide (l'en-tête).", "Découpe avec <code>strtok_r(l, \",\", &amp;save)<\/code> puis <b>trim<\/b> chaque champ : espaces ET <code>\\r<\/code>.", "Il faut afficher le compte AVANT la liste : stocke les critiques (tableau fixe) ou fais deux passes.", "Fichier absent : <code>fprintf(stderr, ...)<\/code> et <code>return 1<\/code>, rien sur stdout."], "opti": "Un seul passage sur le fichier. <code>atoi<\/code> une fois par champ. Pas de <code>strlen<\/code> dans les boucles.", "spec": "Usage : ./prog equipage.csv\nAffiche :\n  Equipage : N membre(s)\n  Oxygene critique (< 30) : K\n  - <nom> (<oxygene>%)        <- une ligne par membre critique, ordre du fichier\nRegles : 1re ligne = en-tete. Champs separes par ',' + espaces eventuels.\n         Lignes vides ignorees. Fins de ligne \\n ou \\r\\n.\nFichier illisible -> message sur stderr, rien sur stdout, return 1.", "tests": [{"name": "01-nominal", "args": "data/equipage.csv", "expected": "Equipage : 5 membre(s)\nOxygene critique (< 30) : 2\n- Lior Okafor (23%)\n- Teo Brandt (12%)\n", "code": 0}, {"name": "02-entete-seule", "args": "tests/data/equipage_vide.csv", "expected": "Equipage : 0 membre(s)\nOxygene critique (< 30) : 0\n", "code": 0}, {"name": "03-crlf-espaces", "args": "tests/data/equipage_crlf.csv", "expected": "Equipage : 2 membre(s)\nOxygene critique (< 30) : 1\n- Nils Arno (29%)\n", "code": 0}, {"name": "04-fichier-absent", "args": "data/nexiste_pas.csv", "expected": "", "code": 1}], "solution": "#define _POSIX_C_SOURCE 200809L\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <ctype.h>\n\n/* Retire les espaces (et \\r\\n) au debut et a la fin, sur place. */\nstatic char *trim(char *s)\n{\n    while (isspace((unsigned char)*s))\n        s++;\n    char *end = s + strlen(s);\n    while (end > s && isspace((unsigned char)end[-1]))\n        end--;\n    *end = '\\0';\n    return s;\n}\n\nint main(int argc, char **argv)\n{\n    if (argc != 2) {\n        fprintf(stderr, \"Usage : %s fichier.csv\\n\", argv[0]);\n        return 1;\n    }\n    FILE *f = fopen(argv[1], \"r\");\n    if (!f) {\n        fprintf(stderr, \"Erreur : impossible d'ouvrir %s\\n\", argv[1]);\n        return 1;\n    }\n\n    char line[1024];\n    char crit_names[64][256];\n    int crit_o2[64];\n    int ncrit = 0, count = 0, header = 1;\n\n    while (fgets(line, sizeof(line), f)) {\n        char *l = trim(line);\n        if (*l == '\\0')\n            continue;              /* ligne vide */\n        if (header) {              /* 1re ligne = en-tete */\n            header = 0;\n            continue;\n        }\n        char *save = NULL;\n        char *fields[4];\n        int n = 0;\n        for (char *tok = strtok_r(l, \",\", &save); tok && n < 4;\n             tok = strtok_r(NULL, \",\", &save))\n            fields[n++] = trim(tok);\n        if (n != 4)\n            continue;\n        count++;\n        int o2 = atoi(fields[3]);\n        if (o2 < 30 && ncrit < 64) {\n            snprintf(crit_names[ncrit], sizeof(crit_names[ncrit]), \"%s\", fields[0]);\n            crit_o2[ncrit++] = o2;\n        }\n    }\n    fclose(f);\n\n    printf(\"Equipage : %d membre(s)\\n\", count);\n    printf(\"Oxygene critique (< 30) : %d\\n\", ncrit);\n    for (int i = 0; i < ncrit; i++)\n        printf(\"- %s (%d%%)\\n\", crit_names[i], crit_o2[i]);\n    return 0;\n}\n"}, {"dir": "ex2_modules", "title": "Mission 2 · Diagnostic des modules", "short": "Modules", "ico": "🔧", "story": "Les modules de la station envoient leur état en JSON. Deux modules critiques sont tombés. Lesquels ?", "hints": ["<code>read_file<\/code> → <code>cJSON_Parse<\/code> → <code>free(text)<\/code> tout de suite.", "<code>if (!cJSON_IsArray(root))<\/code> couvre à la fois « JSON invalide » (NULL) et « racine pas un tableau ».", "Pour chaque module : récupère les 4 champs, puis <b>un seul<\/b> <code>if<\/code> avec les 4 <code>cJSON_Is*<\/code>.", "critique est un booléen : <code>cJSON_IsBool<\/code> pour valider, <code>cJSON_IsTrue<\/code> pour lire."], "opti": "<code>cJSON_ArrayForEach<\/code> (O(n)). Chaque champ récupéré une seule fois. <code>cJSON_Delete<\/code> unique à la fin.", "spec": "Usage : ./prog modules.json   (racine = tableau d'objets)\nPour chaque module valide : [<etat>] <nom> (<energie %.2f> kW)\n  + \" !! CRITIQUE\" si etat == \"HS\" ET critique == true\nPuis : Energie totale : <%.2f> kW\n       Modules critiques HS : <K>\nModule invalide (champ manquant / mauvais type) -> ignore (message stderr libre).\nFichier illisible -> return 1. JSON invalide ou racine pas un tableau -> stderr, return 2.", "tests": [{"name": "01-nominal", "args": "data/modules.json", "expected": "[OK] Hydroponie (12.50 kW)\n[HS] Recycleur O2 (0.00 kW) !! CRITIQUE\n[OK] Propulsion (40.00 kW)\n[HS] Communications (3.25 kW) !! CRITIQUE\n[OK] Gymnase (7.00 kW)\nEnergie totale : 62.75 kW\nModules critiques HS : 2\n", "code": 0}, {"name": "02-modules-casses", "args": "tests/data/modules_casses.json", "expected": "[OK] Serre (2.00 kW)\n[HS] Bouclier (10.00 kW) !! CRITIQUE\nEnergie totale : 12.00 kW\nModules critiques HS : 1\n", "code": 0}, {"name": "03-json-tronque", "args": "tests/data/modules_tronque.json", "expected": "", "code": 2}, {"name": "04-racine-objet", "args": "tests/data/modules_objet.json", "expected": "", "code": 2}, {"name": "05-tableau-vide", "args": "tests/data/vide.json", "expected": "Energie totale : 0.00 kW\nModules critiques HS : 0\n", "code": 0}], "solution": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <cjson/cJSON.h>\n\n/* Lit tout un fichier dans un buffer termine par '\\0'. A free() par l'appelant. */\nstatic char *read_file(const char *path)\n{\n    FILE *f = fopen(path, \"rb\");\n    if (!f)\n        return NULL;\n    if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return NULL; }\n    long size = ftell(f);\n    if (size < 0) { fclose(f); return NULL; }\n    rewind(f);\n    char *buf = malloc((size_t)size + 1);\n    if (!buf) { fclose(f); return NULL; }\n    size_t n = fread(buf, 1, (size_t)size, f);\n    fclose(f);\n    buf[n] = '\\0';\n    return buf;\n}\n\nint main(int argc, char **argv)\n{\n    if (argc != 2) {\n        fprintf(stderr, \"Usage : %s modules.json\\n\", argv[0]);\n        return 1;\n    }\n    char *text = read_file(argv[1]);\n    if (!text) {\n        fprintf(stderr, \"Erreur : impossible de lire %s\\n\", argv[1]);\n        return 1;\n    }\n    cJSON *root = cJSON_Parse(text);\n    free(text);                       /* plus besoin du texte apres le parse */\n    if (!cJSON_IsArray(root)) {       /* gere aussi root == NULL */\n        fprintf(stderr, \"Erreur : JSON invalide\\n\");\n        cJSON_Delete(root);\n        return 2;\n    }\n\n    double total = 0;\n    int crit_hs = 0, i = 0;\n    const cJSON *m;\n    cJSON_ArrayForEach(m, root) {     /* O(n), pas GetArrayItem en boucle */\n        const cJSON *nom = cJSON_GetObjectItemCaseSensitive(m, \"nom\");\n        const cJSON *etat = cJSON_GetObjectItemCaseSensitive(m, \"etat\");\n        const cJSON *en = cJSON_GetObjectItemCaseSensitive(m, \"energie\");\n        const cJSON *crit = cJSON_GetObjectItemCaseSensitive(m, \"critique\");\n        if (!cJSON_IsString(nom) || !cJSON_IsString(etat)\n            || !cJSON_IsNumber(en) || !cJSON_IsBool(crit)) {\n            fprintf(stderr, \"Module %d ignore : donnees invalides\\n\", i++);\n            continue;\n        }\n        i++;\n        int hs = strcmp(etat->valuestring, \"HS\") == 0;\n        printf(\"[%s] %s (%.2f kW)%s\\n\", etat->valuestring, nom->valuestring,\n               en->valuedouble, hs && cJSON_IsTrue(crit) ? \" !! CRITIQUE\" : \"\");\n        total += en->valuedouble;\n        if (hs && cJSON_IsTrue(crit))\n            crit_hs++;\n    }\n    printf(\"Energie totale : %.2f kW\\n\", total);\n    printf(\"Modules critiques HS : %d\\n\", crit_hs);\n    cJSON_Delete(root);\n    return 0;\n}\n"}, {"dir": "ex3_capteurs", "title": "Mission 3 · Les capteurs fous", "short": "Capteurs", "ico": "🌡️", "story": "Les capteurs crachent des tableaux de mesures, rangés dans un objet. Certains dépassent leur seuil… ou sont dans le négatif.", "hints": ["La racine est un <b>objet<\/b> : <code>GetObjectItemCaseSensitive(root, \"releves\")<\/code> puis <code>IsArray<\/code>.", "Deux <code>cJSON_ArrayForEach<\/code> imbriqués : relevés, puis valeurs.", "Max en un passage, initialisé avec la <b>1re valeur<\/b> (flag <code>has<\/code>), pas avec 0.", "Tableau vide → « aucune valeur », et ce n'est pas une alerte."], "opti": "Max en un seul parcours : O(n). Surtout pas de tri, ni de <code>GetArrayItem(i)<\/code> en boucle (O(n²)).", "spec": "Usage : ./prog capteurs.json\nRacine = objet { \"station\": string, \"releves\": [ {id, type, seuil, valeurs[]} ] }\nPour chaque releve valide :\n  <id> <type> : max <%.2f> / seuil <%.2f> -> ALERTE   (si max > seuil, sinon \"ok\")\n  <id> <type> : aucune valeur                          (si valeurs est vide)\nPuis : Station <station> : <K> alerte(s)\nReleve invalide -> ignore. Attention : les valeurs peuvent etre negatives !\nFichier illisible -> return 1. JSON invalide / structure fausse -> return 2.", "tests": [{"name": "01-nominal", "args": "data/capteurs.json", "expected": "T-01 temperature : max 41.50 / seuil 40.00 -> ALERTE\nP-02 pression : max 1013.00 / seuil 1100.00 -> ok\nR-03 radiation : max 12.00 / seuil 5.00 -> ALERTE\nH-04 humidite : aucune valeur\nStation Kepler-7 : 2 alerte(s)\n", "code": 0}, {"name": "02-negatifs-et-trous", "args": "tests/data/capteurs_pieges.json", "expected": "F-01 froid : max -15.50 / seuil -10.00 -> ok\nV-03 vide : max -49.75 / seuil -50.00 -> ALERTE\nStation Orion-2 : 1 alerte(s)\n", "code": 0}, {"name": "03-json-casse", "args": "tests/data/capteurs_casse.json", "expected": "", "code": 2}, {"name": "04-fichier-absent", "args": "data/nexiste_pas.json", "expected": "", "code": 1}], "solution": "#include <stdio.h>\n#include <stdlib.h>\n#include <cjson/cJSON.h>\n\n/* Lit tout un fichier dans un buffer termine par '\\0'. A free() par l'appelant. */\nstatic char *read_file(const char *path)\n{\n    FILE *f = fopen(path, \"rb\");\n    if (!f)\n        return NULL;\n    if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return NULL; }\n    long size = ftell(f);\n    if (size < 0) { fclose(f); return NULL; }\n    rewind(f);\n    char *buf = malloc((size_t)size + 1);\n    if (!buf) { fclose(f); return NULL; }\n    size_t n = fread(buf, 1, (size_t)size, f);\n    fclose(f);\n    buf[n] = '\\0';\n    return buf;\n}\n\nint main(int argc, char **argv)\n{\n    if (argc != 2) {\n        fprintf(stderr, \"Usage : %s capteurs.json\\n\", argv[0]);\n        return 1;\n    }\n    char *text = read_file(argv[1]);\n    if (!text) {\n        fprintf(stderr, \"Erreur : impossible de lire %s\\n\", argv[1]);\n        return 1;\n    }\n    cJSON *root = cJSON_Parse(text);\n    free(text);\n    const cJSON *station = cJSON_GetObjectItemCaseSensitive(root, \"station\");\n    const cJSON *releves = cJSON_GetObjectItemCaseSensitive(root, \"releves\");\n    if (!cJSON_IsObject(root) || !cJSON_IsString(station) || !cJSON_IsArray(releves)) {\n        fprintf(stderr, \"Erreur : JSON invalide\\n\");\n        cJSON_Delete(root);\n        return 2;\n    }\n\n    int alertes = 0;\n    const cJSON *r;\n    cJSON_ArrayForEach(r, releves) {\n        const cJSON *id = cJSON_GetObjectItemCaseSensitive(r, \"id\");\n        const cJSON *type = cJSON_GetObjectItemCaseSensitive(r, \"type\");\n        const cJSON *seuil = cJSON_GetObjectItemCaseSensitive(r, \"seuil\");\n        const cJSON *vals = cJSON_GetObjectItemCaseSensitive(r, \"valeurs\");\n        if (!cJSON_IsString(id) || !cJSON_IsString(type)\n            || !cJSON_IsNumber(seuil) || !cJSON_IsArray(vals)) {\n            fprintf(stderr, \"Releve ignore : donnees invalides\\n\");\n            continue;\n        }\n        int has = 0;\n        double max = 0;\n        const cJSON *v;\n        cJSON_ArrayForEach(v, vals) {          /* un seul passage : O(n) */\n            if (!cJSON_IsNumber(v))\n                continue;\n            if (!has || v->valuedouble > max)\n                max = v->valuedouble;\n            has = 1;\n        }\n        if (!has) {\n            printf(\"%s %s : aucune valeur\\n\", id->valuestring, type->valuestring);\n            continue;\n        }\n        int alerte = max > seuil->valuedouble;\n        alertes += alerte;\n        printf(\"%s %s : max %.2f / seuil %.2f -> %s\\n\", id->valuestring,\n               type->valuestring, max, seuil->valuedouble, alerte ? \"ALERTE\" : \"ok\");\n    }\n    printf(\"Station %s : %d alerte(s)\\n\", station->valuestring, alertes);\n    cJSON_Delete(root);\n    return 0;\n}\n"}, {"dir": "ex4_validation", "title": "Mission 4 · Le validateur", "short": "Validateur", "ico": "🛡️", "story": "Quelqu'un a trafiqué le journal de bord. Écris le validateur qu'ORBIT aurait dû avoir : on ne fait jamais confiance à l'entrée.", "hints": ["Écris une fonction <code>const char *check(const cJSON *e)<\/code> qui renvoie le nom du 1er champ fautif, ou NULL.", "Ordre : objet → nom → role → age → oxygene. Retourne dès la 1re erreur.", "Entier : <code>d == (double)(int)d<\/code>. <code>\"35\"<\/code> n'est pas un nombre (<code>IsNumber<\/code> faux).", "Rôles : tableau <code>static const char *ROLES[]<\/code> + boucle <code>strcmp<\/code>. Code de retour selon le bilan."], "opti": "Retour anticipé dès le 1er champ invalide. Taille du tableau des rôles calculée avec <code>sizeof<\/code>, pas de constante magique.", "spec": "Usage : ./prog journal.json   (racine = tableau)\nSchema d'une entree (verifier DANS CET ORDRE, afficher le 1er champ fautif) :\n  nom     : string non vide\n  role    : string parmi commandant, ingenieur, medecin, pilote, biologiste\n  age     : nombre ENTIER entre 18 et 70 inclus\n  oxygene : nombre entre 0 et 100 inclus\nSi l'entree n'est pas un objet : champ fautif = \"objet\".\nAffiche :  #<i> OK   ou   #<i> INVALIDE : <champ>\nPuis :     Bilan : <V>/<N> valide(s)\nreturn 0 si tout est valide, 1 sinon, 2 si JSON invalide / racine pas un tableau.", "tests": [{"name": "01-nominal", "args": "data/journal.json", "expected": "#0 OK\n#1 INVALIDE : nom\n#2 INVALIDE : role\n#3 INVALIDE : age\n#4 INVALIDE : age\n#5 INVALIDE : oxygene\n#6 OK\nBilan : 2/7 valide(s)\n", "code": 1}, {"name": "02-tout-valide", "args": "tests/data/journal_ok.json", "expected": "#0 OK\n#1 OK\nBilan : 2/2 valide(s)\n", "code": 0}, {"name": "03-pieges", "args": "tests/data/journal_pieges.json", "expected": "#0 INVALIDE : role\n#1 INVALIDE : age\n#2 INVALIDE : nom\n#3 INVALIDE : objet\n#4 INVALIDE : oxygene\nBilan : 0/5 valide(s)\n", "code": 1}, {"name": "04-json-tronque", "args": "tests/data/modules_tronque.json", "expected": "", "code": 2}, {"name": "05-tableau-vide", "args": "tests/data/vide.json", "expected": "Bilan : 0/0 valide(s)\n", "code": 0}], "solution": "#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <cjson/cJSON.h>\n\n/* Lit tout un fichier dans un buffer termine par '\\0'. A free() par l'appelant. */\nstatic char *read_file(const char *path)\n{\n    FILE *f = fopen(path, \"rb\");\n    if (!f)\n        return NULL;\n    if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return NULL; }\n    long size = ftell(f);\n    if (size < 0) { fclose(f); return NULL; }\n    rewind(f);\n    char *buf = malloc((size_t)size + 1);\n    if (!buf) { fclose(f); return NULL; }\n    size_t n = fread(buf, 1, (size_t)size, f);\n    fclose(f);\n    buf[n] = '\\0';\n    return buf;\n}\n\nstatic const char *ROLES[] = { \"commandant\", \"ingenieur\", \"medecin\", \"pilote\", \"biologiste\" };\n\nstatic int is_int_in(const cJSON *n, int lo, int hi)\n{\n    if (!cJSON_IsNumber(n))\n        return 0;\n    double d = n->valuedouble;\n    return d == (double)(int)d && d >= lo && d <= hi;\n}\n\n/* Renvoie le nom du 1er champ invalide (ordre du schema), ou NULL si valide. */\nstatic const char *check(const cJSON *e)\n{\n    if (!cJSON_IsObject(e))\n        return \"objet\";\n    const cJSON *nom = cJSON_GetObjectItemCaseSensitive(e, \"nom\");\n    if (!cJSON_IsString(nom) || nom->valuestring[0] == '\\0')\n        return \"nom\";\n    const cJSON *role = cJSON_GetObjectItemCaseSensitive(e, \"role\");\n    if (!cJSON_IsString(role))\n        return \"role\";\n    int ok = 0;\n    for (size_t i = 0; i < sizeof(ROLES) / sizeof(*ROLES) && !ok; i++)\n        ok = strcmp(role->valuestring, ROLES[i]) == 0;\n    if (!ok)\n        return \"role\";\n    if (!is_int_in(cJSON_GetObjectItemCaseSensitive(e, \"age\"), 18, 70))\n        return \"age\";\n    const cJSON *o2 = cJSON_GetObjectItemCaseSensitive(e, \"oxygene\");\n    if (!cJSON_IsNumber(o2) || o2->valuedouble < 0 || o2->valuedouble > 100)\n        return \"oxygene\";\n    return NULL;\n}\n\nint main(int argc, char **argv)\n{\n    if (argc != 2) {\n        fprintf(stderr, \"Usage : %s journal.json\\n\", argv[0]);\n        return 1;\n    }\n    char *text = read_file(argv[1]);\n    if (!text) {\n        fprintf(stderr, \"Erreur : impossible de lire %s\\n\", argv[1]);\n        return 1;\n    }\n    cJSON *root = cJSON_Parse(text);\n    free(text);\n    if (!cJSON_IsArray(root)) {\n        fprintf(stderr, \"Erreur : JSON invalide\\n\");\n        cJSON_Delete(root);\n        return 2;\n    }\n    int i = 0, valides = 0;\n    const cJSON *e;\n    cJSON_ArrayForEach(e, root) {\n        const char *bad = check(e);\n        if (bad)\n            printf(\"#%d INVALIDE : %s\\n\", i, bad);\n        else {\n            printf(\"#%d OK\\n\", i);\n            valides++;\n        }\n        i++;\n    }\n    printf(\"Bilan : %d/%d valide(s)\\n\", valides, i);\n    cJSON_Delete(root);\n    return valides == i ? 0 : 1;\n}\n"}, {"dir": "ex5_rapport", "title": "Mission 5 · Le rapport de bord", "short": "Rapport", "ico": "📤", "story": "Dernière étape : renvoyer un rapport JSON à la Terre. Cette fois, c'est toi qui <b>produis<\/b> le JSON.", "hints": ["Crée la racine, puis <code>cJSON_AddArrayToObject(root, \"equipage\")<\/code> : il te rend le tableau.", "Ordre des clés dans l'objet = ordre des <code>Add…<\/code> : station, equipage, critiques, oxygene_moyen.", "<code>cJSON_AddItemToArray(critiques, cJSON_CreateString(nom))<\/code>.", "<code>char *s = cJSON_PrintUnformatted(root); puts(s); free(s); cJSON_Delete(root);<\/code>"], "opti": "Moyenne accumulée pendant la lecture (un seul passage). Un seul <code>cJSON_Delete<\/code> : l'arbre possède tous ses enfants.", "spec": "Usage : ./prog equipage.csv\nConstruit avec cJSON_Create* / cJSON_Add* puis affiche avec cJSON_PrintUnformatted :\n{\"station\":\"Kepler-7\",\n \"equipage\":[{\"nom\":..,\"role\":..,\"age\":<int>,\"oxygene\":<int>}, ...],\n \"critiques\":[<noms avec oxygene < 30>],\n \"oxygene_moyen\":<moyenne, 0 si aucun membre>}\n(sur UNE seule ligne). Fichier illisible -> return 1.", "tests": [{"name": "01-nominal", "args": "data/equipage.csv", "expected": "{\"station\":\"Kepler-7\",\"equipage\":[{\"nom\":\"Ada Vance\",\"role\":\"commandant\",\"age\":41,\"oxygene\":87},{\"nom\":\"Lior Okafor\",\"role\":\"ingenieur\",\"age\":29,\"oxygene\":23},{\"nom\":\"Mina Sato\",\"role\":\"medecin\",\"age\":35,\"oxygene\":64},{\"nom\":\"Teo Brandt\",\"role\":\"pilote\",\"age\":26,\"oxygene\":12},{\"nom\":\"Yara Haddad\",\"role\":\"biologiste\",\"age\":31,\"oxygene\":45}],\"critiques\":[\"Lior Okafor\",\"Teo Brandt\"],\"oxygene_moyen\":46.2}\n", "code": 0}, {"name": "02-entete-seule", "args": "tests/data/equipage_vide.csv", "expected": "{\"station\":\"Kepler-7\",\"equipage\":[],\"critiques\":[],\"oxygene_moyen\":0}\n", "code": 0}, {"name": "03-crlf-espaces", "args": "tests/data/equipage_crlf.csv", "expected": "{\"station\":\"Kepler-7\",\"equipage\":[{\"nom\":\"Nils Arno\",\"role\":\"pilote\",\"age\":33,\"oxygene\":29},{\"nom\":\"Eva Lindt\",\"role\":\"medecin\",\"age\":45,\"oxygene\":30}],\"critiques\":[\"Nils Arno\"],\"oxygene_moyen\":29.5}\n", "code": 0}, {"name": "04-fichier-absent", "args": "data/nexiste_pas.csv", "expected": "", "code": 1}], "solution": "#define _POSIX_C_SOURCE 200809L\n#include <stdio.h>\n#include <stdlib.h>\n#include <string.h>\n#include <ctype.h>\n#include <cjson/cJSON.h>\n\nstatic char *trim(char *s)\n{\n    while (isspace((unsigned char)*s))\n        s++;\n    char *end = s + strlen(s);\n    while (end > s && isspace((unsigned char)end[-1]))\n        end--;\n    *end = '\\0';\n    return s;\n}\n\nint main(int argc, char **argv)\n{\n    if (argc != 2) {\n        fprintf(stderr, \"Usage : %s equipage.csv\\n\", argv[0]);\n        return 1;\n    }\n    FILE *f = fopen(argv[1], \"r\");\n    if (!f) {\n        fprintf(stderr, \"Erreur : impossible d'ouvrir %s\\n\", argv[1]);\n        return 1;\n    }\n    cJSON *root = cJSON_CreateObject();\n    cJSON_AddStringToObject(root, \"station\", \"Kepler-7\");\n    cJSON *equipage = cJSON_AddArrayToObject(root, \"equipage\");\n    cJSON *critiques = cJSON_AddArrayToObject(root, \"critiques\");\n\n    char line[1024];\n    int header = 1, count = 0;\n    double somme = 0;\n    while (fgets(line, sizeof(line), f)) {\n        char *l = trim(line);\n        if (*l == '\\0')\n            continue;\n        if (header) { header = 0; continue; }\n        char *save = NULL, *fields[4];\n        int n = 0;\n        for (char *tok = strtok_r(l, \",\", &save); tok && n < 4;\n             tok = strtok_r(NULL, \",\", &save))\n            fields[n++] = trim(tok);\n        if (n != 4)\n            continue;\n        cJSON *membre = cJSON_CreateObject();\n        cJSON_AddStringToObject(membre, \"nom\", fields[0]);\n        cJSON_AddStringToObject(membre, \"role\", fields[1]);\n        cJSON_AddNumberToObject(membre, \"age\", atoi(fields[2]));\n        int o2 = atoi(fields[3]);\n        cJSON_AddNumberToObject(membre, \"oxygene\", o2);\n        cJSON_AddItemToArray(equipage, membre);   /* l'arbre devient proprietaire */\n        if (o2 < 30)\n            cJSON_AddItemToArray(critiques, cJSON_CreateString(fields[0]));\n        somme += o2;\n        count++;\n    }\n    fclose(f);\n    cJSON_AddNumberToObject(root, \"oxygene_moyen\", count ? somme / count : 0);\n\n    char *out = cJSON_PrintUnformatted(root);\n    puts(out);\n    free(out);            /* la chaine de Print est a nous : free ! */\n    cJSON_Delete(root);   /* libere tout l'arbre d'un coup */\n    return 0;\n}\n"}], "files": {"tests/data/modules_tronque.json": "[ { \"nom\": \"Serre\", \"etat\": \"OK\", ", "tests/data/modules_casses.json": "[\n  { \"nom\": \"Serre\", \"etat\": \"OK\", \"energie\": 2, \"critique\": false },\n  { \"nom\": \"Sas\", \"etat\": \"HS\", \"critique\": true },\n  { \"nom\": \"Laser\", \"etat\": \"HS\", \"energie\": \"beaucoup\", \"critique\": true },\n  { \"nom\": \"Bouclier\", \"etat\": \"HS\", \"energie\": 9.999, \"critique\": true }\n]\n", "tests/data/capteurs_casse.json": "{ \"station\": \"Kepler-7\", \"releves\": [ }", "tests/data/modules_objet.json": "{ \"nom\": \"Serre\" }\n", "tests/data/equipage_vide.csv": "nom, role, age, oxygene\n", "tests/data/journal_ok.json": "[\n  { \"nom\": \"Ada Vance\", \"role\": \"commandant\", \"age\": 18, \"oxygene\": 0 },\n  { \"nom\": \"Ivo Lund\", \"role\": \"ingenieur\", \"age\": 70, \"oxygene\": 100 }\n]\n", "tests/data/journal_pieges.json": "[\n  { \"nom\": \"Zoe\", \"role\": \"Pilote\", \"age\": 30, \"oxygene\": 50 },\n  { \"nom\": \"Max\", \"role\": \"pilote\", \"age\": 17, \"oxygene\": 50 },\n  { \"nom\": 42, \"role\": \"pilote\", \"age\": 30, \"oxygene\": 50 },\n  \"pas un objet\",\n  { \"nom\": \"Kim\", \"role\": \"medecin\", \"age\": 40, \"oxygene\": 100.5 }\n]\n", "tests/data/vide.json": "[]\n", "tests/data/equipage_crlf.csv": "nom,role,age,oxygene\n\n  Nils Arno ,  pilote ,  33 ,  29  \nEva Lindt,medecin,45,30\n\n", "tests/data/capteurs_pieges.json": "{\n  \"station\": \"Orion-2\",\n  \"releves\": [\n    { \"id\": \"F-01\", \"type\": \"froid\", \"seuil\": -10, \"valeurs\": [-42, -15.5, -30] },\n    { \"id\": \"X-02\", \"type\": \"inconnu\", \"valeurs\": [1, 2] },\n    { \"id\": \"V-03\", \"type\": \"vide\", \"seuil\": -50, \"valeurs\": [-80, -49.75] }\n  ]\n}\n", "data/journal.json": "[\n  { \"nom\": \"Ada Vance\",   \"role\": \"commandant\", \"age\": 41,   \"oxygene\": 87 },\n  { \"nom\": \"\",            \"role\": \"pilote\",     \"age\": 30,   \"oxygene\": 50 },\n  { \"nom\": \"Lior Okafor\", \"role\": \"cuisinier\",  \"age\": 29,   \"oxygene\": 23 },\n  { \"nom\": \"Mina Sato\",   \"role\": \"medecin\",    \"age\": \"35\", \"oxygene\": 64 },\n  { \"nom\": \"Teo Brandt\",  \"role\": \"pilote\",     \"age\": 26.5, \"oxygene\": 12 },\n  { \"nom\": \"Yara Haddad\", \"role\": \"biologiste\", \"age\": 31 },\n  { \"nom\": \"Ivo Lund\",    \"role\": \"ingenieur\",  \"age\": 52,   \"oxygene\": 100 }\n]\n", "data/equipage.csv": "nom, role, age, oxygene\nAda Vance, commandant, 41, 87\nLior Okafor, ingenieur, 29, 23\nMina Sato, medecin, 35, 64\nTeo Brandt, pilote, 26, 12\nYara Haddad, biologiste, 31, 45\n", "data/capteurs.json": "{\n  \"station\": \"Kepler-7\",\n  \"releves\": [\n    { \"id\": \"T-01\", \"type\": \"temperature\", \"seuil\": 40,   \"valeurs\": [21.5, 22, 38.75, 41.5, 39] },\n    { \"id\": \"P-02\", \"type\": \"pression\",    \"seuil\": 1100, \"valeurs\": [1013, 1009.5, 1011] },\n    { \"id\": \"R-03\", \"type\": \"radiation\",   \"seuil\": 5,    \"valeurs\": [0.5, 7.25, 12, 3] },\n    { \"id\": \"H-04\", \"type\": \"humidite\",    \"seuil\": 80,   \"valeurs\": [] }\n  ]\n}\n", "data/modules.json": "[\n  { \"nom\": \"Hydroponie\",     \"etat\": \"OK\", \"energie\": 12.5, \"critique\": false },\n  { \"nom\": \"Recycleur O2\",   \"etat\": \"HS\", \"energie\": 0,    \"critique\": true  },\n  { \"nom\": \"Propulsion\",     \"etat\": \"OK\", \"energie\": 40,   \"critique\": true  },\n  { \"nom\": \"Communications\", \"etat\": \"HS\", \"energie\": 3.25, \"critique\": true  },\n  { \"nom\": \"Gymnase\",        \"etat\": \"OK\", \"energie\": 7,    \"critique\": false }\n]\n"}, "install": "echo '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' | base64 -d | tar xz && cd kepler7 && chmod +x moulinette.sh && ls"};
+const INSTALL = DATA.install;
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem('k7_' + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('k7_' + k, JSON.stringify(v)); } catch (e) {} }
+};
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ---------- étoiles ---------- */
+(function stars() {
+  const c = $('#stars'), x = c.getContext('2d'); let S = [];
+  function rs() { c.width = innerWidth; c.height = innerHeight; S = Array.from({ length: 140 }, () => ({ x: Math.random() * c.width, y: Math.random() * c.height, r: Math.random() * 1.3, s: Math.random() * .3 + .05 })); }
+  rs(); addEventListener('resize', rs);
+  (function f() { x.clearRect(0, 0, c.width, c.height); for (const p of S) { p.y += p.s; if (p.y > c.height) p.y = 0; x.fillStyle = '#d9c8ff' + (p.r > 1 ? 'aa' : '55'); x.beginPath(); x.arc(p.x, p.y, p.r, 0, 7); x.fill(); } requestAnimationFrame(f); })();
+})();
+
+/* ---------- progression ---------- */
+const SYSTEMS = [
+  { id: 'cours', ico: '📡', name: 'Archives', desc: 'Lire le cours', view: 'cours' },
+  { id: 'labo', ico: '🧪', name: 'Labo', desc: 'Réussir les 4 labos', view: 'labo' },
+  { id: 'quiz', ico: '🧠', name: 'Cerveau ORBIT', desc: 'QCM ≥ 80 %', view: 'quiz' },
+  { id: 'm1', ico: '👩‍🚀', name: 'Appel équipage', desc: 'Mission 1 · CSV', view: 'missions', m: 0 },
+  { id: 'm2', ico: '🔧', name: 'Modules', desc: 'Mission 2 · JSON plat', view: 'missions', m: 1 },
+  { id: 'm3', ico: '🌡️', name: 'Capteurs', desc: 'Mission 3 · JSON imbriqué', view: 'missions', m: 2 },
+  { id: 'm4', ico: '🛡️', name: 'Validateur', desc: 'Mission 4 · schéma', view: 'missions', m: 3 },
+  { id: 'm5', ico: '📤', name: 'Rapport', desc: 'Mission 5 · CSV → JSON', view: 'missions', m: 4 },
+];
+let prog = LS.get('prog', {});
+function setDone(id) { if (!prog[id]) { prog[id] = 1; LS.set('prog', prog); renderPower(); toast('⚡ Système « ' + SYSTEMS.find(s => s.id === id).name + ' » rétabli !'); } }
+function renderPower() {
+  const n = SYSTEMS.filter(s => prog[s.id]).length, p = Math.round(100 * n / SYSTEMS.length);
+  $('#gauge').style.width = p + '%'; $('#pct').textContent = p + '%';
+  $('#station').innerHTML = SYSTEMS.map(s => `<div class="sys ${prog[s.id] ? 'on' : 'off'}" onclick="openSys('${s.id}')">
+    <div class="ico">${s.ico}</div><div class="st ${prog[s.id] ? '' : 'blink'}">${prog[s.id] ? '● EN LIGNE' : '○ HORS LIGNE'}</div>
+    <h4>${s.name}</h4><p>${s.desc}</p></div>`).join('');
+  document.querySelectorAll('#mTabs button').forEach((b, i) => b.classList.toggle('done', !!prog['m' + (i + 1)]));
+}
+function openSys(id) { const s = SYSTEMS.find(x => x.id === id); go(s.view); if (s.m !== undefined) showMission(s.m); }
+function toast(t) {
+  const d = document.createElement('div'); d.textContent = t;
+  d.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:linear-gradient(90deg,#ff79c6,#bd93f9);color:#1a1028;font-weight:700;padding:12px 18px;border-radius:12px;z-index:99;box-shadow:0 10px 30px #0008';
+  document.body.appendChild(d); setTimeout(() => d.remove(), 2600);
+}
+
+/* ---------- routing ---------- */
+const VIEWS = ['accueil', 'cours', 'labo', 'quiz', 'missions', 'moulinette', 'examen'];
+function go(v) { if (location.hash !== '#' + v) location.hash = v; else route(); }
+function route() {
+  let v = location.hash.slice(1); if (!VIEWS.includes(v)) v = 'accueil';
+  document.querySelectorAll('.view').forEach(s => s.classList.toggle('on', s.id === 'v-' + v));
+  document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a.dataset.v === v));
+  scrollTo(0, 0);
+  if (v === 'cours') setTimeout(() => setDone('cours'), 20000);
+}
+function jump(id) { document.getElementById(id).scrollIntoView({ behavior: 'smooth', block: 'start' }); return false; }
+addEventListener('hashchange', route);
+
+/* ---------- briefing ---------- */
+const BRIEF = ['> ORBIT v4.2 ... ÉCHEC CRITIQUE', '> mémoire de travail : CORROMPUE', '> fichiers de bord : INTACTS (CSV, JSON)', '> ingénieur(e) réveillé(e) : 1', '> objectif : relire les données et relancer la station', '> bon courage. ▌'];
+(function typer() {
+  const el = $('#typer'); let i = 0, j = 0, out = '';
+  (function t() { if (i >= BRIEF.length) return; if (j < BRIEF[i].length) { out += BRIEF[i][j++]; el.textContent = out; setTimeout(t, 22); } else { out += '\n'; i++; j = 0; setTimeout(t, 260); } })();
+})();
+
+/* ---------- formats ---------- */
+const FMT = {
+  CSV: ['title, identification, revision, language\nCMake, prog-206-l-01, 1.0.0, c\nThreads & Synchronisation, prog-205-l-03, 1.0.0, c', 'Une ligne = un enregistrement. Simple, mais pas d\'imbrication ni de types.'],
+  JSON: ['[\n  {\n    "title": "CMake",\n    "identification": "prog-206-l-01",\n    "revision": "1.0.0",\n    "language": "c"\n  },\n  {\n    "title": "Threads & Synchronisation",\n    "identification": "prog-205-l-03",\n    "revision": "1.0.0",\n    "language": "c"\n  }\n]', 'Le format d\'échange le plus courant. Imbrication + types.'],
+  YAML: ['- title: CMake\n  identification: prog-206-l-01\n  revision: 1.0.0\n  language: c\n- title: Threads & Synchronisation\n  identification: prog-205-l-03\n  revision: 1.0.0\n  language: c', 'Indentation significative. Très lisible, utilisé pour la config (CI GitLab !).'],
+  XML: ['<lectures>\n  <lecture>\n    <title>CMake</title>\n    <identification>prog-206-l-01</identification>\n    <revision>1.0.0</revision>\n    <language>c</language>\n  </lecture>\n  <lecture>\n    <title>Threads &amp; Synchronisation</title>\n    ...\n  </lecture>\n</lectures>', 'Balises ouvrantes/fermantes. Verbeux. Lib C : libxml2. Attention : & s\'écrit &amp;amp;.'],
+  TOML: ['[[lecture]]\ntitle = "CMake"\nidentification = "prog-206-l-01"\nrevision = "1.0.0"\nlanguage = "c"\n\n[[lecture]]\ntitle = "Threads & Synchronisation"\nidentification = "prog-205-l-03"\nrevision = "1.0.0"\nlanguage = "c"', 'Config typée et explicite (Cargo.toml, pyproject.toml).'],
+  INI: ['[prog-206-l-01]\ntitle = CMake\nrevision = 1.0.0\nlanguage = c\n\n[prog-205-l-03]\ntitle = Threads & Synchronisation\nrevision = 1.0.0\nlanguage = c', 'Sections + clé = valeur. Pas de tableaux, pas d\'imbrication.'],
+  SQL: ["CREATE TABLE lecture (title TEXT, identification TEXT PRIMARY KEY,\n                      revision TEXT, language TEXT);\nINSERT INTO lecture VALUES\n  ('CMake', 'prog-206-l-01', '1.0.0', 'c'),\n  ('Threads & Synchronisation', 'prog-205-l-03', '1.0.0', 'c');", 'Le schéma est dans le CREATE TABLE : types + contraintes imposés par la base.']
+};
+function showFmt(k) { $('#fmtCode').textContent = FMT[k][0]; $('#fmtNote').textContent = FMT[k][1]; document.querySelectorAll('#fmtTabs button').forEach(b => b.classList.toggle('on', b.textContent === k)); }
+$('#fmtTabs').innerHTML = Object.keys(FMT).map(k => `<button onclick="showFmt('${k}')">${k}</button>`).join(''); showFmt('JSON');
+
+/* ---------- arbre cJSON (démo) ---------- */
+$('#treeDemo').innerHTML = `<div class="mute" style="margin-bottom:6px">{"nom":"Serre","energie":2,"tags":["eau","O2"]} une fois parsé :</div>
+root <span class="tag">Object</span><br>
+└─ child → <span class="key">"nom"</span> <span class="tag">String</span> valuestring="Serre"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;next → <span class="key">"energie"</span> <span class="tag">Number</span> valuedouble=2<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;next → <span class="key">"tags"</span> <span class="tag">Array</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└─ child → "eau" <span class="tag">String</span> → next → "O2" <span class="tag">String</span> → next → NULL`;
+
+/* ---------- checklist ---------- */
+const CHECK = ['#define _POSIX_C_SOURCE 200809L avant les includes (si strtok_r)', '#include <cjson/cJSON.h> et -lcjson à la fin de la ligne gcc', 'Compile avec -Wall -Wextra -Werror dès le début', 'Chaque fopen / malloc / cJSON_Parse : test NULL', 'Chaque champ : cJSON_Is* avant ->valuestring / ->valuedouble', 'cJSON_ArrayForEach, jamais GetArrayItem dans une boucle', 'free(texte) après le parse, cJSON_Delete(root) à la fin', 'free() de chaque cJSON_Print*', 'Erreurs sur stderr, codes de retour exacts', 'Format de sortie au caractère près (espaces, %.2f, \\n final)', 'Tester : fichier absent, JSON cassé, champ manquant, tableau vide', 'valgrind --leak-check=full ./prog fichier'];
+const ck = LS.get('check', {});
+$('#checklist').innerHTML = CHECK.map((c, i) => `<label><input type="checkbox" ${ck[i] ? 'checked' : ''} onchange="ck[${i}]=this.checked;LS.set('check',ck)">${esc(c)}</label>`).join('');
+
+/* ---------- LABO 1 : réparer ---------- */
+const FIX = [
+  { name: 'Niveau 1', bad: '{\n  "nom": "Hydroponie",\n  "etat": "OK",\n  "energie": 12.5,\n}', want: { nom: 'Hydroponie', etat: 'OK', energie: 12.5 } },
+  { name: 'Niveau 2', bad: "{\n  'nom': 'Sas',\n  critique: true\n}", want: { nom: 'Sas', critique: true } },
+  { name: 'Niveau 3', bad: '{\n  "id": "T-01", // capteur principal\n  "valeurs": [21.5, 22 38.75],\n  "actif": True\n}', want: { id: 'T-01', valeurs: [21.5, 22, 38.75], actif: true } },
+  { name: 'Niveau 4', bad: '[\n  { "nom": "Ada", "age": 41 },\n  { "nom": "Lior", "age": 29 }\n  { "nom": "Mina, "age": 35 }\n', want: [{ nom: 'Ada', age: 41 }, { nom: 'Lior', age: 29 }, { nom: 'Mina', age: 35 }] }
+];
+let fixCur = 0; const fixOk = LS.get('fix', {});
+function deq(a, b) { return JSON.stringify(sortK(a)) === JSON.stringify(sortK(b)); }
+function sortK(v) { if (Array.isArray(v)) return v.map(sortK); if (v && typeof v === 'object') return Object.keys(v).sort().reduce((o, k) => (o[k] = sortK(v[k]), o), {}); return v; }
+function showFix(i) { fixCur = i; $('#fixIn').value = FIX[i].bad; document.querySelectorAll('#fixTabs button').forEach((b, j) => b.classList.toggle('on', j === i)); checkFix(); }
+function renderFixTabs() { $('#fixTabs').innerHTML = FIX.map((f, i) => `<button onclick="showFix(${i})">${fixOk[i] ? '✔ ' : ''}${f.name}</button>`).join(''); }
+function checkFix() {
+  const t = $('#fixIn').value, r = $('#fixRes');
+  try { const v = JSON.parse(t);
+    if (deq(v, FIX[fixCur].want)) { r.innerHTML = '<span class="ok">✔ cJSON_Parse réussit et les données sont intactes. Transmission rétablie !</span>'; if (!fixOk[fixCur]) { fixOk[fixCur] = 1; LS.set('fix', fixOk); renderFixTabs(); document.querySelectorAll('#fixTabs button')[fixCur].classList.add('on'); labDone(); } }
+    else r.innerHTML = '<span class="ko">JSON valide… mais les données ont changé. Ne supprime/renomme rien.</span>';
+  } catch (e) { r.innerHTML = '<span class="ko">✖ cJSON_Parse → NULL</span>\n<span class="mute">' + esc(e.message) + '</span>'; }
+}
+$('#fixIn').addEventListener('input', checkFix); renderFixTabs(); showFix(0);
+
+/* ---------- LABO 2 : chemins ---------- */
+const PJ = { station: 'Kepler-7', releves: [{ id: 'T-01', seuil: 40, valeurs: [21.5, 41.5] }, { id: 'P-02', seuil: 1100, valeurs: [1013] }, { id: 'R-03', seuil: 5, valeurs: [0.5, 7.25, 12] }], equipage: { commandant: 'Ada Vance', medecin: 'Mina Sato' } };
+const PQ = [
+  ['le nom de la station', 'station', 'cJSON_GetObjectItemCaseSensitive(root, "station")'],
+  ['le seuil du 1er relevé', 'releves[0].seuil', 'root → "releves" → 1er élément (child) → "seuil"'],
+  ['la valeur 7.25', 'releves[2].valeurs[1]', 'Attention : en cJSON, atteindre l\'index 2 coûte 2 sauts de next.'],
+  ['le nom du médecin', 'equipage.medecin', 'Un objet dans un objet : deux GetObjectItem.'],
+  ['l\'id du relevé de pression', 'releves[1].id', '']
+];
+let pqi = 0;
+$('#pathJson').textContent = JSON.stringify(PJ, null, 2);
+function evalPath(p) {
+  let v = PJ; const re = /([A-Za-z_]\w*)|\[(\d+)\]|\./g; let m, last = 0, any = false;
+  p = p.trim(); if (!p) return { err: 'vide' };
+  while ((m = re.exec(p))) { if (m.index !== last) return { err: 'syntaxe' }; last = re.lastIndex; any = true;
+    if (m[1] !== undefined) { if (!v || typeof v !== 'object' || Array.isArray(v) || !(m[1] in v)) return { err: 'clé « ' + m[1] + ' » introuvable → GetObjectItem rend NULL' }; v = v[m[1]]; }
+    else if (m[2] !== undefined) { if (!Array.isArray(v) || +m[2] >= v.length) return { err: 'index ' + m[2] + ' hors tableau → NULL' }; v = v[+m[2]]; } }
+  if (last !== p.length || !any) return { err: 'syntaxe' }; return { v };
+}
+function showPQ() { $('#pathQ').innerHTML = `Question ${pqi + 1}/${PQ.length} : chemin vers <b>${PQ[pqi][0]}</b>`; $('#pathIn').value = ''; $('#pathRes').textContent = ''; $('#pathC').textContent = ''; }
+$('#pathIn').addEventListener('input', () => {
+  const r = evalPath($('#pathIn').value), want = evalPath(PQ[pqi][1]).v;
+  if (r.err) { $('#pathRes').innerHTML = '<span class="ko">' + esc(r.err) + '</span>'; return; }
+  const s = JSON.stringify(r.v);
+  if (JSON.stringify(r.v) === JSON.stringify(want)) {
+    $('#pathRes').innerHTML = '<span class="ok">✔ ' + esc(s) + '</span>'; $('#pathC').textContent = PQ[pqi][2];
+    setTimeout(() => { pqi++; if (pqi >= PQ.length) { $('#pathQ').innerHTML = '<span class="ok">✔ Tous les chemins trouvés !</span> <button class="btn sm" onclick="pqi=0;showPQ()">Rejouer</button>'; LS.set('path', 1); labDone(); $('#pathIn').value = ''; $('#pathRes').textContent = ''; } else showPQ(); }, 1400);
+  } else $('#pathRes').innerHTML = '→ <span class="mute">' + esc(s.length > 80 ? s.slice(0, 80) + '…' : s) + '</span>';
+});
+showPQ();
+
+/* ---------- LABO 3 : validation ---------- */
+const VAL = [
+  ['{ "nom": "Ada", "role": "commandant", "age": 41, "oxygene": 87 }', 'OK'],
+  ['{ "nom": "Zoe", "role": "Pilote", "age": 30, "oxygene": 50 }', 'role'],
+  ['{ "nom": "Max", "role": "pilote", "age": "30", "oxygene": 50 }', 'age'],
+  ['{ "nom": "", "role": "chef", "age": 12 }', 'nom'],
+  ['{ "nom": "Kim", "role": "medecin", "age": 70, "oxygene": 0 }', 'OK'],
+  ['{ "nom": "Ivo", "role": "ingenieur", "age": 44.5, "oxygene": 101 }', 'age'],
+  ['{ "nom": "Lea", "role": "biologiste", "age": 22 }', 'oxygene'],
+];
+$('#valList').innerHTML = VAL.map((v, i) => `<div class="entry"><span class="mono">#${i}</span><pre><code>${esc(v[0])}</code></pre><select id="val${i}"><option value="">—</option>${['OK', 'nom', 'role', 'age', 'oxygene'].map(o => `<option>${o}</option>`).join('')}</select><span id="valr${i}"></span></div>`).join('');
+function checkVal() {
+  let g = 0; VAL.forEach((v, i) => { const a = $('#val' + i).value, ok = a === v[1]; g += ok; $('#valr' + i).innerHTML = ok ? '<span class="ok">✔</span>' : '<span class="ko">✖ ' + (a ? '' : 'à remplir') + '</span>'; });
+  $('#valRes').innerHTML = g === VAL.length ? '<span class="ok">✔ Validateur humain certifié !</span>' : `<span class="ko">${g}/${VAL.length}</span> <span class="mute">— rappel : "30" est une string, 44.5 n'est pas entier, la casse compte.</span>`;
+  if (g === VAL.length) { LS.set('val', 1); labDone(); }
+}
+
+/* ---------- LABO 4 : conversion ---------- */
+const CONV = [{ nom: 'Mina Sato', role: 'medecin', age: 35, oxygene: 64 }, { nom: 'Teo Brandt', role: 'pilote', age: 26, oxygene: 12 }];
+$('#convIn').addEventListener('input', () => {
+  const r = $('#convRes');
+  try { const v = JSON.parse($('#convIn').value);
+    if (deq(v, CONV)) { r.innerHTML = '<span class="ok">✔ Conversion parfaite.</span>'; LS.set('conv', 1); labDone(); }
+    else if (Array.isArray(v) && v.some(o => o && typeof o.age === 'string')) r.innerHTML = '<span class="ko">"35" est une string : écris 35 (nombre).</span>';
+    else if (Array.isArray(v) && v.some(o => o && Object.keys(o).some(k => k !== k.trim()))) r.innerHTML = '<span class="ko">Clé avec espace : pense au trim !</span>';
+    else r.innerHTML = '<span class="mute">JSON valide, mais pas encore les bonnes données (' + (Array.isArray(v) ? v.length : 0) + '/2 objets).</span>';
+  } catch (e) { r.innerHTML = '<span class="mute">' + esc(e.message) + '</span>'; }
+});
+function labDone() { const all = FIX.every((_, i) => fixOk[i]) && LS.get('path', 0) && LS.get('val', 0) && LS.get('conv', 0); if (all) setDone('labo'); }
+
+/* ---------- QUIZ ---------- */
+const QUIZ = [
+  ['Que renvoie cJSON_Parse sur un JSON invalide ?', ['NULL', 'Un objet vide', 'Un nœud de type cJSON_Invalid', 'Il fait exit(1)'], 0, 'NULL. Et cJSON_GetErrorPtr() donne la position de l\'erreur.'],
+  ['Pourquoi cJSON_GetArrayItem(arr, i) dans un for est-il à éviter ?', ['Il copie l\'élément', 'Il est en O(i) : la boucle devient O(n²)', 'Il n\'est pas thread-safe', 'Il alloue de la mémoire'], 1, 'Les enfants sont une liste chaînée : il faut i sauts de next. cJSON_ArrayForEach est O(n) au total.'],
+  ['Après cJSON_AddItemToArray(arr, item), qui libère item ?', ['Toi, avec cJSON_Delete(item)', 'Toi, avec free(item)', 'Le cJSON_Delete de la racine', 'Personne, ça fuit'], 2, 'L\'arbre devient propriétaire. Le libérer aussi = double free.'],
+  ['"age": "35" — que vaut cJSON_IsNumber(age) ?', ['vrai', 'faux', 'ça dépend de la lib', 'erreur de compilation'], 1, 'C\'est une string. Un validateur doit le rejeter.'],
+  ['Que faut-il faire de la chaîne renvoyée par cJSON_PrintUnformatted ?', ['Rien', 'cJSON_Delete', 'free', 'fclose'], 2, 'Elle est allouée avec malloc : free(s).'],
+  ['Le lexing, c\'est…', ['Transformer le texte en liste de tokens', 'Construire l\'arbre syntaxique', 'Valider avec un schéma', 'Sérialiser en JSON'], 0, 'Le lexing « mâche », le parsing « digère » et produit l\'arbre.'],
+  ['Lequel de ces textes est du JSON valide ?', ['{\'a\': 1}', '{"a": 1,}', '{"a": [1, 2]}', '{a: 1}'], 2, 'Guillemets doubles obligatoires, pas de virgule finale.'],
+  ['À quoi sert un schéma (JSON Schema) ?', ['Compresser les données', 'Décrire la structure attendue pour valider l\'entrée', 'Accélérer le parsing', 'Chiffrer le fichier'], 1, 'Un validateur automatique vérifie l\'entrée avant le parsing/l\'exploitation.'],
+  ['Valeurs [-42, -15.5, -30]. On initialise max = 0. Résultat ?', ['-15.5', '0 (faux !)', '-42', 'NaN'], 1, 'Toujours initialiser avec la 1re valeur (ou un flag « has »).'],
+  ['strtok(",") sur "a,,b" donne…', ['3 champs dont un vide', '2 champs : a et b', '1 champ', 'un segfault'], 1, 'strtok fusionne les séparateurs consécutifs : un champ vide disparaît.'],
+  ['Différence cJSON_GetObjectItem / GetObjectItemCaseSensitive ?', ['Aucune', 'La 1re ignore la casse des clés', 'La 2e est plus lente', 'La 1re ne marche que sur les tableaux'], 1, '"Nom" et "nom" seraient confondues : préfère CaseSensitive.'],
+  ['Où écrire « Erreur : JSON invalide » ?', ['stdout', 'stderr', 'dans le fichier', 'nulle part'], 1, 'stdout est comparé par la moulinette : les erreurs vont sur stderr.'],
+  ['Pourquoi éviter ->valueint ?', ['Il n\'existe pas', 'Il tronque les décimaux (12.5 → 12)', 'Il est plus lent', 'Il est toujours 0'], 1, 'Utilise valuedouble, et teste d == (int)d si tu veux un entier.'],
+  ['Format le plus adapté pour des données imbriquées échangées entre services ?', ['CSV', 'INI', 'JSON', 'aucun'], 2, 'CSV et INI ne gèrent pas l\'imbrication.'],
+  ['cJSON_Delete(NULL)…', ['segfault', 'ne fait rien', 'affiche une erreur', 'libère tout'], 1, 'C\'est sûr : pratique dans les chemins d\'erreur.'],
+];
+let qOrder = [], qAns = {};
+function buildQuiz(shuffle) {
+  qOrder = QUIZ.map((_, i) => i); if (shuffle) qOrder.sort(() => Math.random() - .5); qAns = {};
+  $('#quizBox').innerHTML = qOrder.map((qi, n) => { const q = QUIZ[qi];
+    return `<div class="card q" id="q${n}"><b>${n + 1}. ${esc(q[0])}</b><div class="opts">${q[1].map((o, j) => `<button onclick="answer(${n},${j})">${esc(o)}</button>`).join('')}</div><div class="exp">${esc(q[3])}</div></div>`; }).join('');
+  qScore();
+}
+function answer(n, j) {
+  if (qAns[n] !== undefined) return; const q = QUIZ[qOrder[n]]; qAns[n] = j === q[2];
+  const box = $('#q' + n), bs = box.querySelectorAll('button'); bs.forEach(b => b.disabled = true);
+  bs[q[2]].classList.add('good'); if (j !== q[2]) bs[j].classList.add('bad'); box.classList.add('done'); qScore();
+}
+function qScore() {
+  const a = Object.keys(qAns).length, g = Object.values(qAns).filter(Boolean).length;
+  $('#qScore').textContent = `Score : ${g}/${a}` + (a === QUIZ.length ? ` sur ${QUIZ.length} — ${Math.round(100 * g / QUIZ.length)} %` : '');
+  if (a === QUIZ.length && g / QUIZ.length >= .8) setDone('quiz');
+}
+buildQuiz(false);
+
+/* ---------- MISSIONS ---------- */
+const MIS = DATA.missions;
+let mCur = LS.get('mcur', 0);
+function exam() { return !!LS.get('exam', null); }
+function showMission(i) {
+  mCur = i; LS.set('mcur', i); const m = MIS[i], ex = exam();
+  document.querySelectorAll('#mTabs button').forEach((b, j) => b.classList.toggle('on', j === i));
+  const nominal = m.tests[0];
+  $('#mBody').innerHTML = `
+  <div class="card"><span class="tag">${esc(m.dir)}/main.c</span>
+    <h2 style="margin-top:.4em">${m.ico} ${esc(m.title)}</h2>
+    <p class="lead">${m.story}</p>
+    <h3>Consigne</h3><pre><code>${esc(m.spec)}</code></pre>
+    <h3>Entrée nominale : <code>${esc(nominal.args)}</code></h3><pre><code>${esc(DATA.files[nominal.args] || '')}</code></pre>
+    <h3>Sortie attendue</h3><pre><code>${esc(nominal.expected)}</code></pre>
+    <h3>Tests de la moulinette</h3>
+    <table>${m.tests.map(t => `<tr><td class="mono">${esc(t.name)}</td><td class="mono mute">${esc(t.args)}</td><td>retour ${t.code}</td></tr>`).join('')}</table>
+    ${ex ? '<div class="callout warn">🔒 Mode examen : indices et correction masqués.</div>' : `
+    <h3>Indices</h3>${m.hints.map((h, k) => `<details style="margin:6px 0"><summary style="cursor:pointer">Indice ${k + 1}</summary><div class="callout" style="margin-top:6px">${h}</div></details>`).join('')}
+    <details style="margin-top:14px"><summary class="btn" style="display:inline-block">Voir la correction</summary><pre><code>${esc(m.solution)}</code></pre><div class="callout opt"><b>Points d'opti :</b> ${m.opti}</div></details>`}
+    <div class="row" style="margin-top:16px"><button class="btn p" onclick="toMoul(${i})">Tester dans la moulinette web →</button>
+    <button class="btn" onclick="setDone('m${i + 1}');showMission(${i})">${prog['m' + (i + 1)] ? '✔ Mission validée' : 'J\'ai 4/4 à ./moulinette.sh'}</button></div>
+  </div>`;
+}
+$('#mTabs').innerHTML = MIS.map((m, i) => `<button onclick="showMission(${i})"><small>MISSION ${i + 1}</small>${m.ico} ${esc(m.short)}</button>`).join('');
+$('#installCode').textContent = INSTALL;
+function copyTxt(t, b) { navigator.clipboard.writeText(t).then(() => { b.textContent = 'Copié ✔'; setTimeout(() => b.textContent = 'Copier', 1500); }, () => { b.textContent = 'Copie bloquée'; }); }
+function toMoul(i) { $('#mlSel').value = i; fillTests(); go('moulinette'); }
+
+/* ---------- MOULINETTE WEB ---------- */
+$('#mlSel').innerHTML = MIS.map((m, i) => `<option value="${i}">Mission ${i + 1} · ${esc(m.short)}</option>`).join('');
+function fillTests() { const m = MIS[$('#mlSel').value]; $('#mlTest').innerHTML = m.tests.map((t, j) => `<option value="${j}">${esc(t.name)}</option>`).join(''); showTest(); const d = LS.get('code' + $('#mlSel').value, ''); $('#mlCode').value = d; $('#mlAn').innerHTML = ''; }
+function showTest() { const t = MIS[$('#mlSel').value].tests[$('#mlTest').value]; $('#mlCmd').textContent = `./prog ${t.args}\n# code de retour attendu : ${t.code}`; $('#mlInput').textContent = DATA.files[t.args] ?? '(fichier absent : c\'est le test !)'; $('#mlDiff').innerHTML = ''; $('#mlOut').value = ''; $('#mlCode2').value = '0'; }
+$('#mlSel').onchange = fillTests; $('#mlTest').onchange = showTest;
+$('#mlCode').addEventListener('input', () => LS.set('code' + $('#mlSel').value, $('#mlCode').value));
+fillTests();
+
+function stripC(src) { return src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '').replace(/"(?:\\.|[^"\\])*"/g, '""'); }
+function runAnalysis() {
+  const raw = $('#mlCode').value, s = stripC(raw), i = +$('#mlSel').value, out = [];
+  const add = (lvl, msg) => out.push([lvl, msg]);
+  const has = r => r.test(s), cnt = r => (s.match(r) || []).length;
+  if (!raw.trim()) { $('#mlAn').innerHTML = '<li class="mute">Colle ton code d\'abord.</li>'; return; }
+  const usesJson = i > 0;
+  if (usesJson && !/#include\s*<cjson\/cJSON\.h>/.test(raw)) add('ko', 'Il manque #include <cjson/cJSON.h>.');
+  if (has(/\bstrtok_r\s*\(/) && !/_POSIX_C_SOURCE|_DEFAULT_SOURCE|_GNU_SOURCE/.test(raw)) add('ko', 'strtok_r en -std=c99 sans #define _POSIX_C_SOURCE 200809L → warning implicit declaration → -Werror échoue.');
+  if (has(/\bgets\s*\(/)) add('ko', 'gets() est interdit (buffer overflow). Utilise fgets.');
+  const nP = cnt(/cJSON_Parse\w*\s*\(/g), nC = cnt(/cJSON_Create(Object|Array)\s*\(/g), nD = cnt(/cJSON_Delete\s*\(/g);
+  if ((nP || nC) && !nD) add('ko', 'Aucun cJSON_Delete : tout l\'arbre fuit (valgrind : definitely lost).');
+  if (nP && nD && nD < 2 && /return\s+[12]\s*;/.test(s)) add('warn', 'Un seul cJSON_Delete alors qu\'il y a des return d\'erreur : vérifie qu\'aucun chemin ne sort sans libérer.');
+  if (has(/cJSON_Print\w*\s*\(/) && !has(/\bfree\s*\(/)) add('ko', 'cJSON_Print* alloue une chaîne : free() manquant.');
+  if (has(/\bfopen\s*\(/) && !has(/\bfclose\s*\(/)) add('ko', 'fopen sans fclose.');
+  if (has(/\bmalloc\s*\(/) && !has(/\bfree\s*\(/)) add('ko', 'malloc sans free.');
+  if (has(/cJSON_Parse\s*\(/) && has(/read_file|malloc/) && !has(/free\s*\(\s*\w*(text|buf|content|data|str|json)\w*\s*\)/i)) add('warn', 'Le buffer du fichier est-il libéré après cJSON_Parse ?');
+  if (has(/\bfopen\s*\(/) && !has(/if\s*\(\s*!\s*\w+\s*\)|==\s*NULL|!=\s*NULL/)) add('ko', 'Le retour de fopen n\'est jamais testé (fichier absent → segfault).');
+  if (nP && !has(/cJSON_Is(Array|Object)\s*\(\s*\w+\s*\)|if\s*\(\s*!\s*\w*root\w*\s*\)|root\w*\s*==\s*NULL/)) add('ko', 'Le résultat de cJSON_Parse n\'est pas vérifié (JSON invalide → NULL).');
+  const reads = cnt(/->\s*(valuestring|valuedouble|valueint)/g), checks = cnt(/cJSON_Is\w+\s*\(/g);
+  if (reads && !checks) add('ko', '->valuestring/valuedouble sans aucun cJSON_Is* : segfault si le champ manque ou a le mauvais type.');
+  else if (reads > 0 && checks < Math.min(reads, 3)) add('warn', `${reads} lectures de valeur pour ${checks} test(s) de type : chaque champ lu doit être vérifié.`);
+  if (has(/->\s*valueint/)) add('warn', 'valueint tronque (12.5 → 12). Prends valuedouble.');
+  if (has(/cJSON_GetObjectItem\s*\(/)) add('warn', 'cJSON_GetObjectItem ignore la casse : préfère cJSON_GetObjectItemCaseSensitive.');
+  if (has(/cJSON_GetArrayItem\s*\(/)) add('opt', 'cJSON_GetArrayItem → O(i) par appel, O(n²) en boucle. Utilise cJSON_ArrayForEach.');
+  if (has(/for\s*\([^;]*;[^;]*cJSON_GetArraySize/)) add('opt', 'cJSON_GetArraySize dans la condition du for : recalculé (O(n)) à chaque tour.');
+  if (has(/for\s*\([^;]*;[^;]*strlen\s*\(/)) add('opt', 'strlen dans la condition du for : O(n²).');
+  if (has(/\bstrtok\s*\(/)) add('warn', 'strtok n\'est pas réentrant ; strtok_r est plus propre.');
+  if (i === 2 && /max\w*\s*=\s*0(\.0*)?\s*;/.test(s) && !/!\s*\w+\s*\|\||\w+\s*==\s*0\s*\|\||isnan|DBL_MAX|INFINITY|HUGE_VAL/i.test(s)) add('ko', 'max = 0 au départ : faux si toutes les valeurs sont négatives (test 02).');
+  if (i === 3 && !/\(int\)|floor|trunc|fmod|modf|lround/.test(s)) add('warn', 'Comment vérifies-tu que age est un ENTIER ? (26.5 doit être refusé)');
+  if (i === 3 && !/IsObject/.test(s)) add('warn', 'Une entrée peut ne pas être un objet ("pas un objet") → champ fautif « objet ».');
+  if (i === 4 && !/PrintUnformatted/.test(s)) add('ko', 'La sortie doit être sur une ligne : cJSON_PrintUnformatted.');
+  if ((i === 0 || i === 4) && !/isspace|trim|\\r/.test(raw)) add('ko', 'Pas de trim : les espaces et les \\r de Windows vont rester dans les champs (test 03).');
+  if (/fprintf\s*\(\s*stdout\s*,\s*""/.test(s) || /printf\s*\(\s*""\s*\)\s*;\s*return\s+[12]/.test(s)) add('warn', 'Les erreurs doivent aller sur stderr.');
+  const nFor = cnt(/\b(for|while)\s*\(/g); const nested = /(for|while)\s*\([^)]*\)\s*\{[^{}]*(for|while)\s*\([^)]*\)\s*\{[^{}]*(for|while)\s*\(/.test(s);
+  if (nested) add('opt', '3 boucles imbriquées : es-tu sûr d\'en avoir besoin ?');
+  if (!out.length) add('ok', 'Rien à signaler. Lance quand même ./moulinette.sh pour les tests et valgrind.');
+  const ic = { ok: '<span class="ok">✔</span>', ko: '<span class="ko">✖</span>', warn: '<span style="color:var(--yellow)">⚠</span>', opt: '<span class="ok">⚡ OPTI</span>' };
+  const order = { ko: 0, warn: 1, opt: 2, ok: 3 }; out.sort((a, b) => order[a[0]] - order[b[0]]);
+  const nk = out.filter(o => o[0] === 'ko').length;
+  $('#mlAn').innerHTML = `<li><b>${nk ? nk + ' problème(s) bloquant(s)' : 'Aucun problème bloquant détecté'}</b> </li>` + out.map(o => `<li>${ic[o[0]]} ${esc(o[1])}</li>`).join('');
+}
+function compareOut() {
+  const t = MIS[$('#mlSel').value].tests[$('#mlTest').value];
+  const got = $('#mlOut').value.replace(/\r/g, '').replace(/\n+$/, ''), want = t.expected.replace(/\n+$/, '');
+  const code = $('#mlCode2').value.trim();
+  const a = got ? got.split('\n') : [], b = want ? want.split('\n') : [];
+  // LCS diff
+  const n = a.length, m = b.length, L = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) L[i][j] = a[i] === b[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+  let i = 0, j = 0, h = '';
+  while (i < n || j < m) {
+    if (i < n && j < m && a[i] === b[j]) { h += `<div class="eq">  ${esc(a[i])}</div>`; i++; j++; }
+    else if (j < m && (i >= n || L[i][j + 1] >= L[i + 1][j])) { h += `<div class="ad">+ ${esc(b[j]) || ' '}   <span class="mute">← attendu</span></div>`; j++; }
+    else { h += `<div class="rm">- ${esc(a[i]) || ' '}   <span class="mute">← toi</span></div>`; i++; }
+  }
+  const okOut = got === want, okCode = code === String(t.code);
+  let msg = okOut && okCode ? '<p class="ok"><b>✔ Test réussi !</b></p>' : `<p class="ko"><b>✖ ${okOut ? '' : 'Sortie différente. '}${okCode ? '' : 'Code de retour ' + esc(code) + ' au lieu de ' + t.code + '.'}</b></p>`;
+  if (!okOut && a.length === b.length && a.every((l, k) => l.trimEnd() === b[k].trimEnd())) msg += '<p class="mute">Seuls des espaces en fin de ligne diffèrent.</p>';
+  $('#mlDiff').innerHTML = msg + (n + m ? `<div class="diff">${h}</div>` : '<p class="mute">Sortie vide attendue (et obtenue).</p>');
+}
+
+/* ---------- EXAMEN ---------- */
+let tick = null;
+function renderExam() {
+  const e = LS.get('exam', null), c = $('#examCtl');
+  if (!e) { c.innerHTML = [60, 90, 120].map(d => `<button class="btn ${d === 90 ? 'p' : ''}" onclick="startExam(${d})">Démarrer ${d >= 60 ? Math.floor(d / 60) + 'h' + (d % 60 ? d % 60 : '') : d + ' min'}</button>`).join(''); $('#bigTimer').textContent = '--:--:--'; $('#timerChip').style.display = 'none'; clearInterval(tick); return; }
+  c.innerHTML = '<button class="btn" onclick="stopExam()">Terminer l\'épreuve</button> <button class="btn" onclick="go(\'missions\')">Aller aux missions</button>';
+  clearInterval(tick); const upd = () => {
+    const left = Math.max(0, e.end - Date.now()), s = Math.floor(left / 1000), f = `${String(Math.floor(s / 3600)).padStart(2, '0')}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+    $('#bigTimer').textContent = f; const ch = $('#timerChip'); ch.style.display = 'inline-block'; ch.textContent = '⏱ ' + f;
+    if (!left) { $('#bigTimer').innerHTML = '<span class="ko">TEMPS ÉCOULÉ</span>'; ch.textContent = '⏱ FIN'; clearInterval(tick); }
+  }; upd(); tick = setInterval(upd, 1000);
+}
+function startExam(min) { LS.set('exam', { end: Date.now() + min * 60000, min }); renderExam(); showMission(mCur); toast('Épreuve lancée. ' + min + ' minutes. Bon courage !'); }
+function stopExam() { LS.set('exam', null); renderExam(); showMission(mCur); }
+function saveScore() { const v = $('#scoreIn').value.trim(); if (!v) return; const h = LS.get('hist', []); h.unshift({ d: new Date().toLocaleString('fr-FR'), v }); LS.set('hist', h.slice(0, 10)); $('#scoreIn').value = ''; renderHist(); }
+function renderHist() { const h = LS.get('hist', []); $('#history').innerHTML = h.length ? h.map(x => `<div>${esc(x.d)} — <b style="color:var(--pink)">${esc(x.v)}</b></div>`).join('') : 'Aucun essai enregistré.'; }
+
+renderPower(); showMission(mCur); renderExam(); renderHist(); route();
+</script>
+</body>
+</html>
