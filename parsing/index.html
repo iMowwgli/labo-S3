@@ -173,7 +173,7 @@ footer{color:var(--mute);font-size:12px;text-align:center;padding:30px}
   <h1>Le <span class="grad">cours</span></h1>
   <div class="toc">
     <a href="#c1" onclick="return jump('c1')">Lexing / parsing</a><a href="#c2" onclick="return jump('c2')">Données structurées</a>
-    <a href="#c3" onclick="return jump('c3')">Les formats</a><a href="#c4" onclick="return jump('c4')">Lire un fichier</a>
+    <a href="#c3" onclick="return jump('c3')">Les formats</a><a href="#c3b" onclick="return jump('c3b')">Fonctions par format</a><a href="#c4" onclick="return jump('c4')">Lire un fichier</a>
     <a href="#c5" onclick="return jump('c5')">Boîte à outils string.h</a><a href="#c6" onclick="return jump('c6')">Nombres : strtol</a>
     <a href="#c7" onclick="return jump('c7')">sscanf</a><a href="#c8" onclick="return jump('c8')">CSV / INI</a>
     <a href="#c9" onclick="return jump('c9')">Lexer à la main</a><a href="#c10" onclick="return jump('c10')">Parseur récursif</a>
@@ -214,6 +214,36 @@ footer{color:var(--mute);font-size:12px;text-align:center;padding:30px}
   <div class="tabs" id="fmtTabs"></div>
   <pre><code id="fmtCode"></code></pre>
   <p class="mute" id="fmtNote"></p>
+
+
+  <h2 id="c3b"><small>03 bis</small>Les fonctions dispo par format</h2>
+  <div class="callout">Mardi : <b>libc uniquement</b>. Les bibliothèques externes sont là pour la culture (et le QCM).</div>
+  <h3>CSV</h3>
+  <ul class="idea">
+    <li><code>fgets(buf, size, f)</code> : lit une ligne.</li>
+    <li><code>buf[strcspn(buf, "\r\n")] = '\0'</code> : coupe la fin de ligne.</li>
+    <li><code>strtok_r(s, ",", &amp;save)</code> : découpe (fusionne <code>,,</code>).</li>
+    <li><code>strchr(s, ',')</code> : prochaine virgule (garde les champs vides).</li>
+    <li><code>isspace((unsigned char)c)</code> : pour le trim.</li>
+    <li><code>strtol(s, &amp;end, 10)</code> / <code>strtod(s, &amp;end)</code> : texte → nombre, avec contrôle.</li>
+    <li>Lib externe <b>libcsv</b> : <code>csv_init</code>, <code>csv_parse</code>, <code>csv_fini</code>, <code>csv_free</code>.</li>
+  </ul>
+  <h3>JSON</h3>
+  <ul class="idea">
+    <li>libc : rien de prévu → lexer + parseur <b>à la main</b> (missions 4 et 6).</li>
+    <li><code>isdigit</code>, <code>isalpha</code>, <code>isspace</code> : type du caractère.</li>
+    <li><code>strncmp(p, "true", 4)</code> : mots-clés.</li>
+    <li><code>printf("%.*s", len, start)</code> : afficher un morceau sans copier.</li>
+    <li><b>cJSON</b> : <code>cJSON_Parse</code>, <code>cJSON_GetObjectItemCaseSensitive</code>, <code>cJSON_ArrayForEach</code>, <code>cJSON_IsString</code>, <code>cJSON_Print</code>, <code>cJSON_Delete</code>.</li>
+    <li><b>jansson</b> : <code>json_loads</code>, <code>json_object_get</code>, <code>json_array_foreach</code>, <code>json_string_value</code>, <code>json_dumps</code>, <code>json_decref</code>.</li>
+    <li><b>json-c</b> : <code>json_tokener_parse</code>, <code>json_object_object_get_ex</code>, <code>json_object_get_string</code>, <code>json_object_put</code>.</li>
+  </ul>
+  <h3>YAML</h3>
+  <ul class="idea">
+    <li>libc : rien, et trop complexe à la main (indentation, listes, ancres).</li>
+    <li><b>libyaml</b> : <code>yaml_parser_initialize</code>, <code>yaml_parser_set_input_file</code>, <code>yaml_parser_parse</code> (événements), <code>yaml_event_delete</code>, <code>yaml_parser_delete</code>.</li>
+    <li>Pour mardi : savoir le <b>reconnaître</b>, c'est tout.</li>
+  </ul>
 
   <h2 id="c4"><small>04</small>Lire l'entrée</h2>
   <ul class="idea">
